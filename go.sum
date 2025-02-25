@@ -89,6 +89,8 @@ github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65E
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/yon-module/yon-framework v1.1.3 h1:9VK+a01SHZfZXON7tUwP4G5e1By9wV3sS8NtUhM8SPk=
 github.com/yon-module/yon-framework v1.1.3/go.mod h1:B043QECRx7PHugamVUcefXGQ4q+Y/1GN/lcSKzCCyLo=
+github.com/yon-module/yon-framework v1.1.31 h1:Qff23jzXOCQFHDz+Ibs3RHbU9Chp05ykxUm7E4nCyCc=
+github.com/yon-module/yon-framework v1.1.31/go.mod h1:B043QECRx7PHugamVUcefXGQ4q+Y/1GN/lcSKzCCyLo=
 golang.org/x/arch v0.14.0 h1:z9JUEZWr8x4rR0OU6c4/4t6E6jOZ8/QBS2bBYBm4tx4=
 golang.org/x/arch v0.14.0/go.mod h1:FEVrYAQjsQXMVJ1nsMoVVXPZg6p2JE2mx8psSWTDQys=
 golang.org/x/crypto v0.34.0 h1:+/C6tk6rf/+t5DhUketUbD1aNGqiSX3j15Z6xuIDlBA=

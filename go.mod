@@ -2,6 +2,8 @@ module github.com/Sistem-Informasi-Akademik/academic-system-information-service
 
 go 1.24.0
 
+require github.com/yon-module/yon-framework v1.1.31
+
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic v1.12.9 // indirect
@@ -34,7 +36,6 @@ require (
 	github.com/rs/zerolog v1.33.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/yon-module/yon-framework v1.1.3 // indirect
 	golang.org/x/arch v0.14.0 // indirect
 	golang.org/x/crypto v0.34.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
