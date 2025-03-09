@@ -9,7 +9,8 @@ const (
 
 type SchoolConfig struct {
 	gorm.Model
-	SchoolLevelId uint `gorm:"not null" json:"schoolLevelId"`
+	SchoolCode    string `gorm:"type:varchar(20);unique_index"`
+	SchoolLevelId uint   `gorm:"not null" json:"schoolLevelId"`
 }
 
 func (c *SchoolConfig) TableName() string {
