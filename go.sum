@@ -125,12 +125,14 @@ github.com/yon-module/yon-framework v1.1.5 h1:zQ+Eqm20JiPRvA7co8tvtN0/1yyY5ZFSNa
 github.com/yon-module/yon-framework v1.1.5/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
 github.com/yon-module/yon-framework v1.1.6 h1:3QAVInNmwIJ/GpOHYORrv6Y3qajFnzJDPemvMEanKHY=
 github.com/yon-module/yon-framework v1.1.6/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
+github.com/yon-module/yon-framework v1.1.7/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
 github.com/yon-module/yon-framework v1.1.31 h1:Qff23jzXOCQFHDz+Ibs3RHbU9Chp05ykxUm7E4nCyCc=
 github.com/yon-module/yon-framework v1.1.31/go.mod h1:B043QECRx7PHugamVUcefXGQ4q+Y/1GN/lcSKzCCyLo=
 github.com/yon-module/yon-framework v1.1.32 h1:l7N6yAGuMUWXFCNxyau5qhKQKG4JBYwJp3r/iKB7dxE=
 github.com/yon-module/yon-framework v1.1.32/go.mod h1:B043QECRx7PHugamVUcefXGQ4q+Y/1GN/lcSKzCCyLo=
 github.com/yon-module/yon-framework v1.1.51 h1:DPlZJUqSR8GiX0vNCCuySnw6D1FRmhT2jvhs+N+6WXk=
 github.com/yon-module/yon-framework v1.1.51/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
+github.com/yon-module/yon-framework v1.1.71/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
 github.com/yon-module/yon-framework v1.1.321 h1:/4c2d+1kUa19w9jgMdI7Se/NqjyxHABsNtTtXmWn6tY=
 github.com/yon-module/yon-framework v1.1.321/go.mod h1:B043QECRx7PHugamVUcefXGQ4q+Y/1GN/lcSKzCCyLo=
 github.com/yon-module/yon-framework v1.1.331 h1:QB7m5Xz3tAy9Go1efIYjHPQGLs7pUUDuFzbHNw/jOhs=

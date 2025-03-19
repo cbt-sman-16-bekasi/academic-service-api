@@ -1,0 +1,3 @@
+### GET data school
+GET {{host}}/academic/school?schoolCode={{schoolId}}
+###
