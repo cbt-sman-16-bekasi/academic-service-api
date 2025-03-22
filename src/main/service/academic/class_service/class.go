@@ -2,6 +2,7 @@ package class_service
 
 import (
 	classRequest "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
+	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
 	classResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/class_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
@@ -9,49 +10,50 @@ import (
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
-	"gorm.io/gorm"
 )
 
 type ClassService struct {
-	repoClass        *school_repository.ClassRepository
-	repoClassCode    *school_repository.ClassCodeRepository
-	repoClassSubject *school_repository.ClassSubjectRepository
+	repoClass *school_repository.ClassRepository
 }
 
 func NewClassService() *ClassService {
 	return &ClassService{
-		repoClass:        school_repository.NewClassRepository(),
-		repoClassCode:    school_repository.NewClassCodeRepository(),
-		repoClassSubject: school_repository.NewClassSubjectRepository(),
+		repoClass: school_repository.NewClassRepository(),
 	}
 }
 
-func (c *ClassService) GetAllClassCode() []classResponse.ClassCodeResponse {
-	classCode := c.repoClassCode.GetAllClassCode()
-	var classes []classResponse.ClassCodeResponse
-	for _, class := range classCode {
-		classes = append(classes, classResponse.ClassCodeResponse{
-			Code: class.Code,
-			Name: class.Name,
-		})
+func (c *ClassService) FindAllClass(request pagination.Request[map[string]interface{}]) *database.Paginator {
+	paging := database.FindAllPaging(request, &school.Class{})
+	return paging
+}
+
+func (c *ClassService) GetDetailClass(id uint) classResponse.DetailClassResponse {
+	detail := c.repoClass.FindById(id)
+	return classResponse.DetailClassResponse{
+		ID: detail.ID,
+		ClassCode: response2.GeneralLabelKeyResponse{
+			Key:   detail.ClassCode,
+			Label: detail.DetailClassCode.Name,
+		},
+		ClassName: detail.ClassName,
 	}
-	return classes
 }
 
 func (c *ClassService) CreateNewClass(request classRequest.ModifyClassRequest) classResponse.DetailClassResponse {
-	existingClass := c.repoClass.GetClassByCode(request.ClassCode)
-	if existingClass != nil && existingClass.ID != 0 {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Class with this code already exists"))
-	}
-
 	body := school.Class{
-		Model:     gorm.Model{},
 		ClassCode: request.ClassCode,
 		ClassName: request.ClassName,
 	}
 	c.repoClass.Database.Create(&body)
-
-	return classResponse.DetailClassResponse{}
+	detail := c.repoClass.FindById(body.ID)
+	return classResponse.DetailClassResponse{
+		ID: detail.ID,
+		ClassCode: response2.GeneralLabelKeyResponse{
+			Key:   detail.ClassCode,
+			Label: detail.DetailClassCode.Name,
+		},
+		ClassName: detail.ClassName,
+	}
 }
 
 func (c *ClassService) ModifyClass(id uint, request classRequest.ModifyClassRequest) classResponse.DetailClassResponse {
@@ -71,7 +73,6 @@ func (c *ClassService) ModifyClass(id uint, request classRequest.ModifyClassRequ
 	return classResponse.DetailClassResponse{}
 }
 
-func (c *ClassService) GetAllClassSubject(request pagination.Request[map[string]interface{}]) *database.Paginator {
-	page := database.FindAllPaging(request, &school.ClassSubject{})
-	return page
+func (c *ClassService) DeleteById(id uint) {
+	c.repoClass.Delete(id)
 }

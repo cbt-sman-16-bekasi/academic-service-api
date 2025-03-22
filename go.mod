@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/xuri/excelize/v2 v2.9.0
-	github.com/yon-module/yon-framework v1.1.71
+	github.com/yon-module/yon-framework v1.1.72
 	gorm.io/gorm v1.25.12
 )
 

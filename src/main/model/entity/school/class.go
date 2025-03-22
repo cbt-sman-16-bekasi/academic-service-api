@@ -34,7 +34,12 @@ func (c *ClassCode) TableName() string {
 
 type ClassSubject struct {
 	gorm.Model
-	SubjectCode   string             `json:"subjectCode"`
-	DetailSubject curriculum.Subject `gorm:"foreignKey:SubjectCode"`
-	ClassCode     string             `json:"classCode"`
+	SubjectCode     string             `json:"subjectCode"`
+	DetailSubject   curriculum.Subject `gorm:"foreignKey:SubjectCode"`
+	ClassCode       string             `json:"classCode"`
+	DetailClassCode ClassCode          `gorm:"foreignKey:ClassCode"`
+}
+
+func (c *ClassSubject) TableName() string {
+	return TableNameClassSubject
 }

@@ -12,3 +12,9 @@ type DetailClassResponse struct {
 	ClassCode response.GeneralLabelKeyResponse `json:"class_code"`
 	ClassName string                           `json:"class_name"`
 }
+
+type DetailClassSubjectResponse struct {
+	ID        uint                             `json:"id"`
+	ClassCode response.GeneralLabelKeyResponse `json:"class_code"`
+	Subject   response.GeneralLabelKeyResponse `json:"subject"`
+}

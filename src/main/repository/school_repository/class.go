@@ -24,7 +24,7 @@ func (repo *ClassRepository) GetClassByCode(classCode string) *school.Class {
 
 func (repo *ClassRepository) FindById(id uint) *school.Class {
 	var class school.Class
-	_ = repo.Database.Where("id = ?", id).First(&class)
+	_ = repo.Database.Where("id = ?", id).Preload("DetailClassCode").First(&class)
 	return &class
 }
 
@@ -32,4 +32,8 @@ func (repo *ClassRepository) AllClass() []school.Class {
 	var classes []school.Class
 	_ = repo.Database.Preload("DetailClassCode").Find(&classes)
 	return classes
+}
+
+func (repo *ClassRepository) Delete(id uint) {
+	repo.Database.Where("id = ?", id).Delete(&school.Class{})
 }
