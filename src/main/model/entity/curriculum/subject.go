@@ -10,7 +10,7 @@ const (
 type Subject struct {
 	gorm.Model
 	Code        string `gorm:"unique" json:"code"`
-	Subject     string `gorm:"unique" json:"subject"`
+	Subject     string `json:"subject"`
 	SubjectType string `json:"subject_type"`
 	Description string `json:"description"`
 }

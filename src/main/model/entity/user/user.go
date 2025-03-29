@@ -9,9 +9,10 @@ type User struct {
 	SchoolCode string `gorm:"not null" json:"SchoolCode"`
 	Username   string `gorm:"unique" json:"username"`
 	Password   string `gorm:"password" json:"-"`
+	Salt       string `gorm:"salt_password" json:"-"`
 	Role       uint   `gorm:"default:1" json:"-"`
 	Status     uint   `gorm:"default:1" json:"status"`
-	RoleUser   Role   `gorm:"foreignKey:Role" json:"role"`
+	RoleUser   Role   `gorm:"foreignKey:Role;references:ID" json:"role"`
 }
 
 func (u *User) TableName() string {

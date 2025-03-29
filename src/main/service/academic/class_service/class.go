@@ -23,7 +23,7 @@ func NewClassService() *ClassService {
 }
 
 func (c *ClassService) FindAllClass(request pagination.Request[map[string]interface{}]) *database.Paginator {
-	paging := database.FindAllPaging(request, &school.Class{})
+	paging := database.FindAllPaging(request, []school.Class{})
 	return paging
 }
 

@@ -1,6 +1,7 @@
 package school_repository
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
@@ -25,4 +26,10 @@ func (s SchoolRepository) FindTopBySchoolCode(schoolCode string) *school.School 
 		panic(exception.NewNotFoundException(response.NotFound, "Data school_repository not found"))
 	}
 	return &school
+}
+
+func (s SchoolRepository) AllSubject() []curriculum.Subject {
+	var subjects []curriculum.Subject
+	s.Database.Find(&subjects)
+	return subjects
 }

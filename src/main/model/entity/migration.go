@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/teacher"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"github.com/yon-module/yon-framework/database"
 )
@@ -21,5 +22,7 @@ func init() {
 		&school.School{},
 		&curriculum.Curriculum{},
 		&curriculum.CurriculumSubject{},
+		&curriculum.Subject{},
+		&teacher.Teacher{},
 	)
 }

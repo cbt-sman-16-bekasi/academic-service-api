@@ -17,7 +17,7 @@ func NewClassSubjectRepository() *ClassSubjectRepository {
 }
 
 func (c *ClassSubjectRepository) FindById(id uint) (classSubject *school.ClassSubject) {
-	c.Database.Where("id = ?", id).Preload("DetailSubject", "DetailClassCode").First(&classSubject)
+	c.Database.Where("id = ?", id).Preload("DetailSubject").Preload("DetailClassCode").First(&classSubject)
 	return
 }
 

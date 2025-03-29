@@ -36,12 +36,13 @@ func (s *StudentService) DetailStudent(id uint) student_response.DetailStudentRe
 func (s *StudentService) AllStudent(request pagination.Request[map[string]interface{}]) *database.Paginator {
 	paging := database.NewPagination[map[string]interface{}]().
 		SetRequest(&request).
-		SetModal(&student.StudentClass{}).
-		SetPreloads("DetailStudent", "DetailClass", "DetailStudent.DetailUser").FindAllPaging()
+		SetModal([]student.StudentClass{}).
+		SetPreloads("DetailStudent", "DetailClass", "DetailStudent.DetailUser", "DetailStudent.DetailUser.RoleUser").FindAllPaging()
 	return paging
 }
 
 func (s *StudentService) CreateStudent(request student_request.StudentModifyRequest) student_response.DetailStudentResponse {
+	/// Create student = create account
 	return student_response.DetailStudentResponse{}
 }
 
