@@ -24,5 +24,12 @@ func init() {
 		&curriculum.CurriculumSubject{},
 		&curriculum.Subject{},
 		&teacher.Teacher{},
+		&school.TypeExam{},
+		&school.Exam{},
+		&school.ExamMember{},
+		&school.ExamQuestion{},
+		&school.ExamAnswerOption{},
+		&school.ExamSession{},
+		&school.TokenExamSession{},
 	)
 }
