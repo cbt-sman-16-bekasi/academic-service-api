@@ -41,5 +41,17 @@ import (
 
 // @tag.name CBT
 // @tag.description Operation about CBT configuration
+
+// @tag.name Exam
+// @tag.description Operation about Exam configuration
+
+// @tag.name Exam Question
+// @tag.description Operation about Management Question configuration
+
+// @tag.name Exam Session
+// @tag.description Operation about Management Question Session configuration
+
+// @tag.name Type Exam
+// @tag.description Operation about Mastering type exam
 func main() {
 }

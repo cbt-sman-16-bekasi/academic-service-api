@@ -39,3 +39,6 @@ func TestUploadExcelUseImage(t *testing.T) {
 
 	fmt.Println("Selesai membaca gambar dalam Excel.")
 }
+
+func TestUploadExcelUseImage2(t *testing.T) {
+}

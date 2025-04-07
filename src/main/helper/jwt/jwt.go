@@ -17,14 +17,16 @@ type Claims struct {
 	Username   string   `json:"username"`
 	Role       string   `json:"role"`
 	Permission []string `json:"permission"`
+	SchoolCode string   `json:"school_code"`
 }
 
 func GenerateJWT(claim Claims) (string, error) {
 	claims := jwt.MapClaims{
-		"username":   claim.Username,
-		"role":       claim.Role,
-		"permission": claim.Permission,
-		"exp":        time.Now().Add(time.Hour * 24).Unix(),
+		"username":    claim.Username,
+		"role":        claim.Role,
+		"permission":  claim.Permission,
+		"school_code": claim.SchoolCode,
+		"exp":         time.Now().Add(time.Hour * 24).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -73,6 +75,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		userClaims := Claims{
 			Username:   claims["username"].(string),
 			Role:       claims["role"].(string),
+			SchoolCode: claims["school_code"].(string),
 			Permission: toStringSlice(claims["permission"]),
 		}
 
@@ -143,4 +146,12 @@ func toStringSlice(input interface{}) []string {
 		result[i] = str
 	}
 	return result
+}
+
+func GetDataClaims(c *gin.Context) Claims {
+	claims, exists := c.Get("claims")
+	if !exists {
+		return Claims{}
+	}
+	return claims.(Claims)
 }

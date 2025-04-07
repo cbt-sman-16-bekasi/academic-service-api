@@ -1,0 +1,44 @@
+package exam_request
+
+import "time"
+
+type ModifyExamSessionRequest struct {
+	Name     string    `json:"name"`
+	ExamCode string    `json:"exam_code"`
+	StartAt  time.Time `json:"start_at"`
+	EndAt    time.Time `json:"end_at"`
+}
+
+type ExamSessionGenerateToken struct {
+	ExamCode      string    `json:"exam_code"`
+	ExamSessionId string    `json:"exam_session_id"`
+	StartAt       time.Time `json:"start_at"`
+	EndAt         time.Time `json:"end_at"`
+}
+
+type ExamSessionAttendanceRequest struct {
+	ExamSessionId string `form:"exam_session_id"`
+	ClassId       *uint  `form:"class_id"`
+}
+
+type ExamSessionTokenFilterRequest struct {
+	ExamSessionId string `form:"exam_session_id"`
+}
+
+type ExamSessionStartDoWork struct {
+	ExamCode      string `json:"exam_code"`
+	ExamSessionId string `json:"exam_session_id"`
+	Token         string `json:"token"`
+}
+
+type ExamSessionSubmit struct {
+	ExamCode      string             `json:"exam_code"`
+	ExamSessionId string             `json:"exam_session_id"`
+	IsForced      bool               `json:"is_forced"`
+	Result        []ExamResultSubmit `json:"result"`
+}
+
+type ExamResultSubmit struct {
+	QuestionId string `json:"question_id"`
+	AnswerId   string `json:"answer_id"`
+}

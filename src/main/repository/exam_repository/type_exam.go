@@ -7,17 +7,24 @@ import (
 )
 
 type TypeExamRepository struct {
-	Database *gorm.DB
+	Database   *gorm.DB
+	Repository *database.GpaRepository[school.TypeExam]
 }
 
 func NewTypeExamRepository() *TypeExamRepository {
+	database.NewGpaRepository(school.TypeExam{})
 	return &TypeExamRepository{
-		Database: database.GetDB(),
+		Database:   database.GetDB(),
+		Repository: database.NewGpaRepository(school.TypeExam{}),
 	}
 }
 
 func (t *TypeExamRepository) FindByCode(code string) *school.TypeExam {
 	var typeExam school.TypeExam
 	t.Database.Where("code = ?", code).Preload("DetailRole").Find(&typeExam)
+
+	if typeExam.ID == 0 {
+		return nil
+	}
 	return &typeExam
 }

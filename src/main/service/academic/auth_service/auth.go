@@ -39,6 +39,7 @@ func (r *AuthService) Login(username string, password string) auth_response.Auth
 		Username:   username,
 		Role:       user.RoleUser.Code,
 		Permission: []string{"create", "update", "delete", "read", "list"},
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
 	})
 
 	if err != nil {

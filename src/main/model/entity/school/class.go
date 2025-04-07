@@ -14,7 +14,7 @@ const (
 type Class struct {
 	gorm.Model
 	ClassCode       string    `json:"classCode"`
-	DetailClassCode ClassCode `gorm:"foreignKey:ClassCode"`
+	DetailClassCode ClassCode `gorm:"foreignKey:ClassCode;references:Code"`
 	ClassName       string    `json:"className"`
 }
 
@@ -24,8 +24,9 @@ func (c *Class) TableName() string {
 
 type ClassCode struct {
 	gorm.Model
-	Code string `gorm:"unique" json:"code"`
-	Name string `json:"name"`
+	Code        string  `gorm:"unique" json:"code"`
+	Name        string  `json:"name"`
+	ClassMember []Class `json:"class_member" gorm:"foreignKey:ClassCode;references:Code"`
 }
 
 func (c *ClassCode) TableName() string {
@@ -35,9 +36,9 @@ func (c *ClassCode) TableName() string {
 type ClassSubject struct {
 	gorm.Model
 	SubjectCode     string             `json:"subjectCode"`
-	DetailSubject   curriculum.Subject `gorm:"foreignKey:SubjectCode"`
+	DetailSubject   curriculum.Subject `gorm:"foreignKey:SubjectCode;references:Code"`
 	ClassCode       string             `json:"classCode"`
-	DetailClassCode ClassCode          `gorm:"foreignKey:ClassCode"`
+	DetailClassCode ClassCode          `gorm:"foreignKey:ClassCode;references:Code"`
 }
 
 func (c *ClassSubject) TableName() string {

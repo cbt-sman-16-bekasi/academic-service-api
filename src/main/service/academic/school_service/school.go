@@ -1,8 +1,10 @@
 package school_service
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
-	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/school_request"
+	localResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
 	classResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/class_response"
 	schoolResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/school_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
@@ -49,17 +51,23 @@ func (s *SchoolService) GetAllSubject() []curriculum.Subject {
 func (s *SchoolService) RetrieveDetailSchool(c *gin.Context) schoolResponse.DetailSchool {
 	schoolDetail := s.repo.FindTopBySchoolCode(c.Query("schoolCode"))
 	return schoolResponse.DetailSchool{
-		SchoolName: schoolDetail.SchoolName,
-		Id:         schoolDetail.SchoolCode,
-		Address:    schoolDetail.Address,
-		Email:      schoolDetail.Email,
-		Phone:      schoolDetail.Phone,
-		Logo:       schoolDetail.Logo,
+		SchoolName:       schoolDetail.SchoolName,
+		Id:               schoolDetail.SchoolCode,
+		Address:          schoolDetail.Address,
+		Email:            schoolDetail.Email,
+		Phone:            schoolDetail.Phone,
+		Logo:             schoolDetail.Logo,
+		Npsn:             schoolDetail.NPSN,
+		Nss:              schoolDetail.NSS,
+		Banner:           schoolDetail.Banner,
+		LevelOfEducation: "SMA",
 	}
 }
 
 func (s *SchoolService) GetAllClassSubject(request pagination.Request[map[string]interface{}]) *database.Paginator {
-	page := database.FindAllPaging(request, []school.ClassSubject{})
+	page := database.NewPagination[map[string]interface{}]().
+		SetRequest(&request).SetPreloads("DetailSubject", "DetailClassCode", "DetailClassCode.ClassMember").SetModal([]school.ClassSubject{}).
+		FindAllPaging()
 	return page
 }
 
@@ -68,11 +76,11 @@ func (s *SchoolService) GetDetailClassSubject(id uint) classResponse.DetailClass
 
 	return classResponse.DetailClassSubjectResponse{
 		ID: detail.ID,
-		ClassCode: response2.GeneralLabelKeyResponse{
+		ClassCode: localResponse.GeneralLabelKeyResponse{
 			Key:   detail.ClassCode,
 			Label: detail.DetailClassCode.Name,
 		},
-		Subject: response2.GeneralLabelKeyResponse{
+		Subject: localResponse.GeneralLabelKeyResponse{
 			Key:   detail.SubjectCode,
 			Label: detail.DetailSubject.Subject,
 		},
@@ -80,6 +88,12 @@ func (s *SchoolService) GetDetailClassSubject(id uint) classResponse.DetailClass
 }
 
 func (s *SchoolService) CreateClassSubject(request class_request.ModifyClassSubject) classResponse.DetailClassSubjectResponse {
+	var subject curriculum.Subject
+	s.repoClassSubject.Database.Where("code = ?", request.SubjectCode).First(&subject)
+	if subject.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Subject code not exist"))
+	}
+
 	var existing *school.ClassSubject
 	s.repoClassSubject.Database.Where("class_code = ? AND subject_code = ?", request.ClassCode, request.SubjectCode).First(&existing)
 
@@ -96,8 +110,8 @@ func (s *SchoolService) CreateClassSubject(request class_request.ModifyClassSubj
 
 	return classResponse.DetailClassSubjectResponse{
 		ID:        newData.ID,
-		ClassCode: response2.GeneralLabelKeyResponse{},
-		Subject:   response2.GeneralLabelKeyResponse{},
+		ClassCode: localResponse.GeneralLabelKeyResponse{},
+		Subject:   localResponse.GeneralLabelKeyResponse{},
 	}
 }
 
@@ -126,8 +140,8 @@ func (s *SchoolService) UpdateClassSubject(id uint, request class_request.Modify
 
 	return classResponse.DetailClassSubjectResponse{
 		ID:        id,
-		ClassCode: response2.GeneralLabelKeyResponse{},
-		Subject:   response2.GeneralLabelKeyResponse{},
+		ClassCode: localResponse.GeneralLabelKeyResponse{},
+		Subject:   localResponse.GeneralLabelKeyResponse{},
 	}
 }
 
@@ -137,4 +151,31 @@ func (s *SchoolService) DeleteClassSubject(id uint) {
 
 func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
 	return schoolResponse.DashboardResponse{}
+}
+
+func (s *SchoolService) ModifySchool(claims jwt.Claims, req school_request.ModifySchoolRequest) schoolResponse.DetailSchool {
+	sch := s.repo.FindTopBySchoolCode(claims.SchoolCode)
+
+	sch.SchoolName = req.SchoolName
+	sch.Logo = req.Logo
+	sch.NSS = req.Nss
+	sch.NPSN = req.Npsn
+	sch.Phone = req.Phone
+	sch.Email = req.Email
+	sch.Address = req.Address
+	sch.Banner = req.Banner
+
+	s.repo.Database.Save(&sch)
+	return schoolResponse.DetailSchool{
+		SchoolName:       sch.SchoolName,
+		Id:               sch.SchoolCode,
+		Address:          sch.Address,
+		Email:            sch.Email,
+		Phone:            sch.Phone,
+		Logo:             sch.Logo,
+		Npsn:             sch.NPSN,
+		Nss:              sch.NSS,
+		Banner:           sch.Banner,
+		LevelOfEducation: "SMA",
+	}
 }

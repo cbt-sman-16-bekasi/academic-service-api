@@ -7,6 +7,7 @@ import (
 
 type Student struct {
 	UserId     uint      `json:"user_id"`
+	Nisn       string    `json:"nisn"`
 	DetailUser user.User `json:"detail_user" gorm:"foreignKey:UserId;references:ID"`
 	Name       string    `json:"name"`
 	Gender     string    `json:"gender"`

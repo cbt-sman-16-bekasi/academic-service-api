@@ -1,22 +1,36 @@
 package student_service
 
 import (
+	"fmt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/student_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/auth_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/student_response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/cbt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/user_service"
 	"github.com/yon-module/yon-framework/database"
+	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
+	response2 "github.com/yon-module/yon-framework/server/response"
+	"math/rand"
+	"time"
 )
 
 type StudentService struct {
-	studentRepo *school_repository.StudentRepository
+	studentRepo    *school_repository.StudentRepository
+	userRepository *school_repository.UserRepository
 }
 
 func NewStudentService() *StudentService {
 	return &StudentService{
-		studentRepo: school_repository.NewStudentRepository(),
+		studentRepo:    school_repository.NewStudentRepository(),
+		userRepository: school_repository.NewUserRepository(),
 	}
 }
 
@@ -37,19 +51,168 @@ func (s *StudentService) AllStudent(request pagination.Request[map[string]interf
 	paging := database.NewPagination[map[string]interface{}]().
 		SetRequest(&request).
 		SetModal([]student.StudentClass{}).
-		SetPreloads("DetailStudent", "DetailClass", "DetailStudent.DetailUser", "DetailStudent.DetailUser.RoleUser").FindAllPaging()
+		SetPreloads("DetailStudent", "DetailClass", "DetailClass.DetailClassCode", "DetailStudent.DetailUser", "DetailStudent.DetailUser.RoleUser").FindAllPaging()
 	return paging
 }
 
 func (s *StudentService) CreateStudent(request student_request.StudentModifyRequest) student_response.DetailStudentResponse {
-	/// Create student = create account
-	return student_response.DetailStudentResponse{}
+	role := s.userRepository.ReadRole("STUDENT")
+	if role == nil {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Undefined role 'STUDENT'"))
+	}
+
+	// Check existing user
+	var existingUser student.Student
+	s.studentRepo.Database.Where("nisn = ?", request.Nisn).First(&existingUser)
+	if existingUser.ID != 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, fmt.Sprintf("User with NISN '%s' already exists", request.Nisn)))
+	}
+
+	// Create new user
+	userService := user_service.NewUserService()
+	resultUser := userService.CreateNewUser(&user.User{
+		Username: request.Nisn,
+		Role:     role.ID,
+		Status:   1,
+	})
+
+	// Register new student
+	stud := student.Student{
+		UserId: resultUser.ID,
+		Name:   request.Name,
+		Nisn:   request.Nisn,
+		Gender: request.Gender,
+	}
+
+	s.userRepository.Database.Save(&stud)
+
+	// Register new Student Class
+	studentClass := student.StudentClass{
+		StudentId: stud.ID,
+		ClassId:   request.ClassId,
+	}
+	s.studentRepo.Database.Save(&studentClass)
+
+	return student_response.DetailStudentResponse{
+		Nisn:   request.Nisn,
+		Name:   request.Name,
+		Gender: request.Gender,
+		Class: response.GeneralLabelKeyResponse{
+			Key:   role.Code,
+			Label: role.Name,
+		},
+	}
 }
 
 func (s *StudentService) UpdateStudent(id uint, request student_request.StudentModifyRequest) student_response.DetailStudentResponse {
-	return student_response.DetailStudentResponse{}
+	existStudentClass := s.studentRepo.FindById(id)
+	if existStudentClass.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student does not exist"))
+	}
+
+	existingStudent := existStudentClass.DetailStudent
+	if existingStudent.Nisn != request.Nisn {
+		var existingUser student.Student
+		s.studentRepo.Database.Where("nisn = ?", request.Nisn).First(&existingUser)
+		if existingUser.ID != 0 {
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, fmt.Sprintf("User with NISN '%s' already exists", request.Nisn)))
+		}
+		existingStudent.Nisn = request.Nisn
+	}
+	existingStudent.Name = request.Name
+	existingStudent.Gender = request.Gender
+
+	s.studentRepo.Database.Save(&existingStudent)
+
+	existStudentClass.ClassId = request.ClassId
+	s.studentRepo.Database.Save(&existingStudent)
+
+	userData := existStudentClass.DetailStudent.DetailUser
+	userData.Username = request.Nisn
+	s.studentRepo.Database.Save(&userData)
+
+	return student_response.DetailStudentResponse{
+		Nisn:   request.Nisn,
+		Name:   request.Name,
+		Gender: request.Gender,
+		Class:  response.GeneralLabelKeyResponse{},
+	}
 }
 
 func (s *StudentService) DeleteById(id uint) {
+	existStudentClass := s.studentRepo.FindById(id)
+	if existStudentClass.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student does not exist"))
+	}
 	s.studentRepo.Delete(id)
+	s.studentRepo.Database.Where("id = ?", existStudentClass.StudentId).Delete(&student.Student{})
+	s.studentRepo.Database.Where("id = ?", existStudentClass.DetailStudent.UserId).Delete(&user.User{})
+}
+
+func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_response.AuthResponseCBT {
+	std := s.studentRepo.FindByNISN(request.Username)
+	if std.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student with NISN does not exist. Please contact your system administrator and try again."))
+	}
+
+	studentClass := s.studentRepo.GetStudentClass(std.ID)
+
+	examActive := s.studentRepo.ExamRepo.GetExamData(studentClass.ClassId)
+	if examActive.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
+	}
+
+	exam := s.studentRepo.ExamRepo.FindById(examActive.ID)
+	examQuestionRandom := randomizeExam(exam.ExamQuestion, exam.RandomQuestion, exam.RandomAnswer)
+	exam.ExamQuestion = examQuestionRandom
+
+	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(exam.Code)
+	if examSession.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
+	}
+
+	exp := time.Now().Add(time.Hour * 24).Unix()
+	token, err := jwt.GenerateJWT(jwt.Claims{
+		Username:   request.Username,
+		Role:       std.DetailUser.RoleUser.Code,
+		Permission: []string{"create", "update", "delete", "read", "list"},
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
+	})
+
+	if err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(response2.ServerError, err.Error()))
+	}
+
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	s.studentRepo.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, std.ID).First(&existingHistoryTaken)
+	return auth_response.AuthResponseCBT{
+		Token:       token,
+		Exp:         exp,
+		Exam:        exam,
+		User:        studentClass,
+		ExamSession: examSession,
+		ExamTaken:   &existingHistoryTaken,
+	}
+}
+
+func shuffle[T any](arr []T) []T {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(arr), func(i, j int) {
+		arr[i], arr[j] = arr[j], arr[i]
+	})
+	return arr
+}
+
+func randomizeExam(questions []school.ExamQuestion, questionRandom, answerRandom bool) []school.ExamQuestion {
+	if questionRandom {
+		questions = shuffle(questions)
+	}
+
+	if answerRandom {
+		for i := range questions {
+			questions[i].QuestionOption = shuffle(questions[i].QuestionOption)
+		}
+	}
+
+	return questions
 }

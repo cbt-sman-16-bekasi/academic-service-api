@@ -1,12 +1,16 @@
 package school_response
 
 type DetailSchool struct {
-	Id         string `json:"id"`
-	SchoolName string `json:"school_name"`
-	Logo       string `json:"logo"`
-	Address    string `json:"address"`
-	Email      string `json:"email"`
-	Phone      string `json:"phone"`
+	Id               string `json:"id"`
+	Logo             string `json:"logo"`
+	LevelOfEducation string `json:"level_of_education"`
+	SchoolName       string `json:"school_name"`
+	Nss              string `json:"nss"`
+	Npsn             string `json:"npsn"`
+	Phone            string `json:"phone"`
+	Email            string `json:"email"`
+	Address          string `json:"address"`
+	Banner           string `json:"banner"`
 }
 
 type DashboardResponse struct {

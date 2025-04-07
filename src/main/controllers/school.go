@@ -1,10 +1,13 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/school_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/auth_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/school_service"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/student_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
@@ -12,14 +15,16 @@ import (
 )
 
 type SchoolController struct {
-	srv         *school_service.SchoolService
-	authService *auth_service.AuthService
+	srv            *school_service.SchoolService
+	authService    *auth_service.AuthService
+	studentService *student_service.StudentService
 }
 
 func NewSchoolController() *SchoolController {
 	return &SchoolController{
-		srv:         school_service.NewSchoolService(),
-		authService: auth_service.NewAuthService(),
+		srv:            school_service.NewSchoolService(),
+		authService:    auth_service.NewAuthService(),
+		studentService: student_service.NewStudentService(),
 	}
 }
 
@@ -184,7 +189,6 @@ func (s *SchoolController) DeleteClassSubject(c *gin.Context) {
 // @Tags Auth
 // @Accept json
 // @Produce json
-// @Security BearerAuth
 //
 // @Param request body auth_request.AuthRequest true "Body Request of Login"
 //
@@ -211,4 +215,45 @@ func (s *SchoolController) AuthLogin(c *gin.Context) {
 func (s *SchoolController) GetDashboard(c *gin.Context) {
 	dt := s.srv.DashboardUser()
 	response.SuccessResponse("Success get dashboard", dt).Json(c)
+}
+
+// ModifySchool Update data school
+// @Summary This endpoint Update data school
+// @Description Update data school
+// @Tags School
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param request body school_request.ModifySchoolRequest true "Body Request of Update school"
+//
+// @Success 200 {object} response.BaseResponse{data=school_response.DetailSchool} "School detail Response"
+// @Router /academic/school/update [put]
+func (s *SchoolController) ModifySchool(c *gin.Context) {
+	var request school_request.ModifySchoolRequest
+	_ = c.BindJSON(&request)
+
+	claims := jwt.GetDataClaims(c)
+
+	res := s.srv.ModifySchool(claims, request)
+	response.SuccessResponse("Success update class school", res).Json(c)
+}
+
+// AuthCBTLogin Student auth login
+// @Summary This endpoint about auth login
+// @Description Auth login for Student
+// @Tags Auth
+// @Accept json
+// @Produce json
+//
+// @Param request body auth_request.CBTAuthRequest true "Body Request of Login"
+//
+// @Success 200 {object} response.BaseResponse{data=auth_response.AuthResponseCBT} "Login Response"
+// @Router /auth/cbt/login [post]
+func (s *SchoolController) AuthCBTLogin(c *gin.Context) {
+	var request auth_request.CBTAuthRequest
+	_ = c.BindJSON(&request)
+
+	resp := s.studentService.LoginByNISN(request)
+	response.SuccessResponse("Success login", resp).Json(c)
 }
