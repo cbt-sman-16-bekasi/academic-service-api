@@ -474,20 +474,18 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		questionID := "QUESTION-" + helper.RandomString(10)
 		question := row[0]
 		answer := row[1]
-		score := row[2]
-
-		scoreInt, _ := strconv.Atoi(score)
 
 		examQuestion := school.ExamQuestion{
 			ExamCode:     exam.Code,
 			QuestionId:   questionID,
 			Question:     question,
 			Answer:       answer,
-			Score:        scoreInt,
+			Score:        exam.TotalScore,
 			AnswerSingle: answer,
 			QuestionFrom: "IMPORT",
 		}
 
+		var examQuestionOption []school.ExamAnswerOption
 		if exam.TypeQuestion == "PILIHAN_GANDA" {
 			var abjad = []string{"A", "B", "C", "D", "E"}
 
@@ -498,11 +496,16 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 					AnswerId:   questionID + "_" + abjad[idx],
 					Option:     opt,
 				}
-				examQuestion.QuestionOption = append(examQuestion.QuestionOption, option)
+				examQuestionOption = append(examQuestion.QuestionOption, option)
 			}
 		}
 
 		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+			break
+		}
+
+		if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
 			break
 		}
