@@ -209,6 +209,7 @@ func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestion
 		QuestionId:   questionID,
 		Question:     request.Question,
 		Answer:       questionID + "_" + request.Answer,
+		AnswerSingle: request.Answer,
 		Score:        exam.TotalScore,
 		QuestionFrom: "MANUAL",
 		TypeQuestion: exam.TypeQuestion,
@@ -282,7 +283,7 @@ func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExa
 
 	question.Question = request.Question
 	question.Score = exam.TotalScore
-	question.Answer = questionId + "_ " + request.Answer
+	question.Answer = questionId + "_" + request.Answer
 	question.AnswerSingle = request.Answer
 
 	if err := tx.Save(&question).Error; err != nil {
