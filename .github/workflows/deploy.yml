@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMG_NAME: ${{ secrets.DOCKER_USERNAME }}/academic-api-service
-      TAGS: master
+      TAGS: production
       CONTAINER_NAME: academic-academic-api-service-production-v1
     steps:
       - name: Executing deployment
