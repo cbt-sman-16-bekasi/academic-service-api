@@ -86,10 +86,7 @@ func (e *ExamService) GetDetailExam(id uint) exam_response.ExamDetailResponse {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam with id %d not found", id)))
 	}
 
-	totalScore := 0
-	for _, question := range data.ExamQuestion {
-		totalScore += question.Score
-	}
+	totalScore := len(data.ExamQuestion) * data.TotalScore
 
 	return exam_response.ExamDetailResponse{
 		Exam:          data,
@@ -212,7 +209,7 @@ func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestion
 		QuestionId:   questionID,
 		Question:     request.Question,
 		Answer:       questionID + "_" + request.Answer,
-		Score:        request.Score,
+		Score:        exam.TotalScore,
 		QuestionFrom: "MANUAL",
 		TypeQuestion: exam.TypeQuestion,
 	}
@@ -284,7 +281,7 @@ func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExa
 	}()
 
 	question.Question = request.Question
-	question.Score = request.Score
+	question.Score = exam.TotalScore
 	question.Answer = questionId + "_ " + request.Answer
 	question.AnswerSingle = request.Answer
 
