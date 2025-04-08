@@ -1,0 +1,2516 @@
+definitions:
+  auth_request.AuthRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  auth_request.CBTAuthRequest:
+    properties:
+      username:
+        type: string
+    type: object
+  auth_response.AuthResponse:
+    properties:
+      exp:
+        type: integer
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_Sistem-Informasi-Akademik_academic-system-information-service_src_main_model_entity_user.User'
+    type: object
+  auth_response.AuthResponseCBT:
+    properties:
+      exam:
+        $ref: '#/definitions/school.Exam'
+      exam_session:
+        $ref: '#/definitions/school.ExamSession'
+      exam_taken:
+        $ref: '#/definitions/cbt.StudentHistoryTaken'
+      exp:
+        type: integer
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/student.StudentClass'
+    type: object
+  cbt.StudentHistoryTaken:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      end_at:
+        type: string
+      exam_code:
+        type: string
+      id:
+        type: integer
+      is_finished:
+        type: boolean
+      is_forced:
+        type: boolean
+      remaining_time:
+        type: integer
+      score:
+        type: integer
+      session_id:
+        description: DetailExam    school.Exam        `json:"detail_exam" gorm:"foreignKey:ExamCode;references:ExamCode"`
+        type: string
+      start_at:
+        description: DetailStudent student.Student    `json:"detail_student" gorm:"foreignKey:StudentId;references:ID"`
+        type: string
+      status:
+        type: string
+      student_id:
+        description: DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
+        type: integer
+      total_correct:
+        type: integer
+      total_wrong:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  class_request.ModifyClassRequest:
+    properties:
+      class_code:
+        type: string
+      class_name:
+        type: string
+    type: object
+  class_request.ModifyClassSubject:
+    properties:
+      class_code:
+        type: string
+      subject_code:
+        type: string
+    type: object
+  class_response.ClassCodeResponse:
+    properties:
+      code:
+        type: string
+      name:
+        type: string
+    type: object
+  class_response.DetailClassResponse:
+    properties:
+      class_code:
+        $ref: '#/definitions/response.GeneralLabelKeyResponse'
+      class_name:
+        type: string
+      id:
+        type: integer
+    type: object
+  class_response.DetailClassSubjectResponse:
+    properties:
+      class_code:
+        $ref: '#/definitions/response.GeneralLabelKeyResponse'
+      id:
+        type: integer
+      subject:
+        $ref: '#/definitions/response.GeneralLabelKeyResponse'
+    type: object
+  curriculum.Subject:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: integer
+      subject:
+        type: string
+      subject_type:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  database.Paginator:
+    properties:
+      limit:
+        type: integer
+      nextPage:
+        type: integer
+      offset:
+        type: integer
+      page:
+        type: integer
+      prevPage:
+        type: integer
+      records: {}
+      totalPage:
+        type: integer
+      totalRecord:
+        type: integer
+    type: object
+  exam_request.ExamSessionGenerateToken:
+    properties:
+      end_at:
+        type: string
+      exam_code:
+        type: string
+      exam_session_id:
+        type: string
+      start_at:
+        type: string
+    type: object
+  exam_request.ModifyExamQuestionRequest:
+    properties:
+      answer:
+        type: string
+      exam_code:
+        type: string
+      option_a:
+        type: string
+      option_b:
+        type: string
+      option_c:
+        type: string
+      option_d:
+        type: string
+      option_e:
+        type: string
+      question:
+        type: string
+      score:
+        type: integer
+    type: object
+  exam_request.ModifyExamRequest:
+    properties:
+      class_id:
+        items:
+          type: integer
+        type: array
+      description:
+        type: string
+      duration:
+        type: integer
+      name:
+        type: string
+      random_answer:
+        type: boolean
+      random_question:
+        type: boolean
+      score:
+        type: integer
+      show_result:
+        type: boolean
+      subject_code:
+        type: string
+      type_exam_id:
+        type: string
+      type_question:
+        type: string
+    type: object
+  exam_request.ModifyExamSessionRequest:
+    properties:
+      end_at:
+        type: string
+      exam_code:
+        type: string
+      name:
+        type: string
+      start_at:
+        type: string
+    type: object
+  exam_request.ModifyTypeExamRequest:
+    properties:
+      code_type_exam:
+        type: string
+      color:
+        type: string
+      role:
+        type: string
+      type_exam:
+        type: string
+    type: object
+  exam_response.DetailExamQuestionResponse:
+    properties:
+      answer:
+        type: string
+      exam_code:
+        type: string
+      option_a:
+        type: string
+      option_b:
+        type: string
+      option_c:
+        type: string
+      option_d:
+        type: string
+      option_e:
+        type: string
+      question:
+        type: string
+      question_id:
+        type: string
+      score:
+        type: integer
+    type: object
+  exam_response.ExamDetailResponse:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      detail_type_exam:
+        $ref: '#/definitions/school.TypeExam'
+      duration:
+        type: integer
+      exam_member:
+        items:
+          $ref: '#/definitions/school.ExamMember'
+        type: array
+      exam_question:
+        items:
+          $ref: '#/definitions/school.ExamQuestion'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      random_answer:
+        type: boolean
+      random_question:
+        type: boolean
+      show_result:
+        type: boolean
+      subject_code:
+        $ref: '#/definitions/curriculum.Subject'
+      total_question:
+        type: integer
+      total_score:
+        type: integer
+      type_question:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  exam_response.ExamDetailSessionResponse:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_exam:
+        $ref: '#/definitions/school.Exam'
+      end_date:
+        type: string
+      exam:
+        $ref: '#/definitions/school.Exam'
+      id:
+        type: integer
+      name:
+        type: string
+      session_id:
+        type: string
+      start_date:
+        type: string
+      total_attendance:
+        type: integer
+      total_student:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  exam_response.ExamListResponse:
+    properties:
+      code:
+        type: string
+      duration:
+        type: integer
+      id:
+        type: integer
+      member:
+        type: string
+      name:
+        type: string
+      subject:
+        $ref: '#/definitions/curriculum.Subject'
+      total_question:
+        type: integer
+      total_score:
+        type: integer
+      type_exam:
+        $ref: '#/definitions/school.TypeExam'
+    type: object
+  exam_response.ExamSessionAttendanceResponse:
+    properties:
+      class:
+        type: string
+      end_at:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+      score:
+        type: integer
+      start_at:
+        type: string
+      status:
+        type: string
+    type: object
+  exam_response.ExamSessionListResponse:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_exam:
+        $ref: '#/definitions/school.Exam'
+      end_date:
+        type: string
+      exam:
+        $ref: '#/definitions/school.Exam'
+      id:
+        type: integer
+      name:
+        type: string
+      session_id:
+        type: string
+      start_date:
+        type: string
+      total_student:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  exam_response.ExamSessionTokenResponse:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_exam_session:
+        $ref: '#/definitions/school.ExamSession'
+      end_active_token:
+        type: string
+      id:
+        type: integer
+      start_active_token:
+        type: string
+      status:
+        type: string
+      token:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  github_com_Sistem-Informasi-Akademik_academic-system-information-service_src_main_model_entity_user.User:
+    properties:
+      SchoolCode:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      role:
+        $ref: '#/definitions/user.Role'
+      status:
+        type: integer
+      updatedAt:
+        type: string
+      username:
+        type: string
+    type: object
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  response.BaseResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      errors: {}
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  response.GeneralLabelKeyResponse:
+    properties:
+      key: {}
+      label:
+        type: string
+    type: object
+  school.Class:
+    properties:
+      classCode:
+        type: string
+      className:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detailClassCode:
+        $ref: '#/definitions/school.ClassCode'
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  school.ClassCode:
+    properties:
+      class_member:
+        items:
+          $ref: '#/definitions/school.Class'
+        type: array
+      code:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.ClassSubject:
+    properties:
+      classCode:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detailClassCode:
+        $ref: '#/definitions/school.ClassCode'
+      detailSubject:
+        $ref: '#/definitions/curriculum.Subject'
+      id:
+        type: integer
+      subjectCode:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.Exam:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      detail_type_exam:
+        $ref: '#/definitions/school.TypeExam'
+      duration:
+        type: integer
+      exam_member:
+        items:
+          $ref: '#/definitions/school.ExamMember'
+        type: array
+      exam_question:
+        items:
+          $ref: '#/definitions/school.ExamQuestion'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      random_answer:
+        type: boolean
+      random_question:
+        type: boolean
+      show_result:
+        type: boolean
+      subject_code:
+        $ref: '#/definitions/curriculum.Subject'
+      total_score:
+        type: integer
+      type_question:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.ExamAnswerOption:
+    properties:
+      answer_id:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      option:
+        type: string
+      question_id:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.ExamMember:
+    properties:
+      class:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_class:
+        $ref: '#/definitions/school.Class'
+      detail_exam:
+        $ref: '#/definitions/school.Exam'
+      exam_code:
+        type: string
+      id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  school.ExamQuestion:
+    properties:
+      answer_single:
+        type: string
+      bank_question_id:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      exam_code:
+        type: string
+      id:
+        type: integer
+      question:
+        type: string
+      question_from:
+        type: string
+      question_id:
+        type: string
+      question_option:
+        items:
+          $ref: '#/definitions/school.ExamAnswerOption'
+        type: array
+      score:
+        type: integer
+      type_question:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.ExamSession:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_exam:
+        $ref: '#/definitions/school.Exam'
+      end_date:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      session_id:
+        type: string
+      start_date:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.TokenExamSession:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_exam_session:
+        $ref: '#/definitions/school.ExamSession'
+      end_active_token:
+        type: string
+      id:
+        type: integer
+      start_active_token:
+        type: string
+      token:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.TypeExam:
+    properties:
+      code:
+        type: string
+      color:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_role:
+        $ref: '#/definitions/user.Role'
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school_request.ModifySchoolRequest:
+    properties:
+      address:
+        type: string
+      banner:
+        type: string
+      email:
+        type: string
+      level_of_education:
+        type: string
+      logo:
+        type: string
+      npsn:
+        type: string
+      nss:
+        type: string
+      phone:
+        type: string
+      school_name:
+        type: string
+    type: object
+  school_response.DashboardResponse:
+    properties:
+      total_class:
+        type: integer
+      total_exam:
+        type: integer
+      total_report_exam:
+        type: integer
+      total_session_exam:
+        type: integer
+      total_student:
+        type: integer
+      total_subject:
+        type: integer
+    type: object
+  school_response.DetailSchool:
+    properties:
+      address:
+        type: string
+      banner:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      level_of_education:
+        type: string
+      logo:
+        type: string
+      npsn:
+        type: string
+      nss:
+        type: string
+      phone:
+        type: string
+      school_name:
+        type: string
+    type: object
+  student.Student:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_user:
+        $ref: '#/definitions/github_com_Sistem-Informasi-Akademik_academic-system-information-service_src_main_model_entity_user.User'
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nisn:
+        type: string
+      updatedAt:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  student.StudentClass:
+    properties:
+      class_id:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_class:
+        $ref: '#/definitions/school.Class'
+      detail_student:
+        $ref: '#/definitions/student.Student'
+      id:
+        type: integer
+      student_id:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  student_request.StudentModifyRequest:
+    properties:
+      class_id:
+        type: integer
+      gender:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+    type: object
+  student_response.DetailStudentResponse:
+    properties:
+      class:
+        $ref: '#/definitions/response.GeneralLabelKeyResponse'
+      gender:
+        type: string
+      name:
+        type: string
+      nisn:
+        type: string
+    type: object
+  teacher.Teacher:
+    properties:
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_user:
+        $ref: '#/definitions/github_com_Sistem-Informasi-Akademik_academic-system-information-service_src_main_model_entity_user.User'
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nuptk:
+        type: string
+      updatedAt:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  teacher_request.TeacherModifyRequest:
+    properties:
+      name:
+        type: string
+      nuptk:
+        type: string
+      role:
+        type: string
+      username:
+        type: string
+    type: object
+  teacher_response.TeacherDetailResponse:
+    properties:
+      name:
+        type: string
+      nuptk:
+        type: string
+      role:
+        $ref: '#/definitions/response.GeneralLabelKeyResponse'
+      username:
+        type: string
+    type: object
+  user.Role:
+    properties:
+      SchoolCode:
+        type: string
+      code:
+        type: string
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      name:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+host: api.sman16bekasi.id/gateway-service
+info:
+  contact:
+    email: cbt@sman16bekasi.id
+    name: CBT Team
+    url: https://sman16bekasi.id
+  description: This is documentation technical
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: CBT Documentation
+  version: "1.0"
+paths:
+  /academic/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Auth login for admin
+      parameters:
+      - description: Body Request of Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth_request.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth_response.AuthResponse'
+              type: object
+      summary: This endpoint about auth login
+      tags:
+      - Auth
+  /academic/class-code:
+    get:
+      consumes:
+      - application/json
+      description: Return Class Code list data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Class Code Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/class_response.ClassCodeResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Class Code like 10, 11, 12
+      tags:
+      - School
+  /academic/class/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Class list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data class
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/school.Class'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of class
+      tags:
+      - Class
+  /academic/class/create:
+    post:
+      consumes:
+      - application/json
+      description: Create New Class
+      parameters:
+      - description: Body Request of Create New Class
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/class_request.ModifyClassRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Create class response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about create new class
+      tags:
+      - Class
+  /academic/class/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Class
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete class response
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete class
+      tags:
+      - Class
+  /academic/class/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail information class
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail of class
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail of class
+      tags:
+      - Class
+  /academic/class/subject/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Class Subject list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data class Subject
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/school.ClassSubject'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of class Subject
+      tags:
+      - Class
+  /academic/class/subject/create:
+    post:
+      consumes:
+      - application/json
+      description: Create new data class subject
+      parameters:
+      - description: Body Request of Create new Class subject
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/class_request.ModifyClassSubject'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Class subject Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassSubjectResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint Create new data class subject
+      tags:
+      - Class
+  /academic/class/subject/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete ClassSubject
+      parameters:
+      - description: ClassSubject ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete ClassSubject response
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete ClassSubject
+      tags:
+      - Student
+  /academic/class/subject/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail information class
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail of class
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail of class
+      tags:
+      - Class
+  /academic/class/subject/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update new data class subject
+      parameters:
+      - description: Body Request of Update new Class subject
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/class_request.ModifyClassSubject'
+      - description: Class Subject ID
+        in: path
+        name: request
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Class subject Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassSubjectResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint Update new data class subject
+      tags:
+      - Class
+  /academic/class/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update Class
+      parameters:
+      - description: Class ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body Request of Update Class
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/class_request.ModifyClassRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update class response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update class
+      tags:
+      - Class
+  /academic/dashboard:
+    get:
+      consumes:
+      - application/json
+      description: Return dashboard user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dashboard response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school_response.DashboardResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about dashboard user
+      tags:
+      - School
+  /academic/exam/{examId}/question:
+    get:
+      consumes:
+      - application/json
+      description: Return list question
+      parameters:
+      - description: Exam ID
+        in: path
+        name: examId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/school.ExamQuestion'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about get of question
+      tags:
+      - Exam
+  /academic/exam/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Exam list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/exam_response.ExamListResponse'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of exam
+      tags:
+      - Exam
+  /academic/exam/create:
+    post:
+      consumes:
+      - application/json
+      description: Action of creation exam
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.Exam'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about create of exam
+      tags:
+      - Exam
+  /academic/exam/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Action of Delete exam
+      parameters:
+      - description: Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete of exam
+      tags:
+      - Exam
+  /academic/exam/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return Exam detail data
+      parameters:
+      - description: Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_response.ExamDetailResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail of exam
+      tags:
+      - Exam
+  /academic/exam/question/create:
+    post:
+      consumes:
+      - application/json
+      description: Return detail question
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamQuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_request.ModifyExamQuestionRequest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update of question
+      tags:
+      - Exam Question
+  /academic/exam/question/delete/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Return detail question
+      parameters:
+      - description: Question ID}
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete of question
+      tags:
+      - Exam Question
+  /academic/exam/question/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail question
+      parameters:
+      - description: Question ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_response.DetailExamQuestionResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update of question
+      tags:
+      - Exam Question
+  /academic/exam/question/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Return detail question
+      parameters:
+      - description: Question ID}
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamQuestionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_request.ModifyExamQuestionRequest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update of question
+      tags:
+      - Exam Question
+  /academic/exam/session/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Exam session list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/exam_response.ExamSessionListResponse'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of exam session
+      tags:
+      - Exam Session
+  /academic/exam/session/attendance:
+    get:
+      consumes:
+      - application/json
+      description: Return Get attendance of exam session
+      parameters:
+      - description: Exam Session ID
+        in: query
+        name: exam_session_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/exam_response.ExamSessionAttendanceResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Get attendance of exam session
+      tags:
+      - Exam Session
+  /academic/exam/session/attendance/download:
+    get:
+      consumes:
+      - application/json
+      description: Return Download attendance of exam session
+      parameters:
+      - description: Exam Session ID
+        in: query
+        name: exam_session_id
+        required: true
+        type: string
+      - description: Class ID
+        in: query
+        name: class_id
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: File downloaded
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Download attendance of exam session
+      tags:
+      - Exam Session
+  /academic/exam/session/create:
+    post:
+      consumes:
+      - application/json
+      description: Action Create Exam session detail data
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_request.ModifyExamSessionRequest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Create of exam session detail
+      tags:
+      - Exam Session
+  /academic/exam/session/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Action Delete Exam session detail data
+      parameters:
+      - description: Exam Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about delete of exam session detail
+      tags:
+      - Exam Session
+  /academic/exam/session/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return Exam session detail data
+      parameters:
+      - description: Exam Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_response.ExamDetailSessionResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of exam session detail
+      tags:
+      - Exam Session
+  /academic/exam/session/token/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Get 100 latest token
+      parameters:
+      - description: Exam Session ID
+        in: query
+        name: exam_session_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/exam_response.ExamSessionTokenResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Get 100 latest token
+      tags:
+      - Exam Session
+  /academic/exam/session/token/generate:
+    post:
+      consumes:
+      - application/json
+      description: Action Create exam session token
+      parameters:
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ExamSessionGenerateToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.TokenExamSession'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Create exam session token
+      tags:
+      - Exam Session
+  /academic/exam/session/update/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Action Update Exam session detail data
+      parameters:
+      - description: Exam Session ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/exam_request.ModifyExamSessionRequest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update of exam session detail
+      tags:
+      - Exam Session
+  /academic/exam/type-exam/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Pagination Type Exam list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data Type Exam
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/school.TypeExam'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of type exam
+      tags:
+      - Type Exam
+  /academic/exam/type-exam/create:
+    post:
+      consumes:
+      - application/json
+      description: Return Create of type exam
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyTypeExamRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail response type exam
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.TypeExam'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Create type exam
+      tags:
+      - Type Exam
+  /academic/exam/type-exam/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Return Create of type exam
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyTypeExamRequest'
+      - description: Type Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete response type exam
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Create type exam
+      tags:
+      - Type Exam
+  /academic/exam/type-exam/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail of type exam
+      parameters:
+      - description: Type Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail response type exam
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.TypeExam'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail type exam
+      tags:
+      - Type Exam
+  /academic/exam/type-exam/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Return Modify of type exam
+      parameters:
+      - description: Request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyTypeExamRequest'
+      - description: Type Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail response type exam
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.TypeExam'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Modify type exam
+      tags:
+      - Type Exam
+  /academic/exam/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Action of modify exam
+      parameters:
+      - description: Exam ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Request Body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/exam_request.ModifyExamRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail data
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school.Exam'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about update of exam
+      tags:
+      - Exam
+  /academic/school:
+    get:
+      consumes:
+      - application/json
+      description: Return school data information
+      parameters:
+      - description: Required school code
+        in: query
+        name: schoolCode
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: School information
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school_response.DetailSchool'
+              type: object
+      security: []
+      summary: This endpoint about school information
+      tags:
+      - School
+  /academic/school/update:
+    put:
+      consumes:
+      - application/json
+      description: Update data school
+      parameters:
+      - description: Body Request of Update school
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/school_request.ModifySchoolRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: School detail Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/school_response.DetailSchool'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint Update data school
+      tags:
+      - School
+  /academic/student/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Student list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data Student
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/student.StudentClass'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of Student
+      tags:
+      - Student
+  /academic/student/create:
+    post:
+      consumes:
+      - application/json
+      description: Create New Student
+      parameters:
+      - description: Body Request of Create New Student
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/student_request.StudentModifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Create Student response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/student_response.DetailStudentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about create new Student
+      tags:
+      - Student
+  /academic/student/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Student
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete Student response
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete Student
+      tags:
+      - Student
+  /academic/student/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail information Student
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail of Student
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_response.DetailClassResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail of Student
+      tags:
+      - Student
+  /academic/student/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update Student
+      parameters:
+      - description: Student ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body Request of Update Student
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/student_request.StudentModifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update Student response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/student_response.DetailStudentResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update Student
+      tags:
+      - Student
+  /academic/subjects:
+    get:
+      consumes:
+      - application/json
+      description: Return Subject list data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: subjects Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/curriculum.Subject'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint get data all subjects like Matematika and others
+      tags:
+      - School
+  /academic/teacher/all:
+    get:
+      consumes:
+      - application/json
+      description: Return Teacher list data
+      parameters:
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10)'
+        in: query
+        name: size
+        type: integer
+      - description: Search key field (e.g., name, email, etc.)
+        in: query
+        name: search.key
+        type: string
+      - description: Search value for the specified key
+        in: query
+        name: search.value
+        type: string
+      - description: Filter conditions (varies depending on the API)
+        in: query
+        name: filter
+        type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Pagination data Teacher
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/database.Paginator'
+                  - properties:
+                      records:
+                        $ref: '#/definitions/teacher.Teacher'
+                    type: object
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about list of Teacher
+      tags:
+      - Teacher
+  /academic/teacher/create:
+    post:
+      consumes:
+      - application/json
+      description: Create New Teacher
+      parameters:
+      - description: Body Request of Create New Teacher
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/teacher_request.TeacherModifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Create Teacher response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/teacher_response.TeacherDetailResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about create new Teacher
+      tags:
+      - Teacher
+  /academic/teacher/delete/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete Teacher
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete Teacher response
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Delete Teacher
+      tags:
+      - Teacher
+  /academic/teacher/detail/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Return detail information Teacher
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Detail of Teacher
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/teacher_response.TeacherDetailResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about detail of Teacher
+      tags:
+      - Teacher
+  /academic/teacher/update/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update Teacher
+      parameters:
+      - description: Teacher ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Body Request of Update Teacher
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/teacher_request.TeacherModifyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Update Teacher response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/teacher_response.TeacherDetailResponse'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Update Teacher
+      tags:
+      - Teacher
+  /academic/user/roles:
+    get:
+      consumes:
+      - application/json
+      description: Return list role
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of Role
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/user.Role'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about data list roles
+      tags:
+      - User
+  /auth/cbt/login:
+    post:
+      consumes:
+      - application/json
+      description: Auth login for Student
+      parameters:
+      - description: Body Request of Login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth_request.CBTAuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login Response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth_response.AuthResponseCBT'
+              type: object
+      summary: This endpoint about auth login
+      tags:
+      - Auth
+schemes:
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Use "Bearer {your_token}" to authenticate. Some endpoints are public
+      and do not require authentication.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
+tags:
+- description: Operation about Authentication and Profile
+  name: Auth
+- description: Operation about school data
+  name: School
+- description: Operation about student
+  name: Student
+- description: Operation about teacher
+  name: Teacher
+- description: Operation about CBT configuration
+  name: CBT
+- description: Operation about Exam configuration
+  name: Exam
+- description: Operation about Management Question configuration
+  name: Exam Question
+- description: Operation about Management Question Session configuration
+  name: Exam Session
+- description: Operation about Mastering type exam
+  name: Type Exam
