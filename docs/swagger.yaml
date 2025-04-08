@@ -821,6 +821,8 @@ definitions:
         type: string
       nuptk:
         type: string
+      password:
+        type: string
       role:
         type: string
       username:
