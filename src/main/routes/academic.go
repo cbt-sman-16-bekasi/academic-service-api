@@ -52,8 +52,10 @@ func academicRoutes(gr *gin.RouterGroup) {
 	student := academic.Group("/student").Use(jwt.AuthMiddleware())
 	{
 		student.GET("/all", jwt.RequirePermission([]string{"ADMIN"}, "list"), studentController.GetAllStudent)
+		student.GET("/template/download", jwt.RequirePermission([]string{"ADMIN"}, "list"), studentController.DownloadTemplate)
 		student.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), studentController.GetStudent)
 		student.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), studentController.CreateStudent)
+		student.POST("/template/upload", jwt.RequirePermission([]string{"ADMIN"}, "create"), studentController.UploadStudent)
 		student.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), studentController.UpdateStudent)
 		student.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), studentController.DeleteStudent)
 	}
@@ -84,6 +86,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		bank.POST("/question/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), examController.CreateBankQuestion)
 		bank.PUT("/question/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), examController.UpdateBankQuestion)
 		bank.DELETE("/question/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), examController.DeleteBankQuestion)
+		bank.POST("/:masterBankId/question/template/upload", jwt.RequirePermission([]string{"ADMIN"}, "list"), examController.UploadBankQuestion)
 	}
 
 	exam := academic.Group("/exam")

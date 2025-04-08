@@ -460,7 +460,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 	}
 	defer src.Close()
 
-	rows, err := readAndValidateExcel(src)
+	rows, err := ReadAndValidateExcel(src)
 	if err != nil {
 		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
 		return
@@ -480,9 +480,10 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			ExamCode:     exam.Code,
 			QuestionId:   questionID,
 			Question:     question,
-			Answer:       answer,
+			Answer:       questionID + "_" + answer,
 			Score:        exam.TotalScore,
 			AnswerSingle: answer,
+			TypeQuestion: exam.TypeQuestion,
 			QuestionFrom: "IMPORT",
 		}
 
@@ -510,12 +511,97 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
 			break
 		}
+
 	}
 
 	response.SuccessResponse("Success Upload Question", nil)
 }
 
-func readAndValidateExcel(file multipart.File) ([][]string, error) {
+func (e *ExamService) UploadBankQuestion(c *gin.Context) {
+	idParam := c.Param("masterBankId")
+	id, _ := strconv.Atoi(idParam)
+
+	var bank school.MasterBankQuestion
+	e.examRepository.Database.Where("id", uint(id)).First(&bank)
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		return
+	}
+
+	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".xlsx" {
+		response.ErrorResponse(response.ServerError, "Failed Upload Question, Format file must be .xlsx", err)
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		response.ErrorResponse(response.ServerError, "Failed open file", err)
+		return
+	}
+	defer src.Close()
+
+	rows, err := ReadAndValidateExcel(src)
+	if err != nil {
+		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		return
+	}
+
+	for i, row := range rows {
+		if bank.TypeQuestion == "ESSAY" && len(row) < 2 {
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Baris %d tidak lengkap", i+2), err)
+			break
+		}
+		if len(row) < 8 && bank.TypeQuestion == "PILIHAN_GANDA" {
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Baris %d tidak lengkap", i+2), err)
+			break
+		}
+
+		questionID := "QUESTION-" + helper.RandomString(10)
+		question := row[0]
+		answer := row[1]
+
+		examQuestion := school.BankQuestion{
+			MasterBankQuestionCode: bank.Code,
+			QuestionId:             questionID,
+			Question:               question,
+			Answer:                 questionID + "_" + answer,
+			AnswerSingle:           answer,
+			TypeQuestion:           bank.TypeQuestion,
+			QuestionFrom:           "IMPORT",
+		}
+
+		var examQuestionOption []school.BankAnswerOption
+		if bank.TypeQuestion == "PILIHAN_GANDA" {
+			var abjad = []string{"A", "B", "C", "D", "E"}
+
+			options := row[3:8]
+			for idx, opt := range options {
+				option := school.BankAnswerOption{
+					QuestionId: questionID,
+					AnswerId:   questionID + "_" + abjad[idx],
+					Option:     opt,
+				}
+				examQuestionOption = append(examQuestion.QuestionOption, option)
+			}
+		}
+
+		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+			break
+		}
+
+		if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+			break
+		}
+	}
+
+	response.SuccessResponse("Success Upload Question", nil)
+}
+
+func ReadAndValidateExcel(file multipart.File) ([][]string, error) {
 	content, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err

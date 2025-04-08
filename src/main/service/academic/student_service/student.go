@@ -13,12 +13,19 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/exam_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/user_service"
+	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
+	"github.com/yon-module/yon-framework/logger"
 	"github.com/yon-module/yon-framework/pagination"
 	response2 "github.com/yon-module/yon-framework/server/response"
 	"math/rand"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -215,4 +222,98 @@ func randomizeExam(questions []school.ExamQuestion, questionRandom, answerRandom
 	}
 
 	return questions
+}
+
+func (s *StudentService) DownloadTemplateUpload(c *gin.Context) {
+	f := excelize.NewFile()
+	sheet := "Upload_Student"
+	f.SetSheetName("Sheet1", sheet)
+
+	headers := []string{"NISN", "NAMA", "JENIS_KELAMIN(laki-laki/perempuan)", "CLASS_ID"}
+	for i, h := range headers {
+		cell := string(rune('A'+i)) + "1"
+		f.SetCellValue(sheet, cell, h)
+	}
+	f.SetCellValue(sheet, "A2", "12234234234234")
+	f.SetCellValue(sheet, "B2", "Nama Siswa")
+	f.SetCellValue(sheet, "C2", "perempuan")
+	f.SetCellValue(sheet, "D2", 1)
+
+	refSheet := "Class_Reference"
+	index, err := f.NewSheet(refSheet)
+	if err != nil {
+		response2.ErrorResponse(response2.ServerError, "Failed create reference sheet", err)
+		return
+	}
+
+	// Header untuk sheet referensi
+	f.SetCellValue(refSheet, "A1", "classId")
+	f.SetCellValue(refSheet, "B1", "className")
+
+	var classess []school.Class
+	s.studentRepo.Database.Find(&classess)
+
+	for i, class := range classess {
+		f.SetCellValue(refSheet, fmt.Sprintf("A%d", i+2), class.ID)
+		f.SetCellValue(refSheet, fmt.Sprintf("B%d", i+2), class.ClassCode)
+	}
+
+	f.SetActiveSheet(index)
+
+	// Set header agar bisa di-download
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", "attachment; filename=template_student.xlsx")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
+	c.Header("Expires", "0")
+
+	// Stream file ke response
+	if err := f.Write(c.Writer); err != nil {
+		response2.ErrorResponse(response2.ServerError, "Failed Generate file template", err)
+		return
+	}
+}
+
+func (s *StudentService) UploadTemplate(c *gin.Context) {
+	file, err := c.FormFile("file")
+	if err != nil {
+		response2.ErrorResponse(response2.ServerError, "Failed Upload Question", err)
+		return
+	}
+
+	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".xlsx" {
+		response2.ErrorResponse(response2.ServerError, "Failed Upload Question, Format file must be .xlsx", err)
+		return
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		response2.ErrorResponse(response2.ServerError, "Failed open file", err)
+		return
+	}
+	defer src.Close()
+
+	rows, err := exam_service.ReadAndValidateExcel(src)
+	if err != nil {
+		response2.ErrorResponse(response2.ServerError, "Failed Upload Question", err)
+		return
+	}
+
+	for _, row := range rows {
+		nisn := row[0]
+		nama := row[1]
+		jk := row[2]
+		classId := row[3]
+
+		classIdInt, _ := strconv.Atoi(classId)
+		s.CreateStudent(student_request.StudentModifyRequest{
+			Nisn:    nisn,
+			Name:    nama,
+			Gender:  jk,
+			ClassId: uint(classIdInt),
+		})
+	}
+
+	logger.Log.Info().Msg("Success Upload Template")
+	response2.SuccessResponse("Success Upload Template", nil).Json(c)
 }

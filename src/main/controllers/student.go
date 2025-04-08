@@ -126,3 +126,11 @@ func (s *StudentController) DeleteStudent(c *gin.Context) {
 	s.studentService.DeleteById(uint(id))
 	response.SuccessResponse("Success delete student", gin.H{"id": id}).Json(c)
 }
+
+func (s *StudentController) DownloadTemplate(c *gin.Context) {
+	s.studentService.DownloadTemplateUpload(c)
+}
+
+func (s *StudentController) UploadStudent(c *gin.Context) {
+	s.studentService.UploadTemplate(c)
+}

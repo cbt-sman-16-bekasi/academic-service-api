@@ -242,6 +242,10 @@ func (e *ExamController) UploadQuestion(c *gin.Context) {
 	e.examService.UploadQuestion(c)
 }
 
+func (e *ExamController) UploadBankQuestion(c *gin.Context) {
+	e.examService.UploadBankQuestion(c)
+}
+
 func (e *ExamController) GetAllBankQuestion(c *gin.Context) {
 	var request pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&request)
