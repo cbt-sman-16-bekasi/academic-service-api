@@ -23,6 +23,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go app
+WORKDIR /app/src/main
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
 # Start a new stage from scratch
