@@ -26,7 +26,7 @@ func (r *AuthService) Login(username string, password string) auth_response.Auth
 		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Username or Password is incorrect"))
 	}
 
-	if user.RoleUser.Code != "ADMIN" {
+	if user.RoleUser.Code == "STUDENT" {
 		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "You don't have access, You are not admin!"))
 	}
 
