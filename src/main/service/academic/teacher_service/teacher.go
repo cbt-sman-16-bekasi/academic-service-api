@@ -2,6 +2,7 @@ package teacher_service
 
 import (
 	"fmt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/teacher_request"
 	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/teacher_response"
@@ -61,10 +62,13 @@ func (t *TeacherService) CreateTeacher(request teacher_request.TeacherModifyRequ
 	}
 
 	userService := user_service.NewUserService()
+	password, salt, _ := helper.HashPasswordArgon2(request.Password)
 	resultUser := userService.CreateNewUser(&user.User{
 		Username: request.Username,
 		Role:     role.ID,
 		Status:   1,
+		Password: password,
+		Salt:     salt,
 	})
 
 	teach := teacher.Teacher{
@@ -107,10 +111,13 @@ func (t *TeacherService) UpdateTeacher(id uint, request teacher_request.TeacherM
 	}
 
 	userService := user_service.NewUserService()
+	password, salt, _ := helper.HashPasswordArgon2(request.Password)
 	_ = userService.UpdateUser(existTeacher.UserId, &user.User{
 		Username: request.Username,
 		Role:     role.ID,
 		Status:   1,
+		Password: password,
+		Salt:     salt,
 	})
 
 	t.teacherRepository.Database.Save(&existTeacher)
