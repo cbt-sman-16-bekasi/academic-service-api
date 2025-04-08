@@ -119,7 +119,40 @@ func (e *ExamSessionService) DeleteExamSession(id uint) {
 }
 
 func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAttendanceRequest) []exam_response.ExamSessionAttendanceResponse {
-	return make([]exam_response.ExamSessionAttendanceResponse, 0)
+	var examSession school.ExamSession
+	e.examSessionRepository.Database.Where("session_id", request.ExamSessionId).
+		Preload("DetailExam").
+		Preload("DetailExam.ExamMember").
+		First(&examSession)
+
+	classIds := make([]uint, 0)
+	for _, member := range examSession.DetailExam.ExamMember {
+		classIds = append(classIds, member.Class)
+	}
+
+	var studentClasses []student.StudentClass
+	e.examSessionRepository.Database.Where("class_id", classIds).
+		Preload("DetailStudent").
+		Preload("DetailClass").
+		Find(&studentClasses)
+
+	var responses []exam_response.ExamSessionAttendanceResponse
+
+	for _, class := range studentClasses {
+		var studentAttendance cbt.StudentHistoryTaken
+		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, class.DetailStudent.ID).First(&studentAttendance)
+		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
+			Nisn:    class.DetailStudent.Nisn,
+			Name:    class.DetailStudent.Name,
+			Class:   class.DetailClass.ClassName,
+			StartAt: &studentAttendance.StartAt,
+			EndAt:   studentAttendance.EndAt,
+			Score:   studentAttendance.Score,
+			Status:  "-",
+		})
+	}
+
+	return responses
 }
 
 func (e *ExamSessionService) GenerateToken(request exam_request.ExamSessionGenerateToken) *school.TokenExamSession {
