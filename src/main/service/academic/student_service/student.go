@@ -19,7 +19,6 @@ import (
 	"github.com/xuri/excelize/v2"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
-	"github.com/yon-module/yon-framework/logger"
 	"github.com/yon-module/yon-framework/pagination"
 	response2 "github.com/yon-module/yon-framework/server/response"
 	"math/rand"
@@ -299,6 +298,7 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 		return
 	}
 
+	tx := s.studentRepo.Database.Begin()
 	for _, row := range rows {
 		nisn := row[0]
 		nama := row[1]
@@ -306,14 +306,58 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 		classId := row[3]
 
 		classIdInt, _ := strconv.Atoi(classId)
-		s.CreateStudent(student_request.StudentModifyRequest{
+
+		request := student_request.StudentModifyRequest{
 			Nisn:    nisn,
 			Name:    nama,
 			Gender:  jk,
 			ClassId: uint(classIdInt),
+		}
+
+		role := s.userRepository.ReadRole("STUDENT")
+		if role == nil {
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Undefined role 'STUDENT'"))
+		}
+
+		// Check existing user
+		var existingUser student.Student
+		s.studentRepo.Database.Where("nisn = ?", request.Nisn).First(&existingUser)
+		if existingUser.ID != 0 {
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, fmt.Sprintf("User with NISN '%s' already exists", request.Nisn)))
+		}
+		// Create new user
+		userService := user_service.NewUserService()
+		resultUser := userService.CreateNewUser(&user.User{
+			Username: request.Nisn,
+			Role:     role.ID,
+			Status:   1,
 		})
+
+		// Register new student
+		stud := student.Student{
+			UserId: resultUser.ID,
+			Name:   request.Name,
+			Nisn:   request.Nisn,
+			Gender: request.Gender,
+		}
+
+		if err := tx.Create(&stud).Error; err != nil {
+			tx.Rollback()
+			panic("Failed upload student")
+		}
+
+		// Register new Student Class
+		studentClass := student.StudentClass{
+			StudentId: stud.ID,
+			ClassId:   request.ClassId,
+		}
+
+		if err := tx.Create(&studentClass).Error; err != nil {
+			tx.Rollback()
+			panic("Failed upload student")
+		}
 	}
 
-	logger.Log.Info().Msg("Success Upload Template")
+	tx.Commit()
 	response2.SuccessResponse("Success Upload Template", nil).Json(c)
 }
