@@ -64,11 +64,12 @@ func (t *TeacherService) CreateTeacher(request teacher_request.TeacherModifyRequ
 	userService := user_service.NewUserService()
 	password, salt, _ := helper.HashPasswordArgon2(request.Password)
 	resultUser := userService.CreateNewUser(&user.User{
-		Username: request.Username,
-		Role:     role.ID,
-		Status:   1,
-		Password: password,
-		Salt:     salt,
+		Username:   request.Username,
+		Role:       role.ID,
+		Status:     1,
+		Password:   password,
+		Salt:       salt,
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
 	})
 
 	teach := teacher.Teacher{

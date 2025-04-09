@@ -77,9 +77,10 @@ func (s *StudentService) CreateStudent(request student_request.StudentModifyRequ
 	// Create new user
 	userService := user_service.NewUserService()
 	resultUser := userService.CreateNewUser(&user.User{
-		Username: request.Nisn,
-		Role:     role.ID,
-		Status:   1,
+		Username:   request.Nisn,
+		Role:       role.ID,
+		Status:     1,
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
 	})
 
 	// Register new student
@@ -326,12 +327,21 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, fmt.Sprintf("User with NISN '%s' already exists", request.Nisn)))
 		}
 		// Create new user
-		userService := user_service.NewUserService()
-		resultUser := userService.CreateNewUser(&user.User{
-			Username: request.Nisn,
-			Role:     role.ID,
-			Status:   1,
-		})
+		resultUser := user.User{
+			Username:   request.Nisn,
+			Role:       role.ID,
+			Status:     1,
+			SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
+		}
+		isExist := s.userRepository.ReadUser(resultUser.Username)
+		if isExist != nil {
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "User already exists"))
+		}
+
+		if err := tx.Create(&resultUser).Error; err != nil {
+			tx.Rollback()
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Failed save data user"))
+		}
 
 		// Register new student
 		stud := student.Student{
@@ -343,7 +353,7 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 
 		if err := tx.Create(&stud).Error; err != nil {
 			tx.Rollback()
-			panic("Failed upload student")
+			panic("Failed upload student " + err.Error())
 		}
 
 		// Register new Student Class
@@ -354,7 +364,7 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 
 		if err := tx.Create(&studentClass).Error; err != nil {
 			tx.Rollback()
-			panic("Failed upload student")
+			panic("Failed upload student " + err.Error())
 		}
 	}
 
