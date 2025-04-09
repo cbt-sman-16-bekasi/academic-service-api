@@ -255,7 +255,7 @@ func (s *StudentService) DownloadTemplateUpload(c *gin.Context) {
 
 	for i, class := range classess {
 		f.SetCellValue(refSheet, fmt.Sprintf("A%d", i+2), class.ID)
-		f.SetCellValue(refSheet, fmt.Sprintf("B%d", i+2), class.ClassCode)
+		f.SetCellValue(refSheet, fmt.Sprintf("B%d", i+2), class.ClassName)
 	}
 
 	f.SetActiveSheet(index)
