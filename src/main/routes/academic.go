@@ -23,7 +23,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	gr.POST("/cbt/token/validate", jwt.AuthMiddleware(), examController.ValidateToken)
 	gr.POST("/cbt/exam/submit", jwt.AuthMiddleware(), examController.SubmitExamSession)
 
-	masterAcademic := academic.Use(jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN"}, "list"))
+	masterAcademic := academic.Use(jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"))
 	{
 		masterAcademic.GET("/dashboard", schoolController.GetDashboard)
 		masterAcademic.GET("/class-code", schoolController.GetAllClassCode)

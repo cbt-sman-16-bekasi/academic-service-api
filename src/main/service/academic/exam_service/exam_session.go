@@ -148,7 +148,7 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			StartAt: &studentAttendance.StartAt,
 			EndAt:   studentAttendance.EndAt,
 			Score:   studentAttendance.Score,
-			Status:  "-",
+			Status:  studentAttendance.Status,
 		})
 	}
 
