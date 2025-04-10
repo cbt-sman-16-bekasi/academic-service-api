@@ -8,9 +8,10 @@ import (
 )
 
 type AuthResponse struct {
-	Token string     `json:"token"`
-	Exp   int64      `json:"exp"`
-	User  *user.User `json:"user"`
+	Token  string      `json:"token"`
+	Exp    int64       `json:"exp"`
+	User   *user.User  `json:"user"`
+	Detail interface{} `json:"detail"`
 }
 
 type AuthResponseCBT struct {

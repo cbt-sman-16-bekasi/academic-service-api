@@ -4,9 +4,12 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/auth_response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/teacher"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/server/response"
+	"strings"
 	"time"
 )
 
@@ -46,8 +49,28 @@ func (r *AuthService) Login(username string, password string) auth_response.Auth
 		panic(exception.NewIntenalServerExceptionStruct(response.ServerError, err.Error()))
 	}
 	return auth_response.AuthResponse{
-		Token: token,
-		User:  user,
-		Exp:   exp,
+		Token:  token,
+		User:   user,
+		Exp:    exp,
+		Detail: r.detailUser(user),
+	}
+}
+
+func (r *AuthService) detailUser(user *user.User) interface{} {
+	switch user.RoleUser.Code {
+	case "STUDENT":
+		return map[string]interface{}{
+			"name": strings.ReplaceAll(user.Username, "_", " "),
+		}
+	case "TEACHER":
+		var teacherData teacher.Teacher
+		r.userRepository.Database.Where("user_id", user.ID).First(&teacherData)
+		return teacherData
+	case "ADMIN":
+		return map[string]interface{}{
+			"name": strings.ReplaceAll(user.Username, "_", " "),
+		}
+	default:
+		return nil
 	}
 }
