@@ -178,7 +178,7 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
 	}
 
-	exam := s.studentRepo.ExamRepo.FindById(examSession.DetailExam.ID)
+	exam := s.studentRepo.ExamRepo.FindByCode(examSession.ExamCode)
 	examQuestionRandom := randomizeExam(exam.ExamQuestion, exam.RandomQuestion, exam.RandomAnswer)
 	exam.ExamQuestion = examQuestionRandom
 
@@ -199,7 +199,7 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 	return auth_response.AuthResponseCBT{
 		Token:       token,
 		Exp:         exp,
-		Exam:        exam,
+		Exam:        &exam,
 		User:        studentClass,
 		ExamSession: examSession,
 		ExamTaken:   &existingHistoryTaken,

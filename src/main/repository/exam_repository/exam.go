@@ -42,8 +42,16 @@ func (e *ExamRepository) FindByIdQuestion(id uint) *school.ExamQuestion {
 }
 
 func (e *ExamRepository) GetExamData(classId uint) []school.Exam {
+	var examMember []school.ExamMember
+	e.Database.Where("class = ?", classId).Preload("DetailExam").Find(&examMember)
+
+	var examCode []string
+	for _, examM := range examMember {
+		examCode = append(examCode, examM.ExamCode)
+	}
+
 	var exam []school.Exam
-	e.Database.Preload("DetailExam", "class = ?", classId).Find(&exam)
+	e.Database.Debug().Where("code IN ?", examCode).Find(&exam)
 
 	return exam
 }
@@ -63,8 +71,14 @@ func (e *ExamRepository) GetExamSessionActiveNow(examCode []string, studentId ui
 func (e *ExamRepository) FindByCode(code string) school.Exam {
 	var exam school.Exam
 	e.Database.Where("code = ?", code).
+		Preload("DetailSubject").
 		Preload("ExamMember").
 		Preload("ExamMember.DetailClass").
+		Preload("ExamMember.DetailClass.DetailClassCode").
+		Preload("DetailTypeExam").
+		Preload("DetailTypeExam.DetailRole").
+		Preload("ExamQuestion").
+		Preload("ExamQuestion.QuestionOption").Preload(clause.Associations).
 		First(&exam)
 	return exam
 }
