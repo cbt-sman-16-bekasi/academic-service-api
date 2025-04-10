@@ -308,11 +308,17 @@ func (s *StudentService) UploadTemplate(c *gin.Context) {
 
 		classIdInt, _ := strconv.Atoi(classId)
 
+		var classCheck school.Class
+		s.userRepository.Database.Debug().Where("id = ? or class_name = ?", classIdInt, classId).First(&classCheck)
+		if classCheck.ID == 0 {
+			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Class with ID '"+classId+"' does not exist. Please check again with reference on sheet 'Class_Reference'"))
+		}
+
 		request := student_request.StudentModifyRequest{
 			Nisn:    nisn,
 			Name:    nama,
 			Gender:  jk,
-			ClassId: uint(classIdInt),
+			ClassId: classCheck.ID,
 		}
 
 		role := s.userRepository.ReadRole("STUDENT")
