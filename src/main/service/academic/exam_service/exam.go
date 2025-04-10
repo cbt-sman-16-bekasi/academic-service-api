@@ -329,7 +329,7 @@ func (e *ExamService) updateBankQuestion(tx *gorm.DB, exam school.Exam, question
 		var bankQuestion school.BankQuestion
 		if err := tx.Where("question_id = ?", questionId+"_"+member).First(&bankQuestion).Error; err != nil {
 			var masterBankQuestion school.MasterBankQuestion
-			tx.Where("subject_code = ? AND class_code = ? AND type_question = ?", exam.SubjectCode, member, exam.TypeQuestion).First(&masterBankQuestion)
+			e.examRepository.Database.Where("subject_code = ? AND class_code = ? AND type_question = ?", exam.SubjectCode, member, exam.TypeQuestion).First(&masterBankQuestion)
 
 			if masterBankQuestion.ID == 0 {
 				masterBankQuestion = school.MasterBankQuestion{
@@ -653,16 +653,23 @@ func (e *ExamService) insertBankQuestion(tx *gorm.DB, exam school.Exam, question
 	}
 
 	for _, member := range classCode {
-		masterBank := &school.MasterBankQuestion{
-			Code:         "BANK_MASTER_" + helper.RandomString(10),
-			SubjectCode:  exam.SubjectCode,
-			ClassCode:    member,
-			TypeQuestion: exam.TypeQuestion,
-		}
+		var masterBank school.MasterBankQuestion
+		e.examRepository.Database.Where("subject_code = ? AND class_code = ?",
+			exam.SubjectCode,
+			member).First(&masterBank)
 
-		if err := tx.Create(masterBank).Error; err != nil {
-			tx.Rollback()
-			panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed save bank question"))
+		if masterBank.ID == 0 {
+			masterBank = school.MasterBankQuestion{
+				Code:         "BANK_MASTER_" + helper.RandomString(10),
+				SubjectCode:  exam.SubjectCode,
+				ClassCode:    member,
+				TypeQuestion: exam.TypeQuestion,
+			}
+
+			if err := tx.Create(&masterBank).Error; err != nil {
+				tx.Rollback()
+				panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed save bank question"))
+			}
 		}
 
 		bankQuestion := &school.BankQuestion{
