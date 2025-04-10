@@ -173,6 +173,7 @@ func (e *ExamSessionService) GetAllToken(request exam_request.ExamSessionTokenFi
 		Preload("DetailExamSession.DetailExam").
 		Preload("DetailExamSession.DetailExam.DetailSubject").
 		Preload("DetailExamSession.DetailExam.DetailTypeExam").
+		Where("end_active_token >= ?", time.Now()).
 		Order("id desc").
 		Find(&data)
 
