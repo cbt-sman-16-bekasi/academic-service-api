@@ -160,6 +160,7 @@ func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
 		TotalExam:        dashboard.TotalExams,
 		TotalSessionExam: dashboard.TotalExamSessions,
 		TotalReportExam:  dashboard.TotalReport,
+		TotalAccess:      dashboard.TotalUsers,
 	}
 }
 

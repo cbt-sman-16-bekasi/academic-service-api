@@ -20,4 +20,5 @@ type DashboardResponse struct {
 	TotalExam        int `json:"total_exam"`
 	TotalSessionExam int `json:"total_session_exam"`
 	TotalReportExam  int `json:"total_report_exam"`
+	TotalAccess      int `json:"total_access"`
 }
