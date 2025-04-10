@@ -498,7 +498,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 					AnswerId:   questionID + "_" + abjad[idx],
 					Option:     opt,
 				}
-				examQuestionOption = append(examQuestion.QuestionOption, option)
+				examQuestionOption = append(examQuestionOption, option)
 			}
 		}
 
@@ -583,7 +583,7 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 					AnswerId:   questionID + "_" + abjad[idx],
 					Option:     opt,
 				}
-				examQuestionOption = append(examQuestion.QuestionOption, option)
+				examQuestionOption = append(examQuestionOption, option)
 			}
 		}
 

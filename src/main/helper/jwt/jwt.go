@@ -88,14 +88,14 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 	return func(c *gin.Context) {
 		claims, exists := c.Get("claims")
 		if !exists {
-			response.ErrorResponse(response.Unauthorized, "You are not authorized", nil).Json(c)
+			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
 			c.Abort()
 			return
 		}
 
 		userClaims, ok := claims.(Claims)
 		if !ok {
-			response.ErrorResponse(response.Unauthorized, "You are not authorized", nil).Json(c)
+			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
 			c.Abort()
 			return
 		}
@@ -111,7 +111,7 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 			}
 		}
 		if !hasMatch {
-			response.ErrorResponse(response.Unauthorized, "You are not authorized", nil).Json(c)
+			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
 			c.Abort()
 			return
 		}
@@ -123,7 +123,7 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 			}
 		}
 
-		response.ErrorResponse(response.Unauthorized, "You don't have access, please contact administrator", nil).Json(c)
+		response.ErrorResponse(response.UnprocessableEntity, "You don't have access, please contact administrator", nil).Json(c)
 		c.Abort()
 		return
 	}
