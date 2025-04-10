@@ -40,4 +40,4 @@ jobs:
           script: |
             docker pull ${{ env.IMG_NAME }}:${{ env.TAGS }}-v1
             docker rm -f ${{ env.CONTAINER_NAME }} || true
-            docker run -d -p 8081:8080 --name ${{ env.CONTAINER_NAME }} ${{ env.IMG_NAME }}:${{ env.TAGS }}-v1
+            docker run -d -p 8081:8080 --restart always --name ${{ env.CONTAINER_NAME }} ${{ env.IMG_NAME }}:${{ env.TAGS }}-v1
