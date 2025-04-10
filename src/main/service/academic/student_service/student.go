@@ -164,19 +164,23 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 
 	studentClass := s.studentRepo.GetStudentClass(std.ID)
 
-	examActive := s.studentRepo.ExamRepo.GetExamData(studentClass.ClassId)
-	if examActive.ID == 0 {
+	examData := s.studentRepo.ExamRepo.GetExamData(studentClass.ClassId)
+	if len(examData) == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
 	}
 
-	exam := s.studentRepo.ExamRepo.FindById(examActive.ID)
-	examQuestionRandom := randomizeExam(exam.ExamQuestion, exam.RandomQuestion, exam.RandomAnswer)
-	exam.ExamQuestion = examQuestionRandom
-
-	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(exam.Code)
+	var examCodes []string
+	for _, examDatum := range examData {
+		examCodes = append(examCodes, examDatum.Code)
+	}
+	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(examCodes, std.ID)
 	if examSession.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
 	}
+
+	exam := s.studentRepo.ExamRepo.FindById(examSession.DetailExam.ID)
+	examQuestionRandom := randomizeExam(exam.ExamQuestion, exam.RandomQuestion, exam.RandomAnswer)
+	exam.ExamQuestion = examQuestionRandom
 
 	exp := time.Now().Add(time.Hour * 24).Unix()
 	token, err := jwt.GenerateJWT(jwt.Claims{

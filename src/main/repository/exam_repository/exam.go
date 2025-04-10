@@ -41,18 +41,20 @@ func (e *ExamRepository) FindByIdQuestion(id uint) *school.ExamQuestion {
 	return &question
 }
 
-func (e *ExamRepository) GetExamData(classId uint) *school.Exam {
-	var examMember school.ExamMember
-	e.Database.Where("class = ?", classId).Preload("DetailExam").First(&examMember)
+func (e *ExamRepository) GetExamData(classId uint) []school.Exam {
+	var exam []school.Exam
+	e.Database.Preload("DetailExam", "class = ?", classId).Find(&exam)
 
-	return &examMember.DetailExam
+	return exam
 }
 
-func (e *ExamRepository) GetExamSessionActiveNow(examCode string) *school.ExamSession {
+func (e *ExamRepository) GetExamSessionActiveNow(examCode []string, studentId uint) *school.ExamSession {
 	var examSession school.ExamSession
 	timeNow := time.Now()
-	e.Database.Where("exam_code = ?", examCode).
+	e.Database.Where("exam_code IN ?", examCode).
+		Joins("LEFT JOIN cbt_service.student_history_taken st ON st.session_id = exam_session.session_id AND st.student_id = ? AND status != 'COMPLETED'", studentId).
 		Where("start_date <= ? and end_date >= ?", timeNow, timeNow).
+		Order("created_date asc").
 		First(&examSession)
 
 	return &examSession
