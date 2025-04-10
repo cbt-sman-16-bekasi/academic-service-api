@@ -22,7 +22,7 @@ func NewUserService() *UserService {
 func (s *UserService) CreateNewUser(user *user.User) *user.User {
 	isExist := s.userRepo.ReadUser(user.Username)
 	if isExist != nil {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "User already exists"))
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("User already exists: %s", user.Username)))
 	}
 
 	if user.RoleUser.Code != "STUDENT" {
