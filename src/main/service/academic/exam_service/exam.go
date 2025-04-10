@@ -792,7 +792,7 @@ func (e *ExamService) GetQuestionByMasterCode(masterCode string) []school.BankQu
 	var questions []school.BankQuestion
 	e.examRepository.Database.Where("master_bank_question_code = ?", masterCode).
 		Preload("QuestionOption").
-		Order("created_at desc").
+		Order("created_at asc").
 		Find(&questions)
 
 	return questions
