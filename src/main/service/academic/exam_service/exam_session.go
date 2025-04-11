@@ -141,6 +141,11 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 	for _, class := range studentClasses {
 		var studentAttendance cbt.StudentHistoryTaken
 		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, class.DetailStudent.ID).First(&studentAttendance)
+		status := studentAttendance.Status
+
+		if studentAttendance.IsForced {
+			status = "SUBMIT BY SYSTEM"
+		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
 			Nisn:    class.DetailStudent.Nisn,
 			Name:    class.DetailStudent.Name,
@@ -148,7 +153,7 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			StartAt: &studentAttendance.StartAt,
 			EndAt:   studentAttendance.EndAt,
 			Score:   studentAttendance.Score,
-			Status:  studentAttendance.Status,
+			Status:  status,
 		})
 	}
 
