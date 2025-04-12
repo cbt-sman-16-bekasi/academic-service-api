@@ -491,7 +491,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		if exam.TypeQuestion == "PILIHAN_GANDA" {
 			var abjad = []string{"A", "B", "C", "D", "E"}
 
-			options := row[3:7]
+			options := row[3:8]
 			for idx, opt := range options {
 				option := school.ExamAnswerOption{
 					QuestionId: questionID,
@@ -576,7 +576,7 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 		if bank.TypeQuestion == "PILIHAN_GANDA" {
 			var abjad = []string{"A", "B", "C", "D", "E"}
 
-			options := row[3:7]
+			options := row[3:8]
 			for idx, opt := range options {
 				option := school.BankAnswerOption{
 					QuestionId: questionID,
