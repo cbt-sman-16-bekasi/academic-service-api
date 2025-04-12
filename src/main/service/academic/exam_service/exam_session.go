@@ -79,11 +79,16 @@ func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDet
 		return exam_response.ExamDetailSessionResponse{}
 	}
 
+	var totalAttendance int64
+	e.examSessionRepository.Database.Where("session_id = ? AND end_at is not null", data.SessionId).
+		Model(&cbt.StudentHistoryTaken{}).
+		Count(&totalAttendance)
+
 	return exam_response.ExamDetailSessionResponse{
 		ExamSession:     data,
 		Exam:            data.DetailExam,
 		TotalStudent:    0,
-		TotalAttendance: 0,
+		TotalAttendance: int(totalAttendance),
 	}
 }
 
@@ -201,6 +206,7 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 	var tokenExamSession school.TokenExamSession
 	e.examSessionRepository.Database.Where("token = ? AND exam_session = ?", request.Token, request.ExamSessionId).
 		Preload("DetailExamSession").
+		Preload("DetailExamSession.DetailExam").
 		Preload(clause.Associations).
 		First(&tokenExamSession)
 	if tokenExamSession.ID == 0 {
@@ -223,15 +229,18 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 	}
 
 	remainingInMinutes := examSession.EndDate.Sub(timeNow).Minutes()
+	if int(remainingInMinutes) > examSession.DetailExam.Duration {
+		remainingInMinutes = float64(examSession.DetailExam.Duration)
+	}
 
-	student := e.studentRepo.FindByNISN(claims.Username)
+	studentData := e.studentRepo.FindByNISN(claims.Username)
 	var existingHistoryTaken cbt.StudentHistoryTaken
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, student.ID).First(&existingHistoryTaken)
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, studentData.ID).First(&existingHistoryTaken)
 	if existingHistoryTaken.ID == 0 {
 		existingHistoryTaken = cbt.StudentHistoryTaken{
 			ExamCode:      tokenExamSession.DetailExamSession.ExamCode,
 			SessionId:     examSession.SessionId,
-			StudentId:     student.ID,
+			StudentId:     studentData.ID,
 			StartAt:       timeNow,
 			EndAt:         nil,
 			Status:        "STARTED",
