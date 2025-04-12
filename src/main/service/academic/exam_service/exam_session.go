@@ -330,7 +330,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, responses []exam_response.ExamSessionAttendanceResponse) {
 	f := excelize.NewFile()
 	sheet := "Attendance"
-	f.NewSheet(sheet)
+	index, _ := f.NewSheet(sheet)
 
 	// Header
 	headers := []string{"No", "NISN", "Name", "Class", "Start At", "End At", "Score", "Status"}
@@ -346,16 +346,25 @@ func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, 
 		f.SetCellValue(sheet, "B"+strconv.Itoa(row), r.Nisn)
 		f.SetCellValue(sheet, "C"+strconv.Itoa(row), r.Name)
 		f.SetCellValue(sheet, "D"+strconv.Itoa(row), r.Class)
-		if r.StartAt != nil {
+		// Start At
+		if r.StartAt != nil && !r.StartAt.IsZero() {
 			f.SetCellValue(sheet, "E"+strconv.Itoa(row), r.StartAt.Format("2006-01-02 15:04:05"))
+		} else {
+			f.SetCellValue(sheet, "E"+strconv.Itoa(row), "")
 		}
-		if r.EndAt != nil {
+
+		// End At
+		if !r.EndAt.IsZero() {
 			f.SetCellValue(sheet, "F"+strconv.Itoa(row), r.EndAt.Format("2006-01-02 15:04:05"))
+		} else {
+			f.SetCellValue(sheet, "F"+strconv.Itoa(row), "")
 		}
+
 		f.SetCellValue(sheet, "G"+strconv.Itoa(row), r.Score)
 		f.SetCellValue(sheet, "H"+strconv.Itoa(row), r.Status)
 	}
 
+	f.SetActiveSheet(index)
 	// Stream Excel ke response
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	c.Header("Content-Disposition", `attachment; filename="exam_attendance.xlsx"`)
