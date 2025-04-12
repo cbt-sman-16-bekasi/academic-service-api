@@ -47,7 +47,7 @@ func (s *StudentService) DetailStudent(id uint) student_response.DetailStudentRe
 		Name:   detail.DetailStudent.Name,
 		Gender: detail.DetailStudent.Gender,
 		Class: response.GeneralLabelKeyResponse{
-			Key:   detail.DetailClass.ClassCode,
+			Key:   detail.DetailClass.ID,
 			Label: detail.DetailClass.ClassName,
 		},
 	}
