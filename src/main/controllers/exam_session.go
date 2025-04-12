@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
-	"net/http"
 	"strconv"
 )
 
@@ -154,12 +153,8 @@ func (e *ExamController) GetAttendance(c *gin.Context) {
 func (e *ExamController) DownloadAttendance(c *gin.Context) {
 	var request exam_request.ExamSessionAttendanceRequest
 	_ = c.BindQuery(&request)
-	fileContent := []byte("Hello, this is a test file.") // Contoh data
-	fileName := "example.txt"
-
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
-	c.Data(http.StatusOK, "application/octet-stream", fileContent)
+	data := e.examSessionService.GetAllAttendance(request)
+	e.examSessionService.ExportExamSessionAttendanceToExcel(c, data)
 }
 
 // GetAllExamSessionToken Get 100 latest token

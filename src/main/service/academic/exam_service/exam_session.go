@@ -12,12 +12,15 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
+	"github.com/gin-gonic/gin"
+	"github.com/xuri/excelize/v2"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -322,4 +325,48 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 	return existingHistoryTaken
+}
+
+func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, responses []exam_response.ExamSessionAttendanceResponse) {
+	f := excelize.NewFile()
+	sheet := "Attendance"
+	f.NewSheet(sheet)
+
+	// Header
+	headers := []string{"No", "NISN", "Name", "Class", "Start At", "End At", "Score", "Status"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// Data
+	for i, r := range responses {
+		row := i + 2
+		f.SetCellValue(sheet, "A"+strconv.Itoa(row), i+1)
+		f.SetCellValue(sheet, "B"+strconv.Itoa(row), r.Nisn)
+		f.SetCellValue(sheet, "C"+strconv.Itoa(row), r.Name)
+		f.SetCellValue(sheet, "D"+strconv.Itoa(row), r.Class)
+		if r.StartAt != nil {
+			f.SetCellValue(sheet, "E"+strconv.Itoa(row), r.StartAt.Format("2006-01-02 15:04:05"))
+		}
+		if r.EndAt != nil {
+			f.SetCellValue(sheet, "F"+strconv.Itoa(row), r.EndAt.Format("2006-01-02 15:04:05"))
+		}
+		f.SetCellValue(sheet, "G"+strconv.Itoa(row), r.Score)
+		f.SetCellValue(sheet, "H"+strconv.Itoa(row), r.Status)
+	}
+
+	// Stream Excel ke response
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", `attachment; filename="exam_attendance.xlsx"`)
+	c.Header("File-Name", "exam_attendance.xlsx")
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
+	c.Header("Expires", "0")
+
+	if err := f.Write(c.Writer); err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(
+			response.ServerError, "Failed generate report"),
+		)
+	}
 }
