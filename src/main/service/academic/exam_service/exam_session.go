@@ -222,7 +222,7 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "end active token timeout"))
 	}
 
-	remainingInMinutes := tokenExamSession.EndActiveToken.Sub(timeNow).Minutes()
+	remainingInMinutes := examSession.EndDate.Sub(timeNow).Minutes()
 
 	student := e.studentRepo.FindByNISN(claims.Username)
 	var existingHistoryTaken cbt.StudentHistoryTaken
