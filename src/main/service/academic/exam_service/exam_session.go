@@ -347,14 +347,14 @@ func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, 
 		f.SetCellValue(sheet, "C"+strconv.Itoa(row), r.Name)
 		f.SetCellValue(sheet, "D"+strconv.Itoa(row), r.Class)
 		// Start At
-		if r.StartAt != nil && !r.StartAt.IsZero() {
+		if r.StartAt != nil {
 			f.SetCellValue(sheet, "E"+strconv.Itoa(row), r.StartAt.Format("2006-01-02 15:04:05"))
 		} else {
 			f.SetCellValue(sheet, "E"+strconv.Itoa(row), "")
 		}
 
 		// End At
-		if !r.EndAt.IsZero() {
+		if r.EndAt != nil {
 			f.SetCellValue(sheet, "F"+strconv.Itoa(row), r.EndAt.Format("2006-01-02 15:04:05"))
 		} else {
 			f.SetCellValue(sheet, "F"+strconv.Itoa(row), "")
