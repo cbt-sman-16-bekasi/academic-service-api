@@ -304,8 +304,14 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		score := 0
 		var question school.ExamQuestion
 		e.examSessionRepository.Database.Where("question_id = ?", submit.QuestionId).First(&question)
-		if submit.AnswerId == question.Answer {
+		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
 			score = question.Score
+			totalCorrect++
+		}
+
+		if question.TypeQuestion == "ESSAY" {
+			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
+			score = essayHelper.EvaluateScoreEssay()
 			totalCorrect++
 		}
 		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
