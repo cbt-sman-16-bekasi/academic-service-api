@@ -26,11 +26,11 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	curriculumRoute := academic.Group("/curriculum").Use(jwt.AuthMiddleware())
 	{
-		curriculumRoute.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), curriculumController.GetAllSubject)
-		curriculumRoute.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), curriculumController.GetSubject)
-		curriculumRoute.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), curriculumController.CreateSubject)
-		curriculumRoute.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), curriculumController.UpdateSubject)
-		curriculumRoute.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), curriculumController.DeleteSubject)
+		curriculumRoute.GET("/subject/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), curriculumController.GetAllSubject)
+		curriculumRoute.GET("/subject/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), curriculumController.GetSubject)
+		curriculumRoute.POST("/subject/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), curriculumController.CreateSubject)
+		curriculumRoute.PUT("/subject/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), curriculumController.UpdateSubject)
+		curriculumRoute.DELETE("/subject/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), curriculumController.DeleteSubject)
 	}
 
 	masterAcademic := academic.Use(jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"))
