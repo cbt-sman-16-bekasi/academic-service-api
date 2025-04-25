@@ -13,6 +13,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	teacherController := controllers.NewTeacherController()
 	userController := controllers.NewUserController()
 	examController := controllers.NewExamController()
+	curriculumController := controllers.NewCurriculumController()
 
 	academic := gr.Group("/academic")
 
@@ -22,6 +23,15 @@ func academicRoutes(gr *gin.RouterGroup) {
 	gr.POST("/auth/cbt/login", schoolController.AuthCBTLogin)
 	gr.POST("/cbt/token/validate", jwt.AuthMiddleware(), examController.ValidateToken)
 	gr.POST("/cbt/exam/submit", jwt.AuthMiddleware(), examController.SubmitExamSession)
+
+	curriculumRoute := academic.Group("/curriculum").Use(jwt.AuthMiddleware())
+	{
+		curriculumRoute.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), curriculumController.GetAllSubject)
+		curriculumRoute.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), curriculumController.GetSubject)
+		curriculumRoute.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), curriculumController.CreateSubject)
+		curriculumRoute.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), curriculumController.UpdateSubject)
+		curriculumRoute.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), curriculumController.DeleteSubject)
+	}
 
 	masterAcademic := academic.Use(jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"))
 	{
