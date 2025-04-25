@@ -60,8 +60,8 @@ func (s *SubjectService) UpdateSubject(id uint64, subject curriculum_request.Sub
 
 func (s *SubjectService) DeleteSubject(id uint64) {
 	var existCode curriculum.Subject
-	s.repo.Database.Where("id = ?", id).First(&existCode)
-	if existCode.ID != 0 {
+	s.repo.Database.Debug().Where("id = ?", id).First(&existCode)
+	if existCode.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "ID not found"))
 	}
 	s.repo.Database.Delete(&existCode)
@@ -69,8 +69,8 @@ func (s *SubjectService) DeleteSubject(id uint64) {
 
 func (s *SubjectService) GetSubject(id uint64) curriculum.Subject {
 	var existCode curriculum.Subject
-	s.repo.Database.Where("id = ?", id).First(&existCode)
-	if existCode.ID != 0 {
+	s.repo.Database.Debug().Where("id = ?", id).First(&existCode)
+	if existCode.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "ID not found"))
 	}
 	return existCode

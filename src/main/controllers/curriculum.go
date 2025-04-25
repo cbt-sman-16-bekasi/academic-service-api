@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/curriculum_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/curriculum_service"
 	"github.com/gin-gonic/gin"
@@ -49,6 +50,7 @@ func (s *CurriculumController) DeleteSubject(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	s.service.DeleteSubject(uint64(id))
+	response.SuccessResponse(fmt.Sprint("Success delete subject", id), "").Json(c)
 }
 
 func (s *CurriculumController) UpdateSubject(c *gin.Context) {
