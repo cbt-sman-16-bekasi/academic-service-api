@@ -194,6 +194,8 @@ github.com/yon-module/yon-framework v1.1.734 h1:KggOftL3uzxbbsOiHGAzxdyz9byHdzot
 github.com/yon-module/yon-framework v1.1.734/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
 github.com/yon-module/yon-framework v1.1.735 h1:UWeJRAXcEMdDsJ2HBY7GVelY1HVsRY/lJ/r/qME+0/I=
 github.com/yon-module/yon-framework v1.1.735/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
+github.com/yon-module/yon-framework v1.1.736 h1:J3BbR2irWucOJIm4azSGs47EPy3hWA0fZhFJIMkiXZE=
+github.com/yon-module/yon-framework v1.1.736/go.mod h1:hjyUPyZpVAVtwjSlHmeTf3C/LLiVe6AOQHYnADeMBPA=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/arch v0.15.0 h1:QtOrQd0bTUnhNVNndMpLHNWrDmYzZ2KDqSrEymqInZw=
 golang.org/x/arch v0.15.0/go.mod h1:JmwW7aLIoRUKgaTzhkiEFxvcEiQGyOg9BMonBJUS7EE=

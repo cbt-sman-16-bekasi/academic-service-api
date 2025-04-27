@@ -3,7 +3,12 @@ package teacher_request
 type TeacherModifyRequest struct {
 	Nuptk    string `json:"nuptk"`
 	Name     string `json:"name"`
-	Username string `json:"username"`
-	Role     string `json:"role"`
-	Password string `json:"password"`
+	Gender   string `json:"gender"`
+	IsAccess bool   `json:"isAccess"`
+}
+
+type TeacherMappingSubjectClass struct {
+	TeacherId uint   `json:"teacherId"`
+	SubjectId string `json:"subjectId"`
+	ClassId   uint   `json:"classId"`
 }

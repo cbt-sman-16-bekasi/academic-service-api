@@ -77,6 +77,12 @@ func academicRoutes(gr *gin.RouterGroup) {
 		teacher.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), teacherController.CreateTeacher)
 		teacher.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), teacherController.UpdateTeacher)
 		teacher.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), teacherController.DeleteTeacher)
+
+		teacher.GET("/:teacherId/class-subject/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), teacherController.GetTeacherSubjectClassList)
+		teacher.GET("/class-subject/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), teacherController.GetDetailTeacherSubject)
+		teacher.POST("/class-subject/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), teacherController.CreateTeacherSubject)
+		teacher.PUT("/class-subject/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), teacherController.UpdateTeacherSubject)
+		teacher.DELETE("/class-subject/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), teacherController.DeleteTeacherSubject)
 	}
 
 	user := academic.Group("/user").Use(jwt.AuthMiddleware())

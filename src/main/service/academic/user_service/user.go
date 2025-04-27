@@ -61,6 +61,7 @@ func (s *UserService) UpdateUser(userId uint, user *user.User) *user.User {
 		isExist.Salt = salt
 	}
 
+	isExist.Status = user.Status
 	s.userRepo.Database.Save(&isExist)
 	return isExist
 }

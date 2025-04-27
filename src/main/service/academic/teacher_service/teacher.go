@@ -2,7 +2,6 @@ package teacher_service
 
 import (
 	"fmt"
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/teacher_request"
 	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/teacher_response"
@@ -32,7 +31,7 @@ func (t *TeacherService) GetAllTeacher(request pagination.Request[map[string]int
 	paging := database.NewPagination[map[string]interface{}]().
 		SetRequest(&request).
 		SetModal([]teacher.Teacher{}).
-		SetPreloads("DetailUser", "DetailUser.RoleUser").FindAllPaging()
+		SetPreloads("ClassSubject", "ClassSubject.Subject", "ClassSubject.Class").FindAllPaging()
 	return paging
 }
 
@@ -46,13 +45,15 @@ func (t *TeacherService) DetailTeacher(id uint) teacher_response.TeacherDetailRe
 			Key:   existTeacher.DetailUser.RoleUser.Code,
 			Label: existTeacher.DetailUser.RoleUser.Name,
 		},
+		IsAccess: existTeacher.DetailUser.Status == 1,
+		Gender:   existTeacher.Gender,
 	}
 }
 
 func (t *TeacherService) CreateTeacher(request teacher_request.TeacherModifyRequest) teacher_response.TeacherDetailResponse {
-	role := t.userRepository.ReadRole(request.Role)
+	role := t.userRepository.ReadRole("TEACHER")
 	if role == nil {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Undefined role '%s'", request.Role)))
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Undefined role '%s'", "Teacher")))
 	}
 
 	var existingUser teacher.Teacher
@@ -62,11 +63,15 @@ func (t *TeacherService) CreateTeacher(request teacher_request.TeacherModifyRequ
 	}
 
 	userService := user_service.NewUserService()
+	useHasAccess := 1
+	if request.IsAccess == false {
+		useHasAccess = 0
+	}
 	resultUser := userService.CreateNewUser(&user.User{
-		Username:   request.Username,
+		Username:   request.Nuptk,
 		Role:       role.ID,
-		Status:     1,
-		Password:   request.Password,
+		Status:     uint(useHasAccess),
+		Password:   request.Nuptk,
 		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
 	})
 
@@ -81,7 +86,7 @@ func (t *TeacherService) CreateTeacher(request teacher_request.TeacherModifyRequ
 	return teacher_response.TeacherDetailResponse{
 		Nuptk:    request.Nuptk,
 		Name:     request.Name,
-		Username: request.Username,
+		Username: request.Nuptk,
 		Role: response2.GeneralLabelKeyResponse{
 			Key:   role.Code,
 			Label: role.Name,
@@ -104,34 +109,97 @@ func (t *TeacherService) UpdateTeacher(id uint, request teacher_request.TeacherM
 		existTeacher.Nuptk = request.Nuptk
 	}
 
-	role := t.userRepository.ReadRole(request.Role)
-	if role == nil {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Undefined role '%s'", request.Role)))
-	}
-
 	userService := user_service.NewUserService()
-	password, salt, _ := helper.HashPasswordArgon2(request.Password)
+	useHasAccess := 1
+	if request.IsAccess == false {
+		useHasAccess = 0
+	}
 	_ = userService.UpdateUser(existTeacher.UserId, &user.User{
-		Username: request.Username,
-		Role:     role.ID,
-		Status:   1,
-		Password: password,
-		Salt:     salt,
+		Username: request.Nuptk,
+		Status:   uint(useHasAccess),
+		Password: request.Nuptk,
 	})
 
+	existTeacher.Name = request.Name
+	existTeacher.Gender = request.Gender
 	t.teacherRepository.Database.Save(&existTeacher)
 
 	return teacher_response.TeacherDetailResponse{
 		Nuptk:    request.Nuptk,
 		Name:     request.Name,
-		Username: request.Username,
-		Role: response2.GeneralLabelKeyResponse{
-			Key:   role.Code,
-			Label: role.Name,
-		},
+		Username: request.Nuptk,
 	}
 }
 
 func (t *TeacherService) DeleteById(id uint) {
 	t.teacherRepository.Delete(id)
+}
+
+func (t *TeacherService) GetAllSubjectClassTeacher(teacherId uint) []teacher.TeacherClassSubject {
+	var subjects []teacher.TeacherClassSubject
+	t.teacherRepository.Database.Where("teacher_id = ?", teacherId).
+		Preload("Subject").
+		Preload("Class").
+		Find(&subjects)
+
+	return subjects
+}
+
+func (t *TeacherService) GetDetailSubjectClassTeacher(id uint) teacher.TeacherClassSubject {
+	var subject teacher.TeacherClassSubject
+	t.teacherRepository.Database.Where("id = ?", id).First(&subject)
+	return subject
+}
+
+func (t *TeacherService) CreateSubjectClassTeacher(request teacher_request.TeacherMappingSubjectClass) teacher_request.TeacherMappingSubjectClass {
+	t.validateCheckDuplicate(request)
+
+	data := teacher.TeacherClassSubject{
+		TeacherId:   request.TeacherId,
+		SubjectCode: request.SubjectId,
+		ClassId:     request.ClassId,
+	}
+	t.teacherRepository.Database.Create(&data)
+
+	return request
+}
+
+func (t *TeacherService) validateCheckDuplicate(request teacher_request.TeacherMappingSubjectClass) {
+	var checkExistRegister teacher.TeacherClassSubject
+	t.teacherRepository.Database.Where("class_id = ? AND subject_code = ?", request.ClassId, request.SubjectId).First(&checkExistRegister)
+
+	if checkExistRegister.ID != 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with class id '%d' and '%s' already exists", request.ClassId, request.SubjectId)))
+	}
+}
+
+func (t *TeacherService) DeleteSubjectClassTeacher(id uint) {
+	var subject teacher.TeacherClassSubject
+	t.teacherRepository.Database.Where("id = ?", id).First(&subject)
+	if subject.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with id '%d' not found", id)))
+	}
+	t.teacherRepository.Database.Delete(&subject)
+}
+
+func (t *TeacherService) UpdateSubjectClassTeacher(id uint, request teacher_request.TeacherMappingSubjectClass) teacher_request.TeacherMappingSubjectClass {
+	var subject teacher.TeacherClassSubject
+	t.teacherRepository.Database.Where("id = ?", id).First(&subject)
+	if subject.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with id '%d' not found", id)))
+	}
+
+	if request.SubjectId != subject.SubjectCode {
+		t.validateCheckDuplicate(request)
+	}
+
+	if request.ClassId != subject.ClassId {
+		t.validateCheckDuplicate(request)
+	}
+
+	subject.SubjectCode = request.SubjectId
+	subject.ClassId = request.ClassId
+
+	t.teacherRepository.Database.Save(&subject)
+	return request
 }

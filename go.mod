@@ -10,7 +10,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	github.com/xuri/excelize/v2 v2.9.0
-	github.com/yon-module/yon-framework v1.1.735
+	github.com/yon-module/yon-framework v1.1.736
 	golang.org/x/crypto v0.36.0
 	gorm.io/gorm v1.25.12
 )

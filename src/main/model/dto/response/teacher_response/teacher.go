@@ -6,5 +6,7 @@ type TeacherDetailResponse struct {
 	Nuptk    string                           `json:"nuptk"`
 	Name     string                           `json:"name"`
 	Username string                           `json:"username"`
+	Gender   string                           `json:"gender"`
 	Role     response.GeneralLabelKeyResponse `json:"role"`
+	IsAccess bool                             `json:"isAccess"`
 }

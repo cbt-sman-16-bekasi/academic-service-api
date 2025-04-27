@@ -121,3 +121,45 @@ func (s *TeacherController) DeleteTeacher(c *gin.Context) {
 	s.teacherService.DeleteById(uint(id))
 	response.SuccessResponse("Success delete teacher", gin.H{"id": id}).Json(c)
 }
+
+func (s *TeacherController) GetTeacherSubjectClassList(c *gin.Context) {
+	var idParam = c.Param("teacherId")
+	id, _ := strconv.Atoi(idParam)
+
+	resp := s.teacherService.GetAllSubjectClassTeacher(uint(id))
+	response.SuccessResponse("Success get subject class list", resp).Json(c)
+}
+
+func (s *TeacherController) GetDetailTeacherSubject(c *gin.Context) {
+	var idParam = c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+
+	resp := s.teacherService.GetDetailSubjectClassTeacher(uint(id))
+	response.SuccessResponse("Success get subject class", resp).Json(c)
+}
+
+func (s *TeacherController) CreateTeacherSubject(c *gin.Context) {
+	var req teacher_request.TeacherMappingSubjectClass
+	_ = c.BindJSON(&req)
+
+	resp := s.teacherService.CreateSubjectClassTeacher(req)
+	response.SuccessResponse("Success create subject class", resp).Json(c)
+}
+
+func (s *TeacherController) UpdateTeacherSubject(c *gin.Context) {
+	var req teacher_request.TeacherMappingSubjectClass
+	_ = c.BindJSON(&req)
+
+	var idParam = c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+
+	resp := s.teacherService.UpdateSubjectClassTeacher(uint(id), req)
+	response.SuccessResponse("Success update subject class", resp).Json(c)
+}
+
+func (s *TeacherController) DeleteTeacherSubject(c *gin.Context) {
+	var idParam = c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+	s.teacherService.DeleteSubjectClassTeacher(uint(id))
+	response.SuccessResponse("Success delete subject class", gin.H{"id": id}).Json(c)
+}
