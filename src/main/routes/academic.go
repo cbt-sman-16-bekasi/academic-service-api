@@ -109,6 +109,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	{
 		examRoute := exam.Use(jwt.AuthMiddleware())
 		examRoute.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllExam)
+		examRoute.GET("/member/:examCode", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetExamMember)
 		examRoute.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailExam)
 		examRoute.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateExam)
 		examRoute.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.UpdateExam)
@@ -135,6 +136,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		examSession.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "delete"), examController.DeleteExamSession)
 		examSession.GET("/attendance", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAttendance)
 		examSession.GET("/attendance/download", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.DownloadAttendance)
+		examSession.GET("/member/:sessionId", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionMember)
 	}
 
 	examSessionToken := exam.Group("/session/token").Use(jwt.AuthMiddleware())

@@ -14,8 +14,11 @@ type ExamSessionListResponse struct {
 type ExamDetailSessionResponse struct {
 	*school.ExamSession
 	Exam            school.Exam `json:"exam"`
-	TotalStudent    int         `json:"total_student"`
-	TotalAttendance int         `json:"total_attendance"`
+	TotalStudent    int64       `json:"total_student"`
+	TotalAttendance int64       `json:"total_attendance"`
+	TotalSubmit     int64       `json:"total_submit"`
+	TotalCheating   int64       `json:"total_cheating"`
+	TotalTimesOver  int64       `json:"total_times_over"`
 }
 
 type ExamSessionAttendanceResponse struct {

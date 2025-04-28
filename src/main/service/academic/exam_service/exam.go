@@ -7,6 +7,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/exam_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
@@ -708,27 +709,9 @@ func (e *ExamService) setBankQuestionOptions(questionID string, request exam_req
 
 func (e *ExamService) GetAllBankQuestion(request pagination.Request[map[string]interface{}]) *database.Paginator {
 	paging := database.NewPagination[map[string]interface{}]().
-		SetModal([]school.MasterBankQuestion{}).
-		SetPreloads("DetailSubject", "DetailClassCode").
+		SetModal([]view.MasterBankQuestionResponse{}).
 		SetRequest(&request).
 		FindAllPaging()
-
-	var records []school.MasterBankQuestion
-	data, _ := json.Marshal(paging.Records)
-	_ = json.Unmarshal(data, &records)
-
-	var newResponse []exam_response.MasterBankQuestionResponse
-	for _, record := range records {
-		var questions []school.BankQuestion
-		e.examRepository.Database.Where("master_bank_question_code = ?", record.Code).
-			Find(&questions)
-		newResponse = append(newResponse, exam_response.MasterBankQuestionResponse{
-			MasterBankQuestion: record,
-			TotalQuestion:      len(questions),
-		})
-	}
-
-	paging.Records = newResponse
 	return paging
 }
 
@@ -863,4 +846,11 @@ func (e *ExamService) DeleteBankQuestion(id uint) *school.BankQuestion {
 	}
 	e.examRepository.Database.Delete(&detail)
 	return &detail
+}
+
+func (e *ExamService) GetExamMember(code string) []school.ExamMember {
+	var data []school.ExamMember
+	e.examRepository.Database.Where("exam_code = ?", code).Preload("DetailClass").Find(&data)
+
+	return data
 }

@@ -1,4 +1,4 @@
-package report
+package view
 
 type DashboardSummary struct {
 	TotalUsers         int `json:"total_users" gorm:"column:total_users"`

@@ -59,7 +59,7 @@ func (e *ExamRepository) GetExamData(classId uint) []school.Exam {
 func (e *ExamRepository) GetExamSessionActiveNow(examCode []string, studentId uint) *school.ExamSession {
 	var examSession school.ExamSession
 	timeNow := time.Now()
-	e.Database.Where("exam_session.exam_code IN ?", examCode).
+	e.Database.Where("exam_session.session_id IN ?", examCode).
 		Joins("LEFT JOIN cbt_service.student_history_taken st ON st.session_id = exam_session.session_id AND st.student_id = ? AND status != 'COMPLETED'", studentId).
 		Where("start_date <= ? and end_date >= ?", timeNow, timeNow).
 		Order("exam_session.start_date asc").

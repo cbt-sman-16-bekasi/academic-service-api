@@ -7,6 +7,7 @@ type ModifyExamSessionRequest struct {
 	ExamCode string    `json:"exam_code"`
 	StartAt  time.Time `json:"start_at"`
 	EndAt    time.Time `json:"end_at"`
+	ClassId  []int     `json:"class_id"`
 }
 
 type ExamSessionGenerateToken struct {
@@ -35,6 +36,8 @@ type ExamSessionSubmit struct {
 	ExamCode      string             `json:"exam_code"`
 	ExamSessionId string             `json:"exam_session_id"`
 	IsForced      bool               `json:"is_forced"`
+	IsTimeOver    bool               `json:"is_time_over"`
+	IsCheat       bool               `json:"is_cheat"`
 	Result        []ExamResultSubmit `json:"result"`
 }
 

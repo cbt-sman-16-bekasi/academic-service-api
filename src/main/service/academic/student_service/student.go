@@ -12,6 +12,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/exam_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/user_service"
@@ -164,16 +165,19 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 
 	studentClass := s.studentRepo.GetStudentClass(std.ID)
 
-	examData := s.studentRepo.ExamRepo.GetExamData(studentClass.ClassId)
-	if len(examData) == 0 {
+	var examActive []view.ExamSessionActiveToday
+	s.studentRepo.Database.Where("class = ?", studentClass.ClassId).Find(&examActive)
+
+	if len(examActive) == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
 	}
 
-	var examCodes []string
-	for _, examDatum := range examData {
-		examCodes = append(examCodes, examDatum.Code)
+	var sessionActives []string
+	for _, today := range examActive {
+		sessionActives = append(sessionActives, today.SessionID)
 	}
-	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(examCodes, std.ID)
+
+	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(sessionActives, std.ID)
 	if examSession.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
 	}

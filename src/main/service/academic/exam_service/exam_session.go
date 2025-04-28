@@ -10,6 +10,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/cbt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/gin-gonic/gin"
@@ -44,8 +45,8 @@ func (e *ExamSessionService) GetAllExamSession(request pagination.Request[map[st
 			"DetailExam",
 			"DetailExam.DetailSubject",
 			"DetailExam.DetailTypeExam",
-			"DetailExam.ExamMember",
-			"DetailExam.ExamMember.DetailClass",
+			"ExamSessionMember",
+			"ExamSessionMember.DetailClass",
 		).
 		SetRequest(&request).
 		FindAllPaging()
@@ -59,7 +60,7 @@ func (e *ExamSessionService) GetAllExamSession(request pagination.Request[map[st
 		var totalStudent int64
 		classIds := make([]uint, 0)
 
-		for _, m := range record.DetailExam.ExamMember {
+		for _, m := range record.ExamSessionMember {
 			classIds = append(classIds, m.Class)
 		}
 
@@ -82,16 +83,17 @@ func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDet
 		return exam_response.ExamDetailSessionResponse{}
 	}
 
-	var totalAttendance int64
-	e.examSessionRepository.Database.Where("session_id = ? AND end_at is not null", data.SessionId).
-		Model(&cbt.StudentHistoryTaken{}).
-		Count(&totalAttendance)
+	var summarySession view.SummaryExamSession
+	e.examSessionRepository.Database.Where("session_id = ?", data.SessionId).First(&summarySession)
 
 	return exam_response.ExamDetailSessionResponse{
 		ExamSession:     data,
 		Exam:            data.DetailExam,
 		TotalStudent:    0,
-		TotalAttendance: int(totalAttendance),
+		TotalAttendance: summarySession.TotalLogin,
+		TotalSubmit:     summarySession.TotalStudentSubmit,
+		TotalCheating:   summarySession.TotalCheating,
+		TotalTimesOver:  summarySession.TotalTimeIsOver,
 	}
 }
 
@@ -105,6 +107,16 @@ func (e *ExamSessionService) CreateExamSession(request exam_request.ModifyExamSe
 	}
 
 	e.examSessionRepository.Database.Create(&data)
+
+	var dataExamSessionMember []school.ExamSessionMember
+	for _, classId := range request.ClassId {
+		dataExamSessionMember = append(dataExamSessionMember, school.ExamSessionMember{
+			SessionId: data.SessionId,
+			Class:     uint(classId),
+		})
+	}
+
+	e.examSessionRepository.Database.Create(&dataExamSessionMember)
 	return request
 }
 
@@ -119,6 +131,17 @@ func (e *ExamSessionService) UpdateExamSession(id uint, request exam_request.Mod
 	existing.StartDate = request.StartAt
 	existing.EndDate = request.EndAt
 	e.examSessionRepository.Database.Save(&existing)
+
+	e.examSessionRepository.Database.Where("session_id = ?", existing.SessionId).Delete(&school.ExamSessionMember{})
+	var dataExamSessionMember []school.ExamSessionMember
+	for _, classId := range request.ClassId {
+		dataExamSessionMember = append(dataExamSessionMember, school.ExamSessionMember{
+			SessionId: existing.SessionId,
+			Class:     uint(classId),
+		})
+	}
+
+	e.examSessionRepository.Database.Create(&dataExamSessionMember)
 	return request
 }
 
@@ -127,19 +150,8 @@ func (e *ExamSessionService) DeleteExamSession(id uint) {
 }
 
 func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAttendanceRequest) []exam_response.ExamSessionAttendanceResponse {
-	var examSession school.ExamSession
-	e.examSessionRepository.Database.Where("session_id", request.ExamSessionId).
-		Preload("DetailExam").
-		Preload("DetailExam.ExamMember").
-		First(&examSession)
-
-	classIds := make([]uint, 0)
-	for _, member := range examSession.DetailExam.ExamMember {
-		classIds = append(classIds, member.Class)
-	}
-
 	var studentClasses []student.StudentClass
-	e.examSessionRepository.Database.Where("class_id", classIds).
+	e.examSessionRepository.Database.Where("class_id = ?", request.ClassId).
 		Preload("DetailStudent").
 		Preload("DetailClass").
 		Find(&studentClasses)
@@ -151,12 +163,25 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, class.DetailStudent.ID).First(&studentAttendance)
 		status := studentAttendance.Status
 
+		if status == "STARTED" {
+			status = "Aktif"
+		}
+		if status == "COMPLETED" {
+			status = "Selesai"
+		}
+
 		if studentAttendance.IsForced {
-			status = "SUBMIT BY SYSTEM"
+			status = "Dikumpulkan Oleh Sistem"
+			if studentAttendance.IsTimeOver {
+				status = "Mengumpulkan Pada Waktu Habis"
+			}
+			if studentAttendance.IsCheating {
+				status = "Terindikasi Kecurangan"
+			}
 		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
 			Nisn:    class.DetailStudent.Nisn,
-			Name:    class.DetailStudent.Name,
+			Name:    strings.ToUpper(class.DetailStudent.Name),
 			Class:   class.DetailClass.ClassName,
 			StartAt: &studentAttendance.StartAt,
 			EndAt:   studentAttendance.EndAt,
@@ -289,6 +314,8 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	timeNow := time.Now()
 	existingHistoryTaken.IsForced = request.IsForced
+	existingHistoryTaken.IsTimeOver = request.IsTimeOver
+	existingHistoryTaken.IsForced = request.IsForced
 	existingHistoryTaken.IsFinished = true
 	existingHistoryTaken.EndAt = &timeNow
 	existingHistoryTaken.Status = "COMPLETED"
@@ -299,11 +326,26 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	var studentAnswers []cbt.StudentAnswers
 	totalScore := 0
+	totalAllScore := 0
 	totalCorrect := 0
+
+	var questions []school.ExamQuestion
+	e.examSessionRepository.Database.Where("exam_code = ?", existingHistoryTaken.ExamCode).Find(&questions)
+	for _, question := range questions {
+		totalAllScore += question.Score
+	}
+
 	for _, submit := range request.Result {
 		score := 0
+
 		var question school.ExamQuestion
-		e.examSessionRepository.Database.Where("question_id = ?", submit.QuestionId).First(&question)
+		for _, examQuestion := range questions {
+			if examQuestion.QuestionId == submit.QuestionId {
+				question = examQuestion
+				break
+			}
+		}
+
 		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
 			score = question.Score
 			totalCorrect++
@@ -327,7 +369,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	e.examSessionRepository.Database.Save(&studentAnswers)
 
-	existingHistoryTaken.Score = totalScore
+	existingHistoryTaken.Score = (totalScore / totalAllScore) * 100
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 	return existingHistoryTaken
@@ -384,4 +426,10 @@ func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, 
 			response.ServerError, "Failed generate report"),
 		)
 	}
+}
+
+func (e *ExamSessionService) ExamSessionMember(sessionId string) []school.ExamSessionMember {
+	var examSessionMembers []school.ExamSessionMember
+	e.examSessionRepository.Database.Where("session_id = ?", sessionId).Preload("DetailClass").Find(&examSessionMembers)
+	return examSessionMembers
 }

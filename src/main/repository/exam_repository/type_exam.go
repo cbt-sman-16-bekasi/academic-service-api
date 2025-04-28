@@ -28,3 +28,13 @@ func (t *TypeExamRepository) FindByCode(code string) *school.TypeExam {
 	}
 	return &typeExam
 }
+
+func (t *TypeExamRepository) FindById(id uint) *school.TypeExam {
+	var typeExam school.TypeExam
+	t.Database.Where("id = ?", id).Preload("DetailRole").Find(&typeExam)
+
+	if typeExam.ID == 0 {
+		return nil
+	}
+	return &typeExam
+}

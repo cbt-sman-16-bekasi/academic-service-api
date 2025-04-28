@@ -42,6 +42,8 @@ type StudentHistoryTaken struct {
 	RemainingTime int        `json:"remaining_time"`
 	IsFinished    bool       `json:"is_finished"`
 	IsForced      bool       `json:"is_forced"`
+	IsTimeOver    bool       `json:"is_time_over"`
+	IsCheating    bool       `json:"is_cheating"`
 }
 
 func (s StudentHistoryTaken) TableName() string {

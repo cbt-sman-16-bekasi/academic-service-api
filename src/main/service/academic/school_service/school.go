@@ -8,8 +8,8 @@ import (
 	classResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/class_response"
 	schoolResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/school_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/report"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/database"
@@ -151,7 +151,7 @@ func (s *SchoolService) DeleteClassSubject(id uint) {
 }
 
 func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
-	var dashboard report.DashboardSummary
+	var dashboard view.DashboardSummary
 	s.repo.Database.First(&dashboard)
 	return schoolResponse.DashboardResponse{
 		TotalClass:       dashboard.TotalClasses,

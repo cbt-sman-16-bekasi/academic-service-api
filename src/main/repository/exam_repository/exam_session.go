@@ -23,8 +23,8 @@ func (e *ExamSessionRepository) FindById(id uint) *school.ExamSession {
 	e.Database.Where("id = ?", id).Preload("DetailExam").
 		Preload("DetailExam.DetailSubject").
 		Preload("DetailExam.DetailTypeExam").
-		Preload("DetailExam.ExamMember").
-		Preload("DetailExam.ExamMember.DetailClass").
+		Preload("ExamSessionMember").
+		Preload("ExamSessionMember.DetailClass").
 		First(&session)
 	return &session
 }

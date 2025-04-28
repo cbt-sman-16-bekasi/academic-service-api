@@ -131,7 +131,10 @@ func (e *ExamController) CreateExamSession(c *gin.Context) {
 // @Router /academic/exam/session/attendance [get]
 func (e *ExamController) GetAttendance(c *gin.Context) {
 	var request exam_request.ExamSessionAttendanceRequest
-	_ = c.BindQuery(&request)
+	err := c.BindQuery(&request)
+	if err != nil {
+		panic(err)
+	}
 
 	resp := e.examSessionService.GetAllAttendance(request)
 	response.SuccessResponse("Success get attendance", resp).Json(c)
@@ -213,4 +216,11 @@ func (e *ExamController) SubmitExamSession(c *gin.Context) {
 	claims := jwt.GetDataClaims(c)
 	resp := e.examSessionService.SubmitExamSession(claims, request)
 	response.SuccessResponse("Success submit token", resp).Json(c)
+}
+
+func (e *ExamController) ExamSessionMember(c *gin.Context) {
+	var sessionId = c.Param("sessionId")
+
+	res := e.examSessionService.ExamSessionMember(sessionId)
+	response.SuccessResponse("Success get exam session member", res).Json(c)
 }

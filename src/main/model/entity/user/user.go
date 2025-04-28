@@ -12,6 +12,7 @@ type User struct {
 	Salt       string `gorm:"salt_password" json:"-"`
 	Role       uint   `gorm:"default:1" json:"-"`
 	Status     uint   `gorm:"default:1" json:"status"`
+	Name       string `json:"name"`
 	RoleUser   Role   `gorm:"foreignKey:Role;references:ID" json:"role"`
 }
 

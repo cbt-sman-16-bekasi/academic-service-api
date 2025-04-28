@@ -323,3 +323,10 @@ func (e *ExamController) DeleteBankQuestion(c *gin.Context) {
 	e.examService.DeleteBankQuestion(uint(id))
 	response.SuccessResponse("Success delete exam question", gin.H{}).Json(c)
 }
+
+func (e *ExamController) GetExamMember(c *gin.Context) {
+	var idParam = c.Param("examCode")
+
+	res := e.examService.GetExamMember(idParam)
+	response.SuccessResponse("Success get exam member", res).Json(c)
+}

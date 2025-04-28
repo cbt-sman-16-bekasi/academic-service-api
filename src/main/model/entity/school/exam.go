@@ -1,6 +1,7 @@
 package school
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/core"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"gorm.io/gorm"
@@ -18,6 +19,7 @@ const (
 	TableNameExamBankAnswerOption = "school_service.bank_answer_option"
 	TableNameExamSession          = "school_service.exam_session"
 	TableNameExamSessionToken     = "school_service.exam_session_token"
+	TableNameExamSessionMember    = "school_service.exam_session_member"
 )
 
 type TypeExam struct {
@@ -50,6 +52,7 @@ type Exam struct {
 	TotalScore     int                `json:"total_score" gorm:"type:int"`
 	ExamMember     []ExamMember       `json:"exam_member" gorm:"foreignKey:ExamCode;references:Code"`
 	ExamQuestion   []ExamQuestion     `json:"exam_question" gorm:"foreignKey:ExamCode;references:Code"`
+	core.AuditUser
 }
 
 func (s *Exam) TableName() string {
@@ -105,6 +108,7 @@ type MasterBankQuestion struct {
 	ClassCode       string             `gorm:"type:varchar(50)" json:"class_code"`
 	DetailClassCode ClassCode          `gorm:"foreignKey:ClassCode;references:Code" json:"detail_class_code"`
 	TypeQuestion    string             `json:"type_question" gorm:"type:varchar(50)"`
+	core.AuditUser
 }
 
 func (s *MasterBankQuestion) TableName() string {
@@ -141,16 +145,30 @@ func (s *BankAnswerOption) TableName() string {
 
 type ExamSession struct {
 	gorm.Model
-	SessionId  string    `gorm:"unique" json:"session_id"`
-	ExamCode   string    `json:"-"`
-	DetailExam Exam      `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
-	Name       string    `json:"name"`
-	StartDate  time.Time `json:"start_date"`
-	EndDate    time.Time `json:"end_date"`
+	SessionId         string              `gorm:"unique" json:"session_id"`
+	ExamCode          string              `json:"-"`
+	DetailExam        Exam                `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
+	Name              string              `json:"name"`
+	StartDate         time.Time           `json:"start_date"`
+	EndDate           time.Time           `json:"end_date"`
+	ExamSessionMember []ExamSessionMember `json:"exam_member" gorm:"foreignKey:SessionId;references:SessionId"`
+	core.AuditUser
 }
 
 func (s *ExamSession) TableName() string {
 	return TableNameExamSession
+}
+
+type ExamSessionMember struct {
+	gorm.Model
+	SessionId   string      `json:"session_id"`
+	DetailExam  ExamSession `json:"detail_exam" gorm:"foreignKey:SessionId;references:SessionId"`
+	Class       uint        `json:"class"`
+	DetailClass Class       `json:"detail_class" gorm:"foreignKey:Class;references:ID"`
+}
+
+func (s *ExamSessionMember) TableName() string {
+	return TableNameExamSessionMember
 }
 
 type TokenExamSession struct {
@@ -160,6 +178,7 @@ type TokenExamSession struct {
 	StartActiveToken  time.Time   `json:"start_active_token"`
 	EndActiveToken    time.Time   `json:"end_active_token"`
 	Token             string      `json:"token"`
+	core.AuditUser
 }
 
 func (s *TokenExamSession) TableName() string {

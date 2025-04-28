@@ -29,7 +29,7 @@ func (t *TypeExamService) GetAll(request pagination.Request[map[string]interface
 }
 
 func (t *TypeExamService) GetDetail(id uint) *school.TypeExam {
-	typeExam := t.typeExamRepo.Repository.FindById(id)
+	typeExam := t.typeExamRepo.FindById(id)
 	if typeExam.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Type exam with id '%d' not found", id)))
 	}
