@@ -411,9 +411,9 @@ func (e *ExamService) DownloadTemplateUploadQuestion(examId uint, c *gin.Context
 	sheet := "Sheet1"
 
 	if typeQuestion == "PILIHAN_GANDA" {
-		headers := []string{"Pertanyaan", "Jawaban", "Score", "PilihanA", "PilihanB", "PilihanC", "PilihanD", "PilihanE"}
+		headers := []string{"Pertanyaan", "Jawaban", "PilihanA", "PilihanB", "PilihanC", "PilihanD", "PilihanE"}
 		for i, h := range headers {
-			cell := string(rune('A'+i)) + "1" // A1, B1, C1, ...
+			cell := string(rune('A'+i)) + "1"
 			f.SetCellValue(sheet, cell, h)
 		}
 		f.SetCellValue(sheet, "A2", "Soal Nomor 1")
@@ -425,14 +425,13 @@ func (e *ExamService) DownloadTemplateUploadQuestion(examId uint, c *gin.Context
 		f.SetCellValue(sheet, "G2", "Pilih D")
 		f.SetCellValue(sheet, "H2", "Pilih E")
 	} else {
-		headers := []string{"Pertanyaan", "JawabanRefrensi", "score"}
+		headers := []string{"Pertanyaan", "JawabanRefrensi"}
 		for i, h := range headers {
-			cell := string(rune('A'+i)) + "1" // A1, B1, C1, ...
+			cell := string(rune('A'+i)) + "1"
 			f.SetCellValue(sheet, cell, h)
 		}
 		f.SetCellValue(sheet, "A2", "Apa Pancasila")
 		f.SetCellValue(sheet, "B2", "Pancasila adalah")
-		f.SetCellValue(sheet, "C2", 70)
 	}
 
 	// Set header agar bisa di-download
