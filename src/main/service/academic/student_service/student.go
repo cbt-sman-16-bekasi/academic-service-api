@@ -43,13 +43,14 @@ func NewStudentService() *StudentService {
 
 func (s *StudentService) DetailStudent(id uint) student_response.DetailStudentResponse {
 	detail := s.studentRepo.FindById(id)
+
 	return student_response.DetailStudentResponse{
-		Nisn:   detail.DetailStudent.DetailUser.Username,
-		Name:   detail.DetailStudent.Name,
-		Gender: detail.DetailStudent.Gender,
+		Nisn:   detail.NISN,
+		Name:   detail.Name,
+		Gender: detail.Gender,
 		Class: response.GeneralLabelKeyResponse{
-			Key:   detail.DetailClass.ID,
-			Label: detail.DetailClass.ClassName,
+			Key:   detail.ClassID,
+			Label: detail.ClassName,
 		},
 	}
 }
@@ -57,8 +58,7 @@ func (s *StudentService) DetailStudent(id uint) student_response.DetailStudentRe
 func (s *StudentService) AllStudent(request pagination.Request[map[string]interface{}]) *database.Paginator {
 	paging := database.NewPagination[map[string]interface{}]().
 		SetRequest(&request).
-		SetModal([]student.StudentClass{}).
-		SetPreloads("DetailStudent", "DetailClass", "DetailClass.DetailClassCode", "DetailStudent.DetailUser", "DetailStudent.DetailUser.RoleUser").FindAllPaging()
+		SetModal([]view.VStudent{}).FindAllPaging()
 	return paging
 }
 
@@ -113,27 +113,32 @@ func (s *StudentService) CreateStudent(request student_request.StudentModifyRequ
 }
 
 func (s *StudentService) UpdateStudent(id uint, request student_request.StudentModifyRequest) student_response.DetailStudentResponse {
-	existStudentClass := s.studentRepo.FindById(id)
-	if existStudentClass.ID == 0 {
+	existingStudent := s.studentRepo.FindById(id)
+	if existingStudent.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student does not exist"))
 	}
 
-	existingStudent := existStudentClass.DetailStudent
-	if existingStudent.Nisn != request.Nisn {
+	if existingStudent.NISN != request.Nisn {
 		var existingUser student.Student
 		s.studentRepo.Database.Where("nisn = ?", request.Nisn).First(&existingUser)
 		if existingUser.ID != 0 {
 			panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, fmt.Sprintf("User with NISN '%s' already exists", request.Nisn)))
 		}
-		existingStudent.Nisn = request.Nisn
+		existingStudent.NISN = request.Nisn
 	}
 	existingStudent.Name = request.Name
 	existingStudent.Gender = request.Gender
 
-	s.studentRepo.Database.Save(&existingStudent)
+	s.studentRepo.Database.Model(&student.Student{}).Where("id = ?", id).Updates(&existingStudent)
+
+	var existStudentClass student.StudentClass
+	s.studentRepo.Database.Where("student_id = ?", existingStudent.ID).
+		Preload("DetailStudent.DetailUser").
+		Preload("DetailStudent").
+		First(&existStudentClass)
 
 	existStudentClass.ClassId = request.ClassId
-	s.studentRepo.Database.Save(&existingStudent)
+	s.studentRepo.Database.Model(&student.StudentClass{}).Where("student_id = ?", id).Update("class_id", existStudentClass.ClassId)
 
 	userData := existStudentClass.DetailStudent.DetailUser
 	userData.Username = request.Nisn
@@ -153,8 +158,8 @@ func (s *StudentService) DeleteById(id uint) {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student does not exist"))
 	}
 	s.studentRepo.Delete(id)
-	s.studentRepo.Database.Where("id = ?", existStudentClass.StudentId).Delete(&student.Student{})
-	s.studentRepo.Database.Where("id = ?", existStudentClass.DetailStudent.UserId).Delete(&user.User{})
+	s.studentRepo.Database.Where("id = ?", existStudentClass.ID).Delete(&student.Student{})
+	s.studentRepo.Database.Where("id = ?", existStudentClass.UserID).Delete(&user.User{})
 }
 
 func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_response.AuthResponseCBT {

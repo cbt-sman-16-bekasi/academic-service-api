@@ -103,6 +103,7 @@ func (s *ExamAnswerOption) TableName() string {
 type MasterBankQuestion struct {
 	gorm.Model
 	Code            string             `gorm:"unique" json:"code"`
+	BankName        string             `gorm:"type:varchar(255)" json:"bank_name"`
 	SubjectCode     string             `gorm:"type:varchar(50)" json:"subject_code"`
 	DetailSubject   curriculum.Subject `gorm:"foreignKey:SubjectCode;references:Code" json:"detail_subject"`
 	ClassCode       string             `gorm:"type:varchar(50)" json:"class_code"`

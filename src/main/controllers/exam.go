@@ -43,7 +43,7 @@ func (e *ExamController) GetAllExam(c *gin.Context) {
 	var request pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&request)
 
-	resp := e.examService.GetAllExam(request)
+	resp := e.examService.GetAllExam(c, request)
 	response.SuccessResponse("Success get data exam", resp).Json(c)
 }
 

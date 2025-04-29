@@ -18,6 +18,7 @@ type Claims struct {
 	Role       string   `json:"role"`
 	Permission []string `json:"permission"`
 	SchoolCode string   `json:"school_code"`
+	ID         uint     `json:"id"`
 }
 
 func GenerateJWT(claim Claims) (string, error) {

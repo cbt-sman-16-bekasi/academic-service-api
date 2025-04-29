@@ -2,9 +2,11 @@ package exam_service
 
 import (
 	"fmt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
+	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
@@ -21,7 +23,14 @@ func NewTypeExamService() *TypeExamService {
 	}
 }
 
-func (t *TypeExamService) GetAll(request pagination.Request[map[string]interface{}]) *database.Paginator {
+func (t *TypeExamService) GetAll(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+		filter["role"] = claims.Role
+
+		request.Filter = &filter
+	}
 	return database.NewPagination[map[string]interface{}]().
 		SetModal([]school.TypeExam{}).
 		SetRequest(&request).
@@ -77,5 +86,9 @@ func (t *TypeExamService) ModifyTypeExam(id uint, request exam_request.ModifyTyp
 }
 
 func (t *TypeExamService) DeleteTypeExam(id uint) {
-	_ = t.typeExamRepo.Repository.DeleteById(id)
+	existingData := t.typeExamRepo.Repository.FindById(id)
+	if existingData.ID == 0 {
+		panic("Failed delete type exam")
+	}
+	t.typeExamRepo.Database.Delete(&existingData)
 }

@@ -2,6 +2,7 @@ package school_repository
 
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/yon-module/yon-framework/database"
 	"gorm.io/gorm"
@@ -20,13 +21,17 @@ func NewStudentRepository() *StudentRepository {
 	}
 }
 
-func (s *StudentRepository) FindById(id uint) (student *student.StudentClass) {
+func (s *StudentRepository) FindById(id uint) (student *view.VStudent) {
+	_ = s.Database.Where("id = ?", id).
+		Preload(clause.Associations).
+		First(&student)
+	return
+}
+
+func (s *StudentRepository) FindByIdWithClass(id uint) (student *student.StudentClass) {
 	_ = s.Database.Where("id = ?", id).
 		Preload("DetailClass").
-		Preload("DetailStudent.DetailUser").
-		Preload("DetailStudent.DetailUser.RoleUser").
 		Preload("DetailStudent").
-		Preload(clause.Associations).
 		First(&student)
 	return
 }

@@ -27,6 +27,7 @@ type ModifyExamQuestionRequest struct {
 }
 
 type ModifyMasterBankQuestionRequest struct {
+	BankName     string `json:"bank_name"`
 	SubjectCode  string `json:"subject_code"`
 	ClassCode    string `json:"class_code"`
 	TypeQuestion string `json:"type_question"`

@@ -157,7 +157,7 @@ func (e *ExamController) DownloadAttendance(c *gin.Context) {
 	var request exam_request.ExamSessionAttendanceRequest
 	_ = c.BindQuery(&request)
 	data := e.examSessionService.GetAllAttendance(request)
-	e.examSessionService.ExportExamSessionAttendanceToExcel(c, data)
+	e.examSessionService.ExportExamSessionAttendanceToExcel(c, data, request)
 }
 
 // GetAllExamSessionToken Get 100 latest token

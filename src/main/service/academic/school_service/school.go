@@ -52,16 +52,20 @@ func (s *SchoolService) GetAllSubject() []curriculum.Subject {
 func (s *SchoolService) RetrieveDetailSchool(c *gin.Context) schoolResponse.DetailSchool {
 	schoolDetail := s.repo.FindTopBySchoolCode(c.Query("schoolCode"))
 	return schoolResponse.DetailSchool{
-		SchoolName:       schoolDetail.SchoolName,
-		Id:               schoolDetail.SchoolCode,
-		Address:          schoolDetail.Address,
-		Email:            schoolDetail.Email,
-		Phone:            schoolDetail.Phone,
-		Logo:             schoolDetail.Logo,
-		Npsn:             schoolDetail.NPSN,
-		Nss:              schoolDetail.NSS,
-		Banner:           schoolDetail.Banner,
-		LevelOfEducation: "SMA",
+		SchoolName:        schoolDetail.SchoolName,
+		Id:                schoolDetail.SchoolCode,
+		Address:           schoolDetail.Address,
+		Email:             schoolDetail.Email,
+		Phone:             schoolDetail.Phone,
+		Logo:              schoolDetail.Logo,
+		Npsn:              schoolDetail.NPSN,
+		Nss:               schoolDetail.NSS,
+		Banner:            schoolDetail.Banner,
+		PrincipalName:     schoolDetail.PrincipalName,
+		PrincipalNIP:      schoolDetail.PrincipalNIP,
+		VicePrincipalName: schoolDetail.VicePrincipalName,
+		VicePrincipalNIP:  schoolDetail.VicePrincipalNIP,
+		LevelOfEducation:  "SMA",
 	}
 }
 
@@ -175,6 +179,10 @@ func (s *SchoolService) ModifySchool(claims jwt.Claims, req school_request.Modif
 	sch.Email = req.Email
 	sch.Address = req.Address
 	sch.Banner = req.Banner
+	sch.PrincipalName = req.PrincipalName
+	sch.VicePrincipalName = req.VicePrincipalName
+	sch.PrincipalNIP = req.PrincipalNIP
+	sch.VicePrincipalNIP = req.VicePrincipalNIP
 
 	s.repo.Database.Save(&sch)
 	return schoolResponse.DetailSchool{

@@ -35,7 +35,18 @@ func NewExamService() *ExamService {
 	}
 }
 
-func (e *ExamService) GetAllExam(request pagination.Request[map[string]interface{}]) *database.Paginator {
+func (e *ExamService) GetAllExam(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	//claims := jwt.GetDataClaims(c)
+	//if claims.Role != "ADMIN" {
+	//	// Change method for get data ID user
+	//	var teacherData teacher.Teacher
+	//	_ = e.examRepository.Database.Where("user_id")
+	//
+	//	filter := map[string]interface{}{}
+	//	filter["created_by"] = claims
+	//
+	//	request.Filter = &filter
+	//}
 	paging := database.NewPagination[map[string]interface{}]().
 		SetModal([]school.Exam{}).
 		SetPreloads(
@@ -735,6 +746,7 @@ func (e *ExamService) GetDetailBankQuestion(id uint) exam_response.MasterBankQue
 func (e *ExamService) CreateMasterBankQuestion(request exam_request.ModifyMasterBankQuestionRequest) *school.MasterBankQuestion {
 	code := "BANK_" + helper.RandomString(10)
 	body := &school.MasterBankQuestion{
+		BankName:     request.BankName,
 		SubjectCode:  request.SubjectCode,
 		ClassCode:    request.ClassCode,
 		TypeQuestion: request.TypeQuestion,
@@ -752,6 +764,7 @@ func (e *ExamService) UpdateMasterBankQuestion(id uint, request exam_request.Mod
 	if detail.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Master Bank Question Not Found"))
 	}
+	detail.BankName = request.BankName
 	detail.SubjectCode = request.SubjectCode
 	detail.ClassCode = request.ClassCode
 	detail.TypeQuestion = request.TypeQuestion

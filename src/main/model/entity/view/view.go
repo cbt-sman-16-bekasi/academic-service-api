@@ -7,6 +7,7 @@ type MasterBankQuestionResponse struct {
 	Total        int    `json:"total"`
 	TypeQuestion string `json:"type_question"`
 	Name         string `json:"name"`
+	BankName     string `json:"bank_name"`
 }
 
 func (s *MasterBankQuestionResponse) TableName() string {
@@ -34,4 +35,19 @@ type ExamSessionActiveToday struct {
 
 func (ExamSessionActiveToday) TableName() string {
 	return "public.v_exam_session_active_today"
+}
+
+type VStudent struct {
+	ID        uint   `json:"id" db:"id" gorm:"column:id"`
+	UserID    uint   `json:"user_id" db:"user_id" gorm:"column:user_id"`
+	NISN      string `json:"nisn" db:"nisn" gorm:"column:nisn"`
+	Name      string `json:"name" db:"name" gorm:"column:name"`
+	Gender    string `json:"gender" db:"gender" gorm:"column:gender"`
+	ClassName string `json:"class_name" db:"class_name" gorm:"column:class_name"`
+	ClassID   uint   `json:"class_id" db:"class_id" gorm:"column:class_id"`
+}
+
+// TableName sets the name of the table/view for GORM
+func (VStudent) TableName() string {
+	return "public.v_student"
 }

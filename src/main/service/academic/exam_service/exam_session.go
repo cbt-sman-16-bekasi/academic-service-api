@@ -375,7 +375,14 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	return existingHistoryTaken
 }
 
-func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, responses []exam_response.ExamSessionAttendanceResponse) {
+func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, responses []exam_response.ExamSessionAttendanceResponse, request exam_request.ExamSessionAttendanceRequest) {
+	var examSession school.ExamSession
+	_ = e.studentRepo.Database.Where("session_id = ?", request.ExamSessionId).
+		Preload("DetailExam").
+		Preload("DetailExam.DetailSubject").
+		Preload("DetailExam.DetailTypeExam").
+		First(&examSession)
+
 	f := excelize.NewFile()
 	sheet := "Attendance"
 	index, _ := f.NewSheet(sheet)
@@ -413,10 +420,17 @@ func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, 
 	}
 
 	f.SetActiveSheet(index)
+
+	fileName := fmt.Sprintf(
+		"Data Peserta_%s_%s_%s.xlsx",
+		examSession.DetailExam.DetailTypeExam.Code,
+		examSession.DetailExam.DetailSubject.Subject,
+		examSession.EndDate.Format("20060102"),
+	)
 	// Stream Excel ke response
 	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", `attachment; filename="exam_attendance.xlsx"`)
-	c.Header("File-Name", "exam_attendance.xlsx")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
+	c.Header("File-Name", fmt.Sprintf(`attachment; filename="%s"`, fileName))
 	c.Header("Content-Transfer-Encoding", "binary")
 	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
 	c.Header("Expires", "0")

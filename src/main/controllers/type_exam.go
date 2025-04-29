@@ -28,7 +28,7 @@ func (e *ExamController) GetAllTypeExam(c *gin.Context) {
 	var request pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&request)
 
-	resp := e.typeExamService.GetAll(request)
+	resp := e.typeExamService.GetAll(c, request)
 	response.SuccessResponse("Success get all type Exam", resp).Json(c)
 }
 
