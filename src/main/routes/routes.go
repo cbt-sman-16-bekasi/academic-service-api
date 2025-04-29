@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -16,4 +17,5 @@ func init() {
 	})
 
 	server.AddRoutes(academicRoutes)
+	observer.RegisterEvent()
 }

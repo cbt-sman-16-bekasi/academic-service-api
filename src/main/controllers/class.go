@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/class_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/database"
@@ -82,6 +84,7 @@ func (s *ClassController) CreateNewClass(c *gin.Context) {
 	_ = c.BindJSON(&req)
 
 	resp := s.classService.CreateNewClass(req)
+	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success create new class", resp).Json(c)
 }
 
@@ -106,6 +109,7 @@ func (s *ClassController) UpdateClass(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	resp := s.classService.ModifyClass(uint(id), req)
+	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success update class", resp).Json(c)
 }
 
@@ -127,5 +131,6 @@ func (s *ClassController) DeleteClass(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	s.classService.DeleteById(uint(id))
+	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success delete class", gin.H{"id": id}).Json(c)
 }

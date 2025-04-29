@@ -9,6 +9,7 @@ type ExamSessionListResponse struct {
 	school.ExamSession
 	Exam         school.Exam `json:"exam"`
 	TotalStudent int         `json:"total_student"`
+	IsActive     bool        `json:"is_active"`
 }
 
 type ExamDetailSessionResponse struct {

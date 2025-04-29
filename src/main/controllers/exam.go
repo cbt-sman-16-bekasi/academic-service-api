@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/exam_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
@@ -83,7 +85,8 @@ func (e *ExamController) CreateExam(c *gin.Context) {
 	var request exam_request.ModifyExamRequest
 	_ = c.BindJSON(&request)
 
-	resp := e.examService.CreateNewExam(request)
+	resp := e.examService.CreateNewExam(c, request)
+	observer.Trigger(model.EventExamChanged)
 	response.SuccessResponse("Success create exam", resp).Json(c)
 }
 
@@ -107,7 +110,8 @@ func (e *ExamController) UpdateExam(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 
-	resp := e.examService.UpdateExam(uint(id), request)
+	resp := e.examService.UpdateExam(c, uint(id), request)
+	observer.Trigger(model.EventExamChanged)
 	response.SuccessResponse("Success update exam", resp).Json(c)
 }
 
@@ -127,6 +131,7 @@ func (e *ExamController) DeleteExam(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 	e.examService.DeleteExam(uint(id))
+	observer.Trigger(model.EventExamChanged)
 	response.SuccessResponse("Success delete exam", gin.H{}).Json(c)
 }
 
@@ -266,6 +271,7 @@ func (e *ExamController) CreateMasterBankQuestion(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	res := e.examService.CreateMasterBankQuestion(request)
+	observer.Trigger(model.EventBankQuestionChanged)
 	response.SuccessResponse("Success create master bank question", res).Json(c)
 }
 
@@ -275,6 +281,7 @@ func (e *ExamController) UpdateMasterBankQuestion(c *gin.Context) {
 
 	id, _ := strconv.Atoi(c.Param("id"))
 	resp := e.examService.UpdateMasterBankQuestion(uint(id), request)
+	observer.Trigger(model.EventBankQuestionChanged)
 	response.SuccessResponse("Success update master bank question", resp).Json(c)
 }
 
@@ -282,6 +289,7 @@ func (e *ExamController) DeleteMasterBankQuestion(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 	e.examService.DeleteMasterBankQuestion(uint(id))
+	observer.Trigger(model.EventBankQuestionChanged)
 	response.SuccessResponse("Success delete master bank question", gin.H{}).Json(c)
 }
 

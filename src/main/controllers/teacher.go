@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/teacher_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/teacher_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
@@ -78,6 +80,7 @@ func (s *TeacherController) CreateTeacher(c *gin.Context) {
 	var req teacher_request.TeacherModifyRequest
 	_ = c.BindJSON(&req)
 	resp := s.teacherService.CreateTeacher(req)
+	observer.Trigger(model.EventTeacherChanged)
 	response.SuccessResponse("Success create teacher", resp).Json(c)
 }
 
@@ -100,6 +103,7 @@ func (s *TeacherController) UpdateTeacher(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 	resp := s.teacherService.UpdateTeacher(uint(id), req)
+	observer.Trigger(model.EventTeacherChanged)
 	response.SuccessResponse("Success update teacher", resp).Json(c)
 }
 
@@ -119,6 +123,7 @@ func (s *TeacherController) DeleteTeacher(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 	s.teacherService.DeleteById(uint(id))
+	observer.Trigger(model.EventTeacherChanged)
 	response.SuccessResponse("Success delete teacher", gin.H{"id": id}).Json(c)
 }
 

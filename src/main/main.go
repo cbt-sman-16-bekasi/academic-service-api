@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/docs"
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity"
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/routes"
 	_ "github.com/yon-module/yon-framework/config"
+	"github.com/yon-module/yon-framework/yonevent"
 )
 
 // @title CBT Documentation
@@ -54,4 +56,7 @@ import (
 // @tag.name Type Exam
 // @tag.description Operation about Mastering type exam
 func main() {
+	yonevent.On("serverready", func() {
+		fmt.Println("server ready from MAIN")
+	})
 }

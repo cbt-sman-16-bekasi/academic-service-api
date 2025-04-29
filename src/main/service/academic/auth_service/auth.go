@@ -48,11 +48,13 @@ func (r *AuthService) Login(username string, password string) auth_response.Auth
 	if err != nil {
 		panic(exception.NewIntenalServerExceptionStruct(response.ServerError, err.Error()))
 	}
+	detailUser := r.detailUser(user)
+	jwt.SaveDetailUser(username, detailUser, time.Duration(24)*time.Hour)
 	return auth_response.AuthResponse{
 		Token:  token,
 		User:   user,
 		Exp:    exp,
-		Detail: r.detailUser(user),
+		Detail: detailUser,
 	}
 }
 
@@ -61,6 +63,7 @@ func (r *AuthService) detailUser(user *user.User) interface{} {
 	case "STUDENT":
 		return map[string]interface{}{
 			"name": strings.ReplaceAll(user.Username, "_", " "),
+			"ID":   user.ID,
 		}
 	case "TEACHER":
 		var teacherData teacher.Teacher
@@ -69,6 +72,7 @@ func (r *AuthService) detailUser(user *user.User) interface{} {
 	case "ADMIN":
 		return map[string]interface{}{
 			"name": strings.ReplaceAll(user.Username, "_", " "),
+			"ID":   user.ID,
 		}
 	default:
 		return nil

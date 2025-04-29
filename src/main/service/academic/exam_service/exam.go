@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/exam_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
@@ -36,17 +37,13 @@ func NewExamService() *ExamService {
 }
 
 func (e *ExamService) GetAllExam(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
-	//claims := jwt.GetDataClaims(c)
-	//if claims.Role != "ADMIN" {
-	//	// Change method for get data ID user
-	//	var teacherData teacher.Teacher
-	//	_ = e.examRepository.Database.Where("user_id")
-	//
-	//	filter := map[string]interface{}{}
-	//	filter["created_by"] = claims
-	//
-	//	request.Filter = &filter
-	//}
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+		filter["created_by"] = jwt.GetID(claims.Username)
+
+		request.Filter = &filter
+	}
 	paging := database.NewPagination[map[string]interface{}]().
 		SetModal([]school.Exam{}).
 		SetPreloads(
@@ -107,7 +104,7 @@ func (e *ExamService) GetDetailExam(id uint) exam_response.ExamDetailResponse {
 	}
 }
 
-func (e *ExamService) CreateNewExam(request exam_request.ModifyExamRequest) *school.Exam {
+func (e *ExamService) CreateNewExam(c *gin.Context, request exam_request.ModifyExamRequest) *school.Exam {
 	data := &school.Exam{
 		Code:           "EXAM-" + helper.RandomString(10),
 		Name:           request.Name,
@@ -121,6 +118,8 @@ func (e *ExamService) CreateNewExam(request exam_request.ModifyExamRequest) *sch
 		TypeQuestion:   request.TypeQuestion,
 		TotalScore:     request.Score,
 	}
+	claims := jwt.GetDataClaims(c)
+	data.CreatedBy = jwt.GetID(claims.Username)
 
 	e.examRepository.Database.Create(data)
 
@@ -134,7 +133,7 @@ func (e *ExamService) CreateNewExam(request exam_request.ModifyExamRequest) *sch
 	return data
 }
 
-func (e *ExamService) UpdateExam(id uint, request exam_request.ModifyExamRequest) *school.Exam {
+func (e *ExamService) UpdateExam(c *gin.Context, id uint, request exam_request.ModifyExamRequest) *school.Exam {
 	existing := e.examRepository.Repository.FindById(id)
 	if existing.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam with id %d not found", id)))
@@ -150,6 +149,9 @@ func (e *ExamService) UpdateExam(id uint, request exam_request.ModifyExamRequest
 	existing.Duration = request.Duration
 	existing.TypeQuestion = request.TypeQuestion
 	existing.TotalScore = request.Score
+
+	claims := jwt.GetDataClaims(c)
+	existing.ModifiedBy = jwt.GetID(claims.Username)
 
 	e.examRepository.Database.Save(existing)
 	e.examRepository.Database.Where("exam_code = ?", existing.Code).Delete(&school.ExamMember{})

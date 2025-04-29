@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
@@ -69,6 +71,7 @@ func (e *ExamController) CreateTypeExam(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	res := e.typeExamService.CreateTypeExam(request)
+	observer.Trigger(model.EventTypeExamChanged)
 	response.SuccessResponse("Success create new type Exam", res).Json(c)
 }
 
@@ -93,6 +96,7 @@ func (e *ExamController) ModifyTypeExam(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	res := e.typeExamService.ModifyTypeExam(uint(id), request)
+	observer.Trigger(model.EventTypeExamChanged)
 	response.SuccessResponse("Success update type Exam", res).Json(c)
 }
 
@@ -114,5 +118,6 @@ func (e *ExamController) DeleteTypeExam(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	e.typeExamService.DeleteTypeExam(uint(id))
+	observer.Trigger(model.EventTypeExamChanged)
 	response.SuccessResponse("Success delete type Exam", nil).Json(c)
 }

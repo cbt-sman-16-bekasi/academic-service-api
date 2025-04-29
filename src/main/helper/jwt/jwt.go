@@ -2,8 +2,10 @@ package jwt
 
 import (
 	"fmt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/server/response"
 	"os"
 	"strings"
@@ -155,4 +157,21 @@ func GetDataClaims(c *gin.Context) Claims {
 		return Claims{}
 	}
 	return claims.(Claims)
+}
+
+func SaveDetailUser(key string, user interface{}, exp time.Duration) {
+	_ = redisstore.SetJSON(key, user, exp)
+}
+
+func ExtractDetailUser(key string, detail interface{}) {
+	err := redisstore.GetJSON(key, detail)
+	if err != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, err.Error()))
+	}
+}
+
+func GetID(key string) uint {
+	var data map[string]interface{}
+	_ = redisstore.GetJSON(key, &data)
+	return data["ID"].(uint)
 }

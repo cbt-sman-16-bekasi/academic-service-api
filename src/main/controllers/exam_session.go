@@ -2,7 +2,9 @@ package controllers
 
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
@@ -29,7 +31,7 @@ func (e *ExamController) GetAllExamSession(c *gin.Context) {
 	var request pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&request)
 
-	resp := e.examSessionService.GetAllExamSession(request)
+	resp := e.examSessionService.GetAllExamSession(c, request)
 	response.SuccessResponse("Success get all exam session", resp).Json(c)
 }
 
@@ -70,6 +72,7 @@ func (e *ExamController) DeleteExamSession(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	e.examSessionService.DeleteExamSession(uint(id))
+	observer.Trigger(model.EventExamSessionChanged)
 	response.SuccessResponse("Success delete exam session", gin.H{}).Json(c)
 }
 
@@ -92,7 +95,8 @@ func (e *ExamController) UpdateExamSession(c *gin.Context) {
 
 	var request exam_request.ModifyExamSessionRequest
 	_ = c.BindJSON(&request)
-	resp := e.examSessionService.UpdateExamSession(uint(id), request)
+	resp := e.examSessionService.UpdateExamSession(c, uint(id), request)
+	observer.Trigger(model.EventExamSessionChanged)
 	response.SuccessResponse("Success update exam session", resp).Json(c)
 }
 
@@ -112,7 +116,8 @@ func (e *ExamController) CreateExamSession(c *gin.Context) {
 	var request exam_request.ModifyExamSessionRequest
 	_ = c.BindJSON(&request)
 
-	resp := e.examSessionService.CreateExamSession(request)
+	resp := e.examSessionService.CreateExamSession(c, request)
+	observer.Trigger(model.EventExamSessionChanged)
 	response.SuccessResponse("Success create exam session", resp).Json(c)
 }
 
@@ -176,7 +181,7 @@ func (e *ExamController) GetAllExamSessionToken(c *gin.Context) {
 	var request exam_request.ExamSessionTokenFilterRequest
 	_ = c.BindQuery(&request)
 
-	resp := e.examSessionService.GetAllToken(request)
+	resp := e.examSessionService.GetAllToken(c, request)
 	response.SuccessResponse("Success get exam session token", resp).Json(c)
 }
 
@@ -196,7 +201,7 @@ func (e *ExamController) CreateExamSessionToken(c *gin.Context) {
 	var request exam_request.ExamSessionGenerateToken
 	_ = c.BindJSON(&request)
 
-	resp := e.examSessionService.GenerateToken(request)
+	resp := e.examSessionService.GenerateToken(c, request)
 	response.SuccessResponse("Success create exam session token", resp).Json(c)
 }
 

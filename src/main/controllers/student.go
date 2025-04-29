@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/student_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/student_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
@@ -80,6 +82,7 @@ func (s *StudentController) CreateStudent(c *gin.Context) {
 	_ = c.BindJSON(&req)
 
 	resp := s.studentService.CreateStudent(req)
+	observer.Trigger(model.EventStudentChanged)
 	response.SuccessResponse("Success create student", resp).Json(c)
 }
 
@@ -104,6 +107,7 @@ func (s *StudentController) UpdateStudent(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	resp := s.studentService.UpdateStudent(uint(id), req)
+	observer.Trigger(model.EventStudentChanged)
 	response.SuccessResponse("Success update student", resp).Json(c)
 }
 
@@ -124,6 +128,7 @@ func (s *StudentController) DeleteStudent(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	s.studentService.DeleteById(uint(id))
+	observer.Trigger(model.EventStudentChanged)
 	response.SuccessResponse("Success delete student", gin.H{"id": id}).Json(c)
 }
 

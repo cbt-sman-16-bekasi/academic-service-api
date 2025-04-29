@@ -5,6 +5,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/bucket"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	request2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/server/response"
 	"time"
@@ -44,7 +45,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	curriculumRoute := academic.Group("/curriculum").Use(jwt.AuthMiddleware())
 	{
-		curriculumRoute.GET("/subject/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), curriculumController.GetAllSubject)
+		curriculumRoute.GET("/subject/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheSubjects, redisstore.TtlDuration), curriculumController.GetAllSubject)
 		curriculumRoute.GET("/subject/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), curriculumController.GetSubject)
 		curriculumRoute.POST("/subject/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), curriculumController.CreateSubject)
 		curriculumRoute.PUT("/subject/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), curriculumController.UpdateSubject)
@@ -61,7 +63,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 	class := academic.Group("/class")
 	masterClass := class.Use(jwt.AuthMiddleware())
 	{
-		masterClass.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), classController.GetAllClass)
+		masterClass.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheClass, redisstore.TtlDuration), classController.GetAllClass)
 		masterClass.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), classController.GetDetailClass)
 		masterClass.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), classController.CreateNewClass)
 		masterClass.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), classController.UpdateClass)
@@ -79,7 +82,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	student := academic.Group("/student").Use(jwt.AuthMiddleware())
 	{
-		student.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), studentController.GetAllStudent)
+		student.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheStudents, redisstore.TtlDuration), studentController.GetAllStudent)
 		student.GET("/template/download", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), studentController.DownloadTemplate)
 		student.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), studentController.GetStudent)
 		student.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), studentController.CreateStudent)
@@ -90,7 +94,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	teacher := academic.Group("/teacher").Use(jwt.AuthMiddleware())
 	{
-		teacher.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), teacherController.GetAllTeacher)
+		teacher.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheTeachers, redisstore.TtlDuration), teacherController.GetAllTeacher)
 		teacher.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), teacherController.GetTeacher)
 		teacher.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), teacherController.CreateTeacher)
 		teacher.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), teacherController.UpdateTeacher)
@@ -110,7 +115,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	bank := academic.Group("/bank").Use(jwt.AuthMiddleware())
 	{
-		bank.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllBankQuestion)
+		bank.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheBankQuestion, redisstore.TtlDuration), examController.GetAllBankQuestion)
 		bank.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailMasterBankQuestion)
 		bank.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateMasterBankQuestion)
 		bank.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.UpdateMasterBankQuestion)
@@ -126,7 +132,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 	exam := academic.Group("/exam")
 	{
 		examRoute := exam.Use(jwt.AuthMiddleware())
-		examRoute.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllExam)
+		examRoute.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheExam, redisstore.TtlDuration), examController.GetAllExam)
 		examRoute.GET("/member/:examCode", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetExamMember)
 		examRoute.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailExam)
 		examRoute.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateExam)
@@ -147,7 +154,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	examSession := exam.Group("/session").Use(jwt.AuthMiddleware())
 	{
-		examSession.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllExamSession)
+		examSession.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheExamSession, redisstore.TtlDuration), examController.GetAllExamSession)
 		examSession.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetExamSession)
 		examSession.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateExamSession)
 		examSession.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.UpdateExamSession)
@@ -165,7 +173,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	typeExam := exam.Group("/type-exam").Use(jwt.AuthMiddleware())
 	{
-		typeExam.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllTypeExam)
+		typeExam.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheTypeExam, redisstore.TtlDuration), examController.GetAllTypeExam)
 		typeExam.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailTypeExam)
 		typeExam.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), examController.CreateTypeExam)
 		typeExam.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), examController.ModifyTypeExam)

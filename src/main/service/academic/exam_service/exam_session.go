@@ -38,7 +38,14 @@ func NewExamSessionService() *ExamSessionService {
 	}
 }
 
-func (e *ExamSessionService) GetAllExamSession(request pagination.Request[map[string]interface{}]) *database.Paginator {
+func (e *ExamSessionService) GetAllExamSession(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+		filter["created_by"] = jwt.GetID(claims.Username)
+
+		request.Filter = &filter
+	}
 	paging := database.NewPagination[map[string]interface{}]().
 		SetModal([]school.ExamSession{}).
 		SetPreloads(
@@ -56,6 +63,7 @@ func (e *ExamSessionService) GetAllExamSession(request pagination.Request[map[st
 	_ = json.Unmarshal(jsByte, &records)
 
 	var newResponse []exam_response.ExamSessionListResponse
+	timeNow := time.Now()
 	for _, record := range records {
 		var totalStudent int64
 		classIds := make([]uint, 0)
@@ -65,10 +73,16 @@ func (e *ExamSessionService) GetAllExamSession(request pagination.Request[map[st
 		}
 
 		_ = e.studentRepo.Database.Where("class_id IN ?", classIds).Model(&student.StudentClass{}).Count(&totalStudent)
+
+		status := true
+		if timeNow.After(record.EndDate) {
+			status = false
+		}
 		newResponse = append(newResponse, exam_response.ExamSessionListResponse{
 			ExamSession:  record,
 			Exam:         record.DetailExam,
 			TotalStudent: int(totalStudent),
+			IsActive:     status,
 		})
 	}
 
@@ -97,7 +111,7 @@ func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDet
 	}
 }
 
-func (e *ExamSessionService) CreateExamSession(request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
+func (e *ExamSessionService) CreateExamSession(c *gin.Context, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
 	data := &school.ExamSession{
 		SessionId: "SESSION-" + helper.RandomString(10),
 		ExamCode:  request.ExamCode,
@@ -105,6 +119,9 @@ func (e *ExamSessionService) CreateExamSession(request exam_request.ModifyExamSe
 		StartDate: request.StartAt,
 		EndDate:   request.EndAt,
 	}
+
+	claims := jwt.GetDataClaims(c)
+	data.CreatedBy = jwt.GetID(claims.Username)
 
 	e.examSessionRepository.Database.Create(&data)
 
@@ -120,7 +137,7 @@ func (e *ExamSessionService) CreateExamSession(request exam_request.ModifyExamSe
 	return request
 }
 
-func (e *ExamSessionService) UpdateExamSession(id uint, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
+func (e *ExamSessionService) UpdateExamSession(c *gin.Context, id uint, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
 	existing := e.examSessionRepository.FindById(id)
 	if existing.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam session not found")))
@@ -130,6 +147,9 @@ func (e *ExamSessionService) UpdateExamSession(id uint, request exam_request.Mod
 	existing.Name = request.Name
 	existing.StartDate = request.StartAt
 	existing.EndDate = request.EndAt
+
+	claims := jwt.GetDataClaims(c)
+	existing.ModifiedBy = jwt.GetID(claims.Username)
 	e.examSessionRepository.Database.Save(&existing)
 
 	e.examSessionRepository.Database.Where("session_id = ?", existing.SessionId).Delete(&school.ExamSessionMember{})
@@ -193,7 +213,7 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 	return responses
 }
 
-func (e *ExamSessionService) GenerateToken(request exam_request.ExamSessionGenerateToken) *school.TokenExamSession {
+func (e *ExamSessionService) GenerateToken(c *gin.Context, request exam_request.ExamSessionGenerateToken) *school.TokenExamSession {
 	data := &school.TokenExamSession{
 		Model:            gorm.Model{},
 		ExamSession:      request.ExamSessionId,
@@ -201,18 +221,27 @@ func (e *ExamSessionService) GenerateToken(request exam_request.ExamSessionGener
 		EndActiveToken:   request.EndAt,
 		Token:            strings.ToUpper(helper.RandomString(6)),
 	}
+
+	claims := jwt.GetDataClaims(c)
+	data.CreatedBy = jwt.GetID(claims.Username)
 	e.examSessionRepository.Database.Create(&data)
 	return data
 }
 
-func (e *ExamSessionService) GetAllToken(request exam_request.ExamSessionTokenFilterRequest) (res []exam_response.ExamSessionTokenResponse) {
+func (e *ExamSessionService) GetAllToken(c *gin.Context, request exam_request.ExamSessionTokenFilterRequest) (res []exam_response.ExamSessionTokenResponse) {
 	var data []school.TokenExamSession
-	e.examSessionRepository.Database.Preload("DetailExamSession").
+	q := e.examSessionRepository.Database.Preload("DetailExamSession").
 		Preload("DetailExamSession.DetailExam").
 		Preload("DetailExamSession.DetailExam.DetailSubject").
 		Preload("DetailExamSession.DetailExam.DetailTypeExam").
-		Where("end_active_token >= ?", time.Now()).
-		Order("id desc").
+		Where("end_active_token >= ?", time.Now())
+
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		q = q.Where("created_by", jwt.GetID(claims.Username))
+	}
+
+	q = q.Order("id desc").
 		Find(&data)
 
 	for _, tokenExamSession := range data {
