@@ -1,7 +1,6 @@
 package exam_service
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
@@ -42,51 +41,14 @@ func (e *ExamSessionService) GetAllExamSession(c *gin.Context, request paginatio
 	claims := jwt.GetDataClaims(c)
 	if claims.Role != "ADMIN" {
 		filter := map[string]interface{}{}
-		filter["exam_session.created_by"] = jwt.GetID(claims.Username)
+		filter["created_by"] = jwt.GetID(claims.Username)
 
 		request.Filter = &filter
 	}
 	paging := database.NewPagination[map[string]interface{}]().
-		SetModal([]school.ExamSession{}).
-		SetPreloads(
-			"DetailExam",
-			"DetailExam.DetailSubject",
-			"DetailExam.DetailTypeExam",
-			"ExamSessionMember",
-			"ExamSessionMember.DetailClass",
-		).
+		SetModal([]view.ExamSessionView{}).
 		SetRequest(&request).
 		FindAllPaging()
-
-	jsByte, _ := json.Marshal(paging.Records)
-	var records []school.ExamSession
-	_ = json.Unmarshal(jsByte, &records)
-
-	var newResponse []exam_response.ExamSessionListResponse
-	timeNow := time.Now()
-	for _, record := range records {
-		var totalStudent int64
-		classIds := make([]uint, 0)
-
-		for _, m := range record.ExamSessionMember {
-			classIds = append(classIds, m.Class)
-		}
-
-		_ = e.studentRepo.Database.Where("class_id IN ?", classIds).Model(&student.StudentClass{}).Count(&totalStudent)
-
-		status := true
-		if timeNow.After(record.EndDate) {
-			status = false
-		}
-		newResponse = append(newResponse, exam_response.ExamSessionListResponse{
-			ExamSession:  record,
-			Exam:         record.DetailExam,
-			TotalStudent: int(totalStudent),
-			IsActive:     status,
-		})
-	}
-
-	paging.Records = newResponse
 
 	return paging
 }

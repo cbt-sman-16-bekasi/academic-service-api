@@ -1,5 +1,7 @@
 package view
 
+import "time"
+
 type MasterBankQuestionResponse struct {
 	ID           uint   `json:"id"`
 	Subject      string `json:"subject"`
@@ -23,7 +25,7 @@ type SummaryExamSession struct {
 	TotalTimeIsOver    int64  `gorm:"column:total_time_is_over"`
 }
 
-func (SummaryExamSession) TableName() string {
+func (s *SummaryExamSession) TableName() string {
 	return "public.v_summary_exam_session"
 }
 
@@ -33,21 +35,39 @@ type ExamSessionActiveToday struct {
 	Class     uint   `json:"class"`
 }
 
-func (ExamSessionActiveToday) TableName() string {
+func (e *ExamSessionActiveToday) TableName() string {
 	return "public.v_exam_session_active_today"
 }
 
 type VStudent struct {
-	ID        uint   `json:"id" db:"id" gorm:"column:id"`
-	UserID    uint   `json:"user_id" db:"user_id" gorm:"column:user_id"`
-	NISN      string `json:"nisn" db:"nisn" gorm:"column:nisn"`
-	Name      string `json:"name" db:"name" gorm:"column:name"`
-	Gender    string `json:"gender" db:"gender" gorm:"column:gender"`
-	ClassName string `json:"class_name" db:"class_name" gorm:"column:class_name"`
-	ClassID   uint   `json:"class_id" db:"class_id" gorm:"column:class_id"`
+	ID        uint   `json:"id" gorm:"column:id"`
+	UserID    uint   `json:"user_id" gorm:"column:user_id"`
+	NISN      string `json:"nisn" gorm:"column:nisn"`
+	Name      string `json:"name" gorm:"column:name"`
+	Gender    string `json:"gender" gorm:"column:gender"`
+	ClassName string `json:"class_name" gorm:"column:class_name"`
+	ClassID   uint   `json:"class_id" gorm:"column:class_id"`
 }
 
 // TableName sets the name of the table/view for GORM
-func (VStudent) TableName() string {
+func (v *VStudent) TableName() string {
 	return "public.v_student"
+}
+
+type ExamSessionView struct {
+	ID          string    `gorm:"column:id" json:"id"`
+	SessionID   string    `gorm:"column:session_id" json:"session_id"`
+	SessionName string    `gorm:"column:session_name" json:"session_name"`
+	ExamName    string    `gorm:"column:exam_name" json:"exam_name"`
+	Subject     *string   `gorm:"column:subject" json:"subject"` // nullable
+	Kelas       *string   `gorm:"column:kelas" json:"kelas"`     // nullable (hasil string_agg)
+	Total       *int      `gorm:"column:total" json:"total"`     // nullable (karena join bisa kosong)
+	StartDate   time.Time `gorm:"column:start_date" json:"start_date"`
+	EndDate     time.Time `gorm:"column:end_date" json:"end_date"`
+	Status      string    `gorm:"column:status" json:"status"`
+	CreatedBy   uint      `gorm:"column:created_by" json:"created_by"`
+}
+
+func (e *ExamSessionView) TableName() string {
+	return "public.v_exam_session"
 }
