@@ -68,6 +68,9 @@ func (r *AuthService) detailUser(user *user.User) interface{} {
 	case "TEACHER":
 		var teacherData teacher.Teacher
 		r.userRepository.Database.Where("user_id", user.ID).First(&teacherData)
+		if teacherData.ID == 0 {
+			panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "You don't have access. Please contact your administrator"))
+		}
 		return teacherData
 	case "ADMIN":
 		return map[string]interface{}{

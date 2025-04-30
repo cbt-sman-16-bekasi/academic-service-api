@@ -42,7 +42,7 @@ func (e *ExamSessionService) GetAllExamSession(c *gin.Context, request paginatio
 	claims := jwt.GetDataClaims(c)
 	if claims.Role != "ADMIN" {
 		filter := map[string]interface{}{}
-		filter["created_by"] = jwt.GetID(claims.Username)
+		filter["exam_session.created_by"] = jwt.GetID(claims.Username)
 
 		request.Filter = &filter
 	}
@@ -121,7 +121,7 @@ func (e *ExamSessionService) CreateExamSession(c *gin.Context, request exam_requ
 	}
 
 	claims := jwt.GetDataClaims(c)
-	data.CreatedBy = jwt.GetID(claims.Username)
+	data.CreatedBy = uint(jwt.GetID(claims.Username))
 
 	e.examSessionRepository.Database.Create(&data)
 
@@ -149,7 +149,7 @@ func (e *ExamSessionService) UpdateExamSession(c *gin.Context, id uint, request 
 	existing.EndDate = request.EndAt
 
 	claims := jwt.GetDataClaims(c)
-	existing.ModifiedBy = jwt.GetID(claims.Username)
+	existing.ModifiedBy = uint(jwt.GetID(claims.Username))
 	e.examSessionRepository.Database.Save(&existing)
 
 	e.examSessionRepository.Database.Where("session_id = ?", existing.SessionId).Delete(&school.ExamSessionMember{})
@@ -223,7 +223,7 @@ func (e *ExamSessionService) GenerateToken(c *gin.Context, request exam_request.
 	}
 
 	claims := jwt.GetDataClaims(c)
-	data.CreatedBy = jwt.GetID(claims.Username)
+	data.CreatedBy = uint(jwt.GetID(claims.Username))
 	e.examSessionRepository.Database.Create(&data)
 	return data
 }

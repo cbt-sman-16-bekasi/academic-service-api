@@ -119,7 +119,7 @@ func (e *ExamService) CreateNewExam(c *gin.Context, request exam_request.ModifyE
 		TotalScore:     request.Score,
 	}
 	claims := jwt.GetDataClaims(c)
-	data.CreatedBy = jwt.GetID(claims.Username)
+	data.CreatedBy = uint(jwt.GetID(claims.Username))
 
 	e.examRepository.Database.Create(data)
 
@@ -151,7 +151,7 @@ func (e *ExamService) UpdateExam(c *gin.Context, id uint, request exam_request.M
 	existing.TotalScore = request.Score
 
 	claims := jwt.GetDataClaims(c)
-	existing.ModifiedBy = jwt.GetID(claims.Username)
+	existing.ModifiedBy = uint(jwt.GetID(claims.Username))
 
 	e.examRepository.Database.Save(existing)
 	e.examRepository.Database.Where("exam_code = ?", existing.Code).Delete(&school.ExamMember{})

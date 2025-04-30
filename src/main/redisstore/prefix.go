@@ -3,15 +3,15 @@ package redisstore
 import "time"
 
 const (
-	CacheInformationSchool = "cache::information_school"
-	CacheClass             = "cache::class"
-	CacheSubjects          = "cache::subjects"
-	CacheTeachers          = "cache::teachers"
-	CacheStudents          = "cache::students"
-	CacheTypeExam          = "cache::type_exam"
-	CacheBankQuestion      = "cache::bank_question"
-	CacheExam              = "cache::exam"
-	CacheExamSession       = "cache::exam_session"
+	CacheInformationSchool = "cache::information_school::"
+	CacheClass             = "cache::class::"
+	CacheSubjects          = "cache::subjects::"
+	CacheTeachers          = "cache::teachers::"
+	CacheStudents          = "cache::students::"
+	CacheTypeExam          = "cache::type_exam::"
+	CacheBankQuestion      = "cache::bank_question::"
+	CacheExam              = "cache::exam::"
+	CacheExamSession       = "cache::exam_session::"
 )
 
 var TtlDuration = time.Duration(30 * time.Second)

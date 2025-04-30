@@ -6,7 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/yon-module/yon-framework/exception"
+	"github.com/yon-module/yon-framework/logger"
 	"github.com/yon-module/yon-framework/server/response"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -170,8 +172,24 @@ func ExtractDetailUser(key string, detail interface{}) {
 	}
 }
 
-func GetID(key string) uint {
+func GetID(key string) float64 {
 	var data map[string]interface{}
-	_ = redisstore.GetJSON(key, &data)
-	return data["ID"].(uint)
+	err := redisstore.GetJSON(key, &data)
+	if data == nil {
+		logger.Log.Error().Msg("No data found")
+		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Data user not found"))
+	}
+	if err != nil {
+		logger.Log.Error().Msg("No data found")
+		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, err.Error()))
+	}
+	if val, ok := data["ID"]; ok {
+		if floatVal, ok := val.(float64); ok {
+			return floatVal
+		} else {
+			// handle jika bukan float64, misalnya error log
+			log.Println("ID bukan float64")
+		}
+	}
+	panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Data user not found"))
 }
