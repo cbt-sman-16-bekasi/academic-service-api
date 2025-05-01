@@ -255,7 +255,7 @@ func (e *ExamController) GetAllBankQuestion(c *gin.Context) {
 	var request pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&request)
 
-	resp := e.examService.GetAllBankQuestion(request)
+	resp := e.examService.GetAllBankQuestion(c, request)
 	response.SuccessResponse("Success get data bank question", resp).Json(c)
 }
 

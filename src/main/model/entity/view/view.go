@@ -5,6 +5,7 @@ import "time"
 type MasterBankQuestionResponse struct {
 	ID           uint   `json:"id"`
 	Subject      string `json:"subject"`
+	SubjectCode  string `json:"subject_code"`
 	ClassCode    string `json:"class_code"`
 	Total        int    `json:"total"`
 	TypeQuestion string `json:"type_question"`

@@ -8,6 +8,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/exam_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/teacher"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/gin-gonic/gin"
@@ -719,7 +720,21 @@ func (e *ExamService) setBankQuestionOptions(questionID string, request exam_req
 	}
 }
 
-func (e *ExamService) GetAllBankQuestion(request pagination.Request[map[string]interface{}]) *database.Paginator {
+func (e *ExamService) GetAllBankQuestion(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+
+		var teacherClassSubject []teacher.TeacherClassSubject
+		_ = e.examRepository.Database.Where("teacher_id = ?", jwt.GetID(claims.Username)).Find(&teacherClassSubject)
+
+		var subjects = make([]interface{}, 0)
+		for _, subject := range teacherClassSubject {
+			subjects = append(subjects, subject.SubjectCode)
+		}
+		filter["subject_code"] = subjects
+		request.Filter = &filter
+	}
 	paging := database.NewPagination[map[string]interface{}]().
 		SetModal([]view.MasterBankQuestionResponse{}).
 		SetRequest(&request).
