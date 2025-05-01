@@ -1,6 +1,7 @@
 package student_service
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
@@ -13,6 +14,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/exam_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/user_service"
@@ -22,6 +24,7 @@ import (
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
 	response2 "github.com/yon-module/yon-framework/server/response"
+	"gorm.io/gorm"
 	"math/rand"
 	"path/filepath"
 	"strconv"
@@ -168,7 +171,11 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student with NISN does not exist. Please contact your system administrator and try again."))
 	}
 
-	studentClass := s.studentRepo.GetStudentClass(std.ID)
+	var studentClass student.StudentClass
+	err := s.studentRepo.Database.Where("student_id = ?", std.ID).Preload("DetailStudent").Preload("DetailClass").First(&studentClass).Error
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Student with NISN does not exist at class. Please contact your system administrator and try again."))
+	}
 
 	var examActive []view.ExamSessionActiveToday
 	s.studentRepo.Database.Where("class = ?", studentClass.ClassId).Find(&examActive)
@@ -182,19 +189,49 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		sessionActives = append(sessionActives, today.SessionID)
 	}
 
+	// Get session active with user has not submitted
 	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(sessionActives, std.ID)
 	if examSession.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
 	}
 
-	exam := s.studentRepo.ExamRepo.FindByCode(examSession.ExamCode)
-	examQuestionRandom := randomizeExam(exam.ExamQuestion, exam.RandomQuestion, exam.RandomAnswer)
+	if time.Now().Before(examSession.StartDate) {
+		panic(exception.NewBadRequestExceptionStruct(
+			response2.BadRequest,
+			fmt.Sprintf("Your exam session %s is not started. Please back again %s",
+				examSession.Name, examSession.StartDate.Format("02-01-2006 15:04:05"))),
+		)
+	}
+
+	if time.Now().After(examSession.EndDate) {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
+	}
+
+	var exam school.Exam
+	err = s.studentRepo.Database.Where("code", examSession.ExamCode).Preload("DetailSubject").First(&exam).Error
+	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
+	}
+
+	var examQuestion []school.ExamQuestion
+	err = redisstore.GetJSON(exam.Code, &examQuestion)
+	if err != nil {
+		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Find(&examQuestion)
+		_ = redisstore.SetJSON(exam.Code, examQuestion, time.Hour*24)
+	}
+
+	if examQuestion == nil {
+		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Find(&examQuestion)
+		_ = redisstore.SetJSON(exam.Code, examQuestion, time.Hour*24)
+	}
+
+	examQuestionRandom := randomizeExam(examQuestion, exam.RandomQuestion, exam.RandomAnswer)
 	exam.ExamQuestion = examQuestionRandom
 
 	exp := time.Now().Add(time.Hour * 24).Unix()
 	token, err := jwt.GenerateJWT(jwt.Claims{
 		Username:   request.Username,
-		Role:       std.DetailUser.RoleUser.Code,
+		Role:       "STUDENT",
 		Permission: []string{"create", "update", "delete", "read", "list"},
 		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
 	})
@@ -209,7 +246,7 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		Token:       token,
 		Exp:         exp,
 		Exam:        &exam,
-		User:        studentClass,
+		User:        &studentClass,
 		ExamSession: examSession,
 		ExamTaken:   &existingHistoryTaken,
 	}
