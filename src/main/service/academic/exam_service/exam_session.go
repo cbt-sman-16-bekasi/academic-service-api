@@ -10,6 +10,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/gin-gonic/gin"
@@ -321,7 +322,16 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	totalCorrect := 0
 
 	var questions []school.ExamQuestion
-	e.examSessionRepository.Database.Where("exam_code = ?", existingHistoryTaken.ExamCode).Find(&questions)
+	err := redisstore.GetJSON(request.ExamCode, &questions)
+	if err != nil {
+		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
+		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
+	}
+
+	if questions == nil {
+		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
+		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
+	}
 	for _, question := range questions {
 		totalAllScore += question.Score
 	}
