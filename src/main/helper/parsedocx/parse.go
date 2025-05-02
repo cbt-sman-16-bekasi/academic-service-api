@@ -20,7 +20,7 @@ func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]PilihanGanda, e
 	}
 	writer.Close()
 
-	resp, err := http.Post("http://localhost:5000/parse-docx", writer.FormDataContentType(), body)
+	resp, err := http.Post("http://172.17.0.1:8085/parse-docx", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err
 	}
