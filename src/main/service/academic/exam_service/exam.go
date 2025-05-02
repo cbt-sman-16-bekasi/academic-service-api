@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/bucket"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/parsedocx"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
@@ -410,44 +411,33 @@ func (e *ExamService) DeleteExamQuestion(id uint) {
 
 func (e *ExamService) DownloadTemplateUploadQuestion(examId uint, c *gin.Context) {
 	typeQuestion := c.Query("typeQuestion")
+	bucketName := "dokumen"
+	var objectName string
 
-	f := excelize.NewFile()
-	sheet := "Sheet1"
-
+	// Tentukan nama file berdasarkan tipe soal
 	if typeQuestion == "PILIHAN_GANDA" {
-		headers := []string{"Pertanyaan", "Jawaban", "PilihanA", "PilihanB", "PilihanC", "PilihanD", "PilihanE"}
-		for i, h := range headers {
-			cell := string(rune('A'+i)) + "1"
-			f.SetCellValue(sheet, cell, h)
-		}
-		f.SetCellValue(sheet, "A2", "Soal Nomor 1")
-		f.SetCellValue(sheet, "B2", "A")
-		f.SetCellValue(sheet, "C2", 10)
-		f.SetCellValue(sheet, "D2", "Pilih A")
-		f.SetCellValue(sheet, "E2", "Pilih B")
-		f.SetCellValue(sheet, "F2", "Pilih C")
-		f.SetCellValue(sheet, "G2", "Pilih D")
-		f.SetCellValue(sheet, "H2", "Pilih E")
+		objectName = "template_soal_cbt_PILIHAN_GANDA.docx"
 	} else {
-		headers := []string{"Pertanyaan", "JawabanRefrensi"}
-		for i, h := range headers {
-			cell := string(rune('A'+i)) + "1"
-			f.SetCellValue(sheet, cell, h)
-		}
-		f.SetCellValue(sheet, "A2", "Apa Pancasila")
-		f.SetCellValue(sheet, "B2", "Pancasila adalah")
+		objectName = "template_soal_cbt_ESSAY.docx"
 	}
 
+	minioBucket := bucket.NewMinio()
+	object, err := minioBucket.RetrieveObject(bucketName, objectName)
+	if err != nil {
+		panic(err)
+	}
+	defer object.Close()
+
 	// Set header agar bisa di-download
-	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-	c.Header("Content-Disposition", "attachment; filename=template_soal_cbt_"+typeQuestion+".xlsx")
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+	c.Header("Content-Disposition", "attachment; filename="+objectName)
 	c.Header("Content-Transfer-Encoding", "binary")
 	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
 	c.Header("Expires", "0")
 
 	// Stream file ke response
-	if err := f.Write(c.Writer); err != nil {
-		response.ErrorResponse(response.ServerError, "Failed Generate file template", err)
+	if _, err := io.Copy(c.Writer, object); err != nil {
+		response.ErrorResponse(500, "Failed download file", nil)
 		return
 	}
 }

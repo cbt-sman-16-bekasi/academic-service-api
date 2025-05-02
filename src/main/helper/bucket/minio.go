@@ -10,6 +10,7 @@ import (
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
 	"github.com/yon-module/yon-framework/logger"
+	"io"
 	"mime"
 	"os"
 	"strings"
@@ -167,4 +168,8 @@ func (conf *MinioConfig) generatePublicURL(objectName string) string {
 		scheme = "https"
 	}
 	return fmt.Sprintf("%s://%s/%s/%s", scheme, conf.endpoint, conf.bucket, objectName)
+}
+
+func (conf *MinioConfig) RetrieveObject(bucketName, objectName string) (io.ReadCloser, error) {
+	return conf.minioClient.GetObject(context.Background(), bucketName, objectName, minio.GetObjectOptions{})
 }
