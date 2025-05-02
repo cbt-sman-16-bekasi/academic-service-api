@@ -449,30 +449,30 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		response.ErrorResponse(response.ServerError, "Failed Upload Question", err).Json(c)
 		return
 	}
 
-	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".xlsx" {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question, Format file must be .xlsx", err)
+	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".docx" {
+		response.ErrorResponse(response.ServerError, "Failed Upload Question, Format file must be .docx", err).Json(c)
 		return
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed open file", err)
+		response.ErrorResponse(response.ServerError, "Failed open file", err).Json(c)
 		return
 	}
 	defer src.Close()
 
 	fileBytes, err := io.ReadAll(src)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed read file", err)
+		response.ErrorResponse(response.ServerError, "Failed read file", err).Json(c)
 		return
 	}
 	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed to parse docx", err)
+		response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
 		return
 	}
 
@@ -493,7 +493,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		}
 
 		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 			break
 		}
 
@@ -527,14 +527,14 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			})
 
 			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
-				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 				break
 			}
 		}
 
 	}
 
-	response.SuccessResponse("Success Upload Question", nil)
+	response.SuccessResponse("Success Upload Question", nil).Json(c)
 }
 
 func (e *ExamService) UploadBankQuestion(c *gin.Context) {
@@ -546,30 +546,30 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 
 	file, err := c.FormFile("file")
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		response.ErrorResponse(response.ServerError, "Failed Upload Question", err).Json(c)
 		return
 	}
 
-	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".xlsx" {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question, Format file must be .xlsx", err)
+	if ext := strings.ToLower(filepath.Ext(file.Filename)); ext != ".docx" {
+		response.ErrorResponse(response.ServerError, "Failed Upload Question, Format file must be .docx", err).Json(c)
 		return
 	}
 
 	src, err := file.Open()
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed open file", err)
+		response.ErrorResponse(response.ServerError, "Failed open file", err).Json(c)
 		return
 	}
 	defer src.Close()
 
 	fileBytes, err := io.ReadAll(src)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed read file", err)
+		response.ErrorResponse(response.ServerError, "Failed read file", err).Json(c)
 		return
 	}
 	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed to parse docx", err)
+		response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
 		return
 	}
 
@@ -590,7 +590,7 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 		}
 
 		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 			break
 		}
 
@@ -623,13 +623,13 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 			})
 
 			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
-				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 				break
 			}
 		}
 	}
 
-	response.SuccessResponse("Success Upload Question", nil)
+	response.SuccessResponse("Success Upload Question", nil).Json(c)
 }
 
 func ReadAndValidateExcel(file multipart.File) ([][]string, error) {
