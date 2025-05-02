@@ -26,13 +26,18 @@ type MinioConfig struct {
 }
 
 func NewMinio() *MinioConfig {
-	return &MinioConfig{
+	conf := &MinioConfig{
 		endpoint:  os.Getenv("MINIO_ENDPOINT"),
 		bucket:    os.Getenv("MINIO_BUCKET"),
 		accessKey: os.Getenv("MINIO_ACCESS_KEY"),
 		secretKey: os.Getenv("MINIO_SECRET_KEY"),
 		useSSL:    os.Getenv("MINIO_SSL") == "true",
 	}
+	err := conf.createConnection()
+	if err != nil {
+		panic(fmt.Errorf("failed to create minio client: %v", err))
+	}
+	return conf
 }
 
 func (conf *MinioConfig) Bucket() string {
@@ -55,24 +60,21 @@ func (conf *MinioConfig) Endpoint() string {
 	return conf.endpoint
 }
 
-func (conf *MinioConfig) createConnection() (*minio.Client, error) {
+func (conf *MinioConfig) createConnection() error {
 	minioClient, err := minio.New(conf.endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(conf.accessKey, conf.secretKey, ""),
 		Secure: conf.useSSL,
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	logger.Log.Info().Msg("Connected to Minio")
 	conf.minioClient = minioClient
-	return minioClient, nil
+	return nil
 }
 
 func (conf *MinioConfig) UploadViaBase64(base64String string, folder string) (minio.UploadInfo, string) {
-	connection, err := conf.createConnection()
-	fmt.Println(connection)
-	fmt.Println(err)
 	fileData, contentType, ext, err := conf.parseBase64File(base64String)
 	if err != nil {
 		panic(err)
