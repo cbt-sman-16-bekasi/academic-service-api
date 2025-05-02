@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/parsedocx"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/exam_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
@@ -474,21 +475,21 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 	}
 	defer src.Close()
 
-	rows, err := ReadAndValidateExcel(src)
+	fileBytes, err := io.ReadAll(src)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		response.ErrorResponse(response.ServerError, "Failed read file", err)
+		return
+	}
+	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
+	if err != nil {
+		response.ErrorResponse(response.ServerError, "Failed to parse docx", err)
 		return
 	}
 
-	for i, row := range rows {
-		if len(row) < 8 {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Baris %d tidak lengkap", i+2), err)
-			break
-		}
-
+	for i, row := range result {
 		questionID := "QUESTION-" + helper.RandomString(10)
-		question := row[0]
-		answer := row[1]
+		question := row.Soal
+		answer := row.Jawaban
 
 		examQuestion := school.ExamQuestion{
 			ExamCode:     exam.Code,
@@ -501,29 +502,44 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			QuestionFrom: "IMPORT",
 		}
 
-		var examQuestionOption []school.ExamAnswerOption
-		if exam.TypeQuestion == "PILIHAN_GANDA" {
-			var abjad = []string{"A", "B", "C", "D", "E"}
-
-			options := row[3:8]
-			for idx, opt := range options {
-				option := school.ExamAnswerOption{
-					QuestionId: questionID,
-					AnswerId:   questionID + "_" + abjad[idx],
-					Option:     opt,
-				}
-				examQuestionOption = append(examQuestionOption, option)
-			}
-		}
-
 		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
 			break
 		}
 
-		if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
-			break
+		if exam.TypeQuestion == "PILIHAN_GANDA" {
+			var examQuestionOption []school.ExamAnswerOption
+
+			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_A",
+				Option:     row.A,
+			})
+			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_B",
+				Option:     row.B,
+			})
+			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_C",
+				Option:     row.C,
+			})
+			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_D",
+				Option:     row.D,
+			})
+			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_E",
+				Option:     row.E,
+			})
+
+			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
+				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+				break
+			}
 		}
 
 	}
@@ -556,25 +572,22 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 	}
 	defer src.Close()
 
-	rows, err := ReadAndValidateExcel(src)
+	fileBytes, err := io.ReadAll(src)
 	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed Upload Question", err)
+		response.ErrorResponse(response.ServerError, "Failed read file", err)
+		return
+	}
+	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
+	if err != nil {
+		response.ErrorResponse(response.ServerError, "Failed to parse docx", err)
 		return
 	}
 
-	for i, row := range rows {
-		if bank.TypeQuestion == "ESSAY" && len(row) < 2 {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Baris %d tidak lengkap", i+2), err)
-			break
-		}
-		if len(row) < 8 && bank.TypeQuestion == "PILIHAN_GANDA" {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Baris %d tidak lengkap", i+2), err)
-			break
-		}
+	for i, row := range result {
 
 		questionID := "QUESTION-" + helper.RandomString(10)
-		question := row[0]
-		answer := row[1]
+		question := row.Soal
+		answer := row.Jawaban
 
 		examQuestion := school.BankQuestion{
 			MasterBankQuestionCode: bank.Code,
@@ -586,29 +599,43 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 			QuestionFrom:           "IMPORT",
 		}
 
-		var examQuestionOption []school.BankAnswerOption
-		if bank.TypeQuestion == "PILIHAN_GANDA" {
-			var abjad = []string{"A", "B", "C", "D", "E"}
-
-			options := row[3:8]
-			for idx, opt := range options {
-				option := school.BankAnswerOption{
-					QuestionId: questionID,
-					AnswerId:   questionID + "_" + abjad[idx],
-					Option:     opt,
-				}
-				examQuestionOption = append(examQuestionOption, option)
-			}
-		}
-
 		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
 			break
 		}
 
-		if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
-			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
-			break
+		if bank.TypeQuestion == "PILIHAN_GANDA" {
+			var examQuestionOption []school.BankAnswerOption
+			examQuestionOption = append(examQuestionOption, school.BankAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_A",
+				Option:     row.A,
+			})
+			examQuestionOption = append(examQuestionOption, school.BankAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_B",
+				Option:     row.B,
+			})
+			examQuestionOption = append(examQuestionOption, school.BankAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_C",
+				Option:     row.C,
+			})
+			examQuestionOption = append(examQuestionOption, school.BankAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_D",
+				Option:     row.D,
+			})
+			examQuestionOption = append(examQuestionOption, school.BankAnswerOption{
+				QuestionId: questionID,
+				AnswerId:   questionID + "_E",
+				Option:     row.E,
+			})
+
+			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
+				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err)
+				break
+			}
 		}
 	}
 
