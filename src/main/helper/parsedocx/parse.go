@@ -3,6 +3,7 @@ package parsedocx
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/yon-module/yon-framework/logger"
 	"mime/multipart"
 	"net/http"
 )
@@ -20,7 +21,8 @@ func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]PilihanGanda, e
 	}
 	writer.Close()
 
-	resp, err := http.Post("http://localhost:5000/parse-docx", writer.FormDataContentType(), body)
+	logger.Log.Info().Msgf("Call to parse docx with fileName %s", filename)
+	resp, err := http.Post("http://172.17.0.1:8085/parse-docx", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -30,6 +32,8 @@ func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]PilihanGanda, e
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
 		return nil, err
 	}
+
+	logger.Log.Info().Msgf("Parse docx with result size: %v", len(result))
 
 	return result, nil
 }
