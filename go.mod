@@ -14,7 +14,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	github.com/xuri/excelize/v2 v2.9.0
-	github.com/yon-module/yon-framework v1.1.739
+	github.com/yon-module/yon-framework v1.1.741
 	golang.org/x/crypto v0.36.0
 	gorm.io/gorm v1.25.12
 )
@@ -22,13 +22,10 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
-	github.com/PuerkitoBio/purell v1.2.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/bytedance/sonic v1.13.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cpuguy83/go-md2man/v2 v2.0.6 // indirect
 	github.com/deckarep/golang-set v1.7.1 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -70,13 +67,8 @@ require (
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/rs/zerolog v1.33.0 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
-	github.com/texttheater/golang-levenshtein/levenshtein v0.0.0-20200805054039-cae8b0eaed6c // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
-	github.com/urfave/cli/v2 v2.27.6 // indirect
-	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect
 	github.com/xuri/efp v0.0.0-20240408161823-9ad904a10d6d // indirect
 	github.com/xuri/nfp v0.0.0-20240318013403-ab9948c2c4a7 // indirect
 	golang.org/x/arch v0.15.0 // indirect
@@ -88,10 +80,8 @@ require (
 	gonum.org/v1/gonum v0.7.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/neurosnap/sentences.v1 v1.0.6 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/driver/postgres v1.5.11 // indirect
 	gorm.io/driver/sqlite v1.5.7 // indirect
-	sigs.k8s.io/yaml v1.4.0 // indirect
 )
