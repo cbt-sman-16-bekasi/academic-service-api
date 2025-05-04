@@ -154,12 +154,17 @@ func (t *TeacherService) GetDetailSubjectClassTeacher(id uint) teacher.TeacherCl
 func (t *TeacherService) CreateSubjectClassTeacher(request teacher_request.TeacherMappingSubjectClass) teacher_request.TeacherMappingSubjectClass {
 	t.validateCheckDuplicate(request)
 
-	data := teacher.TeacherClassSubject{
-		TeacherId:   request.TeacherId,
-		SubjectCode: request.SubjectId,
-		ClassId:     request.ClassId,
+	var multiple []teacher.TeacherClassSubject
+	for _, u := range request.ClassId {
+		data := teacher.TeacherClassSubject{
+			TeacherId:   request.TeacherId,
+			SubjectCode: request.SubjectId,
+			ClassId:     u,
+		}
+		multiple = append(multiple, data)
 	}
-	t.teacherRepository.Database.Create(&data)
+
+	t.teacherRepository.Database.Create(&multiple)
 
 	return request
 }
@@ -183,23 +188,23 @@ func (t *TeacherService) DeleteSubjectClassTeacher(id uint) {
 }
 
 func (t *TeacherService) UpdateSubjectClassTeacher(id uint, request teacher_request.TeacherMappingSubjectClass) teacher_request.TeacherMappingSubjectClass {
-	var subject teacher.TeacherClassSubject
-	t.teacherRepository.Database.Where("id = ?", id).First(&subject)
-	if subject.ID == 0 {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with id '%d' not found", id)))
-	}
-
-	if request.SubjectId != subject.SubjectCode {
-		t.validateCheckDuplicate(request)
-	}
-
-	if request.ClassId != subject.ClassId {
-		t.validateCheckDuplicate(request)
-	}
-
-	subject.SubjectCode = request.SubjectId
-	subject.ClassId = request.ClassId
-
-	t.teacherRepository.Database.Save(&subject)
+	//var subject teacher.TeacherClassSubject
+	//t.teacherRepository.Database.Where("id = ?", id).First(&subject)
+	//if subject.ID == 0 {
+	//	panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with id '%d' not found", id)))
+	//}
+	//
+	//if request.SubjectId != subject.SubjectCode {
+	//	t.validateCheckDuplicate(request)
+	//}
+	//
+	//if request.ClassId != subject.ClassId {
+	//	t.validateCheckDuplicate(request)
+	//}
+	//
+	//subject.SubjectCode = request.SubjectId
+	//subject.ClassId = request.ClassId
+	//
+	//t.teacherRepository.Database.Save(&subject)
 	return request
 }

@@ -10,5 +10,5 @@ type TeacherModifyRequest struct {
 type TeacherMappingSubjectClass struct {
 	TeacherId uint   `json:"teacherId"`
 	SubjectId string `json:"subjectId"`
-	ClassId   uint   `json:"classId"`
+	ClassId   []uint `json:"classId"`
 }
