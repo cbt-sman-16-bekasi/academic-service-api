@@ -113,7 +113,7 @@ func (conf *MinioConfig) UploadObject(buf *bytes.Buffer, folder string, fileName
 		panic(err)
 	}
 
-	publicURL := conf.generatePublicURL(fileName)
+	publicURL := conf.generatePublicURL(folder + "/" + fileName)
 
 	return &uploadInfo, &publicURL, nil
 }

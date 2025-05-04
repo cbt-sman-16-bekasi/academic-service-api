@@ -8,6 +8,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/server/response"
+	"io"
 	"time"
 )
 
@@ -23,6 +24,31 @@ func academicRoutes(gr *gin.RouterGroup) {
 	academic := gr.Group("/academic")
 
 	academic.GET("/school", schoolController.GetSchool)
+	academic.GET("/:bucketName/:folder/:objectName/download", func(c *gin.Context) {
+		bucketName := c.Param("bucketName")
+		objectName := c.Param("objectName")
+		folder := c.Param("folder")
+
+		minioBucket := bucket.NewMinio()
+		object, err := minioBucket.RetrieveObject(bucketName, folder+"/"+objectName)
+		if err != nil {
+			panic(err)
+		}
+		defer object.Close()
+
+		// Set header agar bisa di-download
+		c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+		c.Header("Content-Disposition", "attachment; filename="+objectName)
+		c.Header("Content-Transfer-Encoding", "binary")
+		c.Header("Access-Control-Expose-Headers", "Content-Disposition")
+		c.Header("Expires", "0")
+
+		// Stream file ke response
+		if _, err := io.Copy(c.Writer, object); err != nil {
+			response.ErrorResponse(500, "Failed download file", nil)
+			return
+		}
+	})
 	academic.PUT("/school/update", jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN"}, "update"), schoolController.ModifySchool)
 	academic.POST("/auth/login", schoolController.AuthLogin)
 	gr.POST("/auth/cbt/login", schoolController.AuthCBTLogin)

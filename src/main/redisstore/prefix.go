@@ -15,4 +15,4 @@ const (
 	CacheExamSessionReport = "cache::exam_session_report::"
 )
 
-var TtlDuration = time.Duration(30 * time.Minute)
+var TtlDuration = time.Duration(30 * time.Second)
