@@ -153,6 +153,9 @@ type ExamSession struct {
 	StartDate         time.Time           `json:"start_date"`
 	EndDate           time.Time           `json:"end_date"`
 	ExamSessionMember []ExamSessionMember `json:"exam_member" gorm:"foreignKey:SessionId;references:SessionId"`
+	ReportUrl         string              `json:"report_url"`
+	StatusReport      string              `json:"status_report"`
+	ErrorReport       string              `json:"error_report"`
 	core.AuditUser
 }
 

@@ -10,4 +10,5 @@ const (
 	EventStudentChanged           = "student.changed"
 	EventTypeExamChanged          = "type.exam.changed"
 	EventBankQuestionChanged      = "bank.question.changed"
+	EventExamSessionReportChanged = "exam.session.report.changed"
 )

@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/docs"
+	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/scheduler"
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity"
 	_ "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/routes"
 	_ "github.com/yon-module/yon-framework/config"

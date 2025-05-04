@@ -13,10 +13,12 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/exam_repository"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/reporting_service"
 	"github.com/gin-gonic/gin"
 	"github.com/xuri/excelize/v2"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
+	"github.com/yon-module/yon-framework/logger"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
@@ -447,4 +449,107 @@ func (e *ExamSessionService) ExamSessionMember(sessionId string) []school.ExamSe
 	var examSessionMembers []school.ExamSessionMember
 	e.examSessionRepository.Database.Where("session_id = ?", sessionId).Preload("DetailClass").Find(&examSessionMembers)
 	return examSessionMembers
+}
+
+func (e *ExamSessionService) GenerateReportSession() {
+	var schoolData school.School
+	e.examSessionRepository.Database.Where("school_code=?", "db74a42e-23a7-4cd2-bbe5-49cf79f86453").First(&schoolData)
+
+	var examSessionReport []view.ExamSessionReadyReport
+	e.examSessionRepository.Database.Find(&examSessionReport)
+
+	for _, session := range examSessionReport {
+		logger.Log.Info().Msgf("ExamSession Report %v", session)
+		report := reporting_service.NewReport(schoolData)
+
+		var reportSession []reporting_service.DataExamSession
+		classIds, _ := StringToUintSlice(session.KelasID)
+		classNames := strings.Split(session.Kelas, ",")
+		for i, classId := range classIds {
+			dataScore := e.GetAllAttendance(exam_request.ExamSessionAttendanceRequest{
+				ExamSessionId: session.SessionID,
+				ClassId:       &classId,
+			})
+
+			var reportScore []reporting_service.DataNilai
+			for _, data := range dataScore {
+				reportScore = append(reportScore, reporting_service.DataNilai{
+					NISN:      data.Nisn,
+					Name:      data.Name,
+					ClassName: data.Class,
+					Gender:    "-",
+					Score:     float64(data.Score),
+				})
+			}
+			dataSession := reporting_service.DataExamSession{
+				TypeExam:     session.TypeExam,
+				Subject:      session.Subject,
+				ClassName:    classNames[i],
+				SessionName:  session.SessionName,
+				SessionStart: session.StartDate,
+				SessionEnd:   session.EndDate,
+				ScoreData:    reportScore,
+			}
+			reportSession = append(reportSession, dataSession)
+		}
+		report.SetData(reportSession)
+
+		err := report.Generate()
+		if err != nil {
+			e.examSessionRepository.Database.Where("session_id = ?", session.SessionID).Update("error_report", err.Error())
+			logger.Log.Error().Msgf("Generate reportSession Error: %s", err.Error())
+			continue
+		}
+
+		resUrlReport, isSuccess := report.GetResult()
+		logger.Log.Info().Str("URL", fmt.Sprintf("%v", resUrlReport)).Str("Status", fmt.Sprintf("%v", isSuccess)).Msg("Generate reportSession Result")
+		if !isSuccess {
+			errorReport := ErrorsToString(report.GetError())
+			e.examSessionRepository.Database.Where("session_id = ?", session.SessionID).Model(&school.ExamSession{}).Update("error_report", errorReport)
+			logger.Log.Error().Msgf("Generate reportSession Error: %s", errorReport)
+			continue
+		}
+
+		e.examSessionRepository.Database.Debug().Where("session_id = ?", session.SessionID).Model(&school.ExamSession{}).Updates(map[string]interface{}{
+			"report_url":    resUrlReport,
+			"status_report": "READY",
+		})
+	}
+
+}
+
+func (e *ExamSessionService) GetAllReport(request exam_request.ExamSessionReportRequest) []view.ExamSessionReportScoreView {
+	var data []view.ExamSessionReportScoreView
+	q := e.examSessionRepository.Database.Where("exam_code=?", request.ExamCode)
+	if request.SessionId != nil {
+		q = q.Where("session_id=?", *request.SessionId)
+	}
+	q.Find(&data)
+	return data
+}
+
+func StringToUintSlice(s string) ([]uint, error) {
+	parts := strings.Split(s, ",")
+	result := make([]uint, 0, len(parts))
+
+	for _, part := range parts {
+		p := strings.TrimSpace(part)
+		num, err := strconv.ParseUint(p, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, uint(num))
+	}
+
+	return result, nil
+}
+
+func ErrorsToString(errs []error) string {
+	strs := make([]string, 0, len(errs))
+	for _, err := range errs {
+		if err != nil {
+			strs = append(strs, err.Error())
+		}
+	}
+	return strings.Join(strs, ", ")
 }

@@ -15,6 +15,8 @@ func RegisterEvent() {
 		model.EventExamChanged:              redisstore.CacheExam,
 		model.EventExamSessionChanged:       redisstore.CacheExamSession,
 		model.EventBankQuestionChanged:      redisstore.CacheBankQuestion,
+		model.EventTypeExamChanged:          redisstore.CacheTypeExam,
+		model.EventExamSessionReportChanged: redisstore.CacheExamSessionReport,
 	}
 
 	for eventKey, prefix := range eventChanged {

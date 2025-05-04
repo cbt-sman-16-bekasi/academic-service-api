@@ -99,6 +99,25 @@ func (conf *MinioConfig) UploadViaBase64(base64String string, folder string) (mi
 	return uploadInfo, publicURL
 }
 
+func (conf *MinioConfig) UploadObject(buf *bytes.Buffer, folder string, fileName string, contentType string) (*minio.UploadInfo, *string, error) {
+	ctx := context.Background()
+
+	err := conf.ensureBucket(ctx, conf.bucket)
+	if err != nil {
+		return nil, nil, err
+	}
+	uploadInfo, err := conf.minioClient.PutObject(ctx, conf.bucket, folder+"/"+fileName, buf, int64(buf.Len()), minio.PutObjectOptions{
+		ContentType: contentType,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	publicURL := conf.generatePublicURL(fileName)
+
+	return &uploadInfo, &publicURL, nil
+}
+
 // ✨ Helper: Parse base64
 func (conf *MinioConfig) parseBase64File(base64Str string) ([]byte, string, string, error) {
 	var contentType, extension string

@@ -229,3 +229,11 @@ func (e *ExamController) ExamSessionMember(c *gin.Context) {
 	res := e.examSessionService.ExamSessionMember(sessionId)
 	response.SuccessResponse("Success get exam session member", res).Json(c)
 }
+
+func (e *ExamController) ExamSessionReport(c *gin.Context) {
+	var request exam_request.ExamSessionReportRequest
+	_ = c.BindQuery(&request)
+
+	res := e.examSessionService.GetAllReport(request)
+	response.SuccessResponse("Success get exam session report", res).Json(c)
+}

@@ -12,6 +12,7 @@ const (
 	CacheBankQuestion      = "cache::bank_question::"
 	CacheExam              = "cache::exam::"
 	CacheExamSession       = "cache::exam_session::"
+	CacheExamSessionReport = "cache::exam_session_report::"
 )
 
-var TtlDuration = time.Duration(30 * time.Second)
+var TtlDuration = time.Duration(30 * time.Minute)
