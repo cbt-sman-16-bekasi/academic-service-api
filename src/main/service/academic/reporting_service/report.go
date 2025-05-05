@@ -49,6 +49,10 @@ func NewReport(school school.School) *Report {
 			Color:   []string{"#FFFFFF"},
 			Pattern: 1,
 		},
+		Font: &excelize.Font{
+			Size:   11,
+			Family: "Times New Roman",
+		},
 	})
 
 	styleKop, _ := f.NewStyle(&excelize.Style{
@@ -158,7 +162,7 @@ func (report *Report) Generate() error {
 		report.excelFile.SetActiveSheet(activeSheet)
 
 		// Set background
-		report.excelFile.SetCellStyle(sheetName, "A1", "Z100", report.styleKopeHeader)
+		report.excelFile.SetCellStyle(sheetName, "A1", "Z100", report.patternStyleBackgroundWhite)
 
 		// Set width
 		report.excelFile.SetColWidth(sheetName, "A", "B", 14.29)

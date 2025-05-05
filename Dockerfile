@@ -36,6 +36,12 @@ WORKDIR /root/
 COPY --from=builder /app/main .
 COPY --from=builder /app/.env .
 
+# Copy semua font ke dalam folder font Alpine
+COPY fonts/*.ttf /usr/share/fonts/truetype/
+
+# Refresh font cache supaya dikenali
+RUN fc-cache -f -v
+
 # Atur timezone default (optional, tapi kadang diperlukan juga)
 ENV TZ=Asia/Jakarta
 
