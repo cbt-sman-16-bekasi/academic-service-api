@@ -188,3 +188,13 @@ type TokenExamSession struct {
 func (s *TokenExamSession) TableName() string {
 	return TableNameExamSessionToken
 }
+
+type ExamEssayResult struct {
+	QuestionID   string   `json:"question_id"`   // q.question_id
+	SessionID    string   `json:"session_id"`    // q.question_id
+	Question     string   `json:"question"`      // q.question
+	AnswerSingle string   `json:"answer_single"` // q.answer_single
+	AnswerUser   *string  `json:"answer_user"`   // sa.answer_id (nullable, pakai pointer)
+	AnswerID     *string  `json:"answer_id"`     // sa.id (nullable, pakai pointer)
+	Score        *float64 `json:"score"`         // sa.score (nullable, bisa float pakai pointer)
+}
