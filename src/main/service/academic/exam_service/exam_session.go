@@ -23,6 +23,7 @@ import (
 	"github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -535,7 +536,34 @@ func (e *ExamSessionService) GetAnswerStudent(request exam_request.ExamSessionSt
 left join school_service.exam e on e.code = q.exam_code
 LEFT JOIN cbt_service.student_answers sa ON sa.question_id = q.question_id AND sa.student_id = ? AND sa.session_id = ?
 WHERE e.type_question = 'ESSAY' and q.exam_code = ?`, request.StudentId, request.SessionId, request.ExamCode).Scan(&data)
+
+	for _, datum := range data {
+		datum.SessionID = request.SessionId
+	}
 	return data
+}
+
+func (e *ExamSessionService) CorrectionAnswerStudent(request exam_request.ExamSessionStudentAnswer) exam_request.ExamSessionStudentAnswer {
+	if request.AnswerResult != nil {
+		var exam school.Exam
+		e.examSessionRepository.Database.Where("exam_code=?", request.ExamCode).First(&exam)
+
+		totalScore := 0
+		for _, result := range *request.AnswerResult {
+			totalScore += result.Score
+			e.examSessionRepository.Database.
+				Where("question_id=? and student_id = ? and session_id = ?", result.QuestionID, request.StudentId, request.SessionId).
+				Model(&cbt.StudentAnswers{}).
+				Update("score", result.Score)
+		}
+
+		averageScore := float64(totalScore/(len(*request.AnswerResult)*exam.TotalScore)) * 100
+		e.examSessionRepository.Database.Model(&cbt.StudentHistoryTaken{}).
+			Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+			Update("score", math.Ceil(averageScore))
+	}
+
+	return request
 }
 
 func StringToUintSlice(s string) ([]uint, error) {

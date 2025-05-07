@@ -245,3 +245,11 @@ func (e *ExamController) ExamSessionAnswerResultStudent(c *gin.Context) {
 	res := e.examSessionService.GetAnswerStudent(request)
 	response.SuccessResponse("Success get exam session answer student", res).Json(c)
 }
+
+func (e *ExamController) ExamSessionAnswerStudentCorrection(c *gin.Context) {
+	var request exam_request.ExamSessionStudentAnswer
+	_ = c.BindJSON(&request)
+
+	res := e.examSessionService.CorrectionAnswerStudent(request)
+	response.SuccessResponse("Success correction exam session answer student", res).Json(c)
+}

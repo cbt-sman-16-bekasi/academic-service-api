@@ -1,6 +1,9 @@
 package exam_request
 
-import "time"
+import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"time"
+)
 
 type ModifyExamSessionRequest struct {
 	Name     string    `json:"name"`
@@ -52,7 +55,8 @@ type ExamSessionReportRequest struct {
 }
 
 type ExamSessionStudentAnswer struct {
-	ExamCode  string `json:"exam_code" form:"exam_code" binding:"required"`
-	SessionId string `json:"session_id" form:"session_id"`
-	StudentId string `json:"student_id" form:"student_id"`
+	ExamCode     string                    `json:"exam_code" form:"exam_code" binding:"required"`
+	SessionId    string                    `json:"session_id" form:"session_id"`
+	StudentId    string                    `json:"student_id" form:"student_id"`
+	AnswerResult *[]school.ExamEssayResult `json:"answer_result"`
 }
