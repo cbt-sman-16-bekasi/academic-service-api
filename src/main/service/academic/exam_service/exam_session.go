@@ -165,13 +165,14 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			}
 		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
-			Nisn:    class.DetailStudent.Nisn,
-			Name:    strings.ToUpper(class.DetailStudent.Name),
-			Class:   class.DetailClass.ClassName,
-			StartAt: &studentAttendance.StartAt,
-			EndAt:   studentAttendance.EndAt,
-			Score:   studentAttendance.Score,
-			Status:  status,
+			Nisn:      class.DetailStudent.Nisn,
+			Name:      strings.ToUpper(class.DetailStudent.Name),
+			Class:     class.DetailClass.ClassName,
+			StartAt:   &studentAttendance.StartAt,
+			EndAt:     studentAttendance.EndAt,
+			Score:     studentAttendance.Score,
+			Status:    status,
+			StudentId: class.DetailStudent.ID,
 		})
 	}
 
