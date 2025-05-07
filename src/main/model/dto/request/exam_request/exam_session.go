@@ -57,6 +57,6 @@ type ExamSessionReportRequest struct {
 type ExamSessionStudentAnswer struct {
 	ExamCode     string                    `json:"exam_code" form:"exam_code" binding:"required"`
 	SessionId    string                    `json:"session_id" form:"session_id"`
-	StudentId    string                    `json:"student_id" form:"student_id"`
+	StudentId    uint                      `json:"student_id" form:"student_id"`
 	AnswerResult *[]school.ExamEssayResult `json:"answer_result"`
 }

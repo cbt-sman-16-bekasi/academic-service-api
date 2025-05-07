@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/cbt"
 	"github.com/yon-module/yon-framework/database"
 )
 
@@ -17,7 +17,7 @@ func init() {
 		//&school.ClassSubject{},
 		//&school.SchoolConfig{},
 		//&school.SchoolLevel{},
-		&school.School{},
+		//&school.School{},
 		//&curriculum.Curriculum{},
 		//&curriculum.CurriculumSubject{},
 		//&curriculum.Subject{},
@@ -32,7 +32,7 @@ func init() {
 		//&student.StudentClass{},
 		//&school.TokenExamSession{},
 		//&cbt.StudentAnswers{},
-		//&cbt.StudentHistoryTaken{},
+		&cbt.StudentHistoryTaken{},
 		//&school.MasterBankQuestion{},
 		//&school.BankQuestion{},
 		//&school.BankAnswerOption{},

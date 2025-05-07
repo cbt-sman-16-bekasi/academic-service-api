@@ -166,14 +166,15 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			}
 		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
-			Nisn:      class.DetailStudent.Nisn,
-			Name:      strings.ToUpper(class.DetailStudent.Name),
-			Class:     class.DetailClass.ClassName,
-			StartAt:   &studentAttendance.StartAt,
-			EndAt:     studentAttendance.EndAt,
-			Score:     studentAttendance.Score,
-			Status:    status,
-			StudentId: class.DetailStudent.ID,
+			Nisn:           class.DetailStudent.Nisn,
+			Name:           strings.ToUpper(class.DetailStudent.Name),
+			Class:          class.DetailClass.ClassName,
+			StartAt:        &studentAttendance.StartAt,
+			EndAt:          studentAttendance.EndAt,
+			Score:          studentAttendance.Score,
+			Status:         status,
+			StudentId:      class.DetailStudent.ID,
+			NeedCorrection: studentAttendance.NeedCorrection,
 		})
 	}
 
@@ -301,9 +302,9 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	if request.Result == nil {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "request result is nil"))
 	}
-	student := e.studentRepo.FindByNISN(claims.Username)
+	studentData := e.studentRepo.FindByNISN(claims.Username)
 	var existingHistoryTaken cbt.StudentHistoryTaken
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, student.ID).First(&existingHistoryTaken)
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).First(&existingHistoryTaken)
 	if existingHistoryTaken.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
 	}
@@ -316,8 +317,15 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	existingHistoryTaken.EndAt = &timeNow
 	existingHistoryTaken.Status = "COMPLETED"
 
+	var examData school.Exam
+	e.examSessionRepository.Database.Where("code = ?", existingHistoryTaken.ExamCode).First(&examData)
+
+	if examData.TypeQuestion == "ESSAY" {
+		existingHistoryTaken.NeedCorrection = true
+	}
+
 	// Correction result
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, student.ID).
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
 		Delete(&cbt.StudentAnswers{})
 
 	var studentAnswers []cbt.StudentAnswers
@@ -327,15 +335,11 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	var questions []school.ExamQuestion
 	err := redisstore.GetJSON(request.ExamCode, &questions)
-	if err != nil {
+	if err != nil || questions == nil || len(questions) == 0 {
 		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
 		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
 	}
 
-	if questions == nil {
-		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
-		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
-	}
 	for _, question := range questions {
 		totalAllScore += question.Score
 	}
@@ -356,7 +360,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 			totalCorrect++
 		}
 
-		if question.TypeQuestion == "ESSAY" {
+		if examData.TypeQuestion == "ESSAY" {
 			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
 			score = essayHelper.EvaluateScoreEssay()
 			totalCorrect++
@@ -364,7 +368,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
 			ExamCode:   existingHistoryTaken.ExamCode,
 			SessionId:  existingHistoryTaken.SessionId,
-			StudentId:  student.ID,
+			StudentId:  studentData.ID,
 			QuestionId: submit.QuestionId,
 			AnswerId:   submit.AnswerId,
 			Score:      score,
@@ -546,21 +550,41 @@ WHERE e.type_question = 'ESSAY' and q.exam_code = ?`, request.StudentId, request
 func (e *ExamSessionService) CorrectionAnswerStudent(request exam_request.ExamSessionStudentAnswer) exam_request.ExamSessionStudentAnswer {
 	if request.AnswerResult != nil {
 		var exam school.Exam
-		e.examSessionRepository.Database.Where("exam_code=?", request.ExamCode).First(&exam)
+		e.examSessionRepository.Database.Where("code=?", request.ExamCode).First(&exam)
 
 		totalScore := 0
 		for _, result := range *request.AnswerResult {
 			totalScore += result.Score
-			e.examSessionRepository.Database.
+			err := e.examSessionRepository.Database.
 				Where("question_id=? and student_id = ? and session_id = ?", result.QuestionID, request.StudentId, request.SessionId).
 				Model(&cbt.StudentAnswers{}).
 				Update("score", result.Score)
+			if err.RowsAffected == 0 {
+				answer := ""
+				if result.AnswerID != nil {
+					answer = *result.AnswerID
+				}
+				e.examSessionRepository.Database.Create(&cbt.StudentAnswers{
+					ExamCode:   request.ExamCode,
+					SessionId:  request.SessionId,
+					StudentId:  request.StudentId,
+					QuestionId: result.QuestionID,
+					AnswerId:   answer,
+					Score:      result.Score,
+				})
+			}
 		}
 
-		averageScore := float64(totalScore/(len(*request.AnswerResult)*exam.TotalScore)) * 100
+		totalQuestion := len(*request.AnswerResult)
+		score := exam.TotalScore
+		totalQMS := totalQuestion * score
+		averageScore := (float64(totalScore) / float64(totalQMS)) * 100
 		e.examSessionRepository.Database.Model(&cbt.StudentHistoryTaken{}).
 			Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
-			Update("score", math.Ceil(averageScore))
+			Updates(map[string]interface{}{
+				"score":           math.Ceil(averageScore),
+				"need_correction": false,
+			})
 	}
 
 	return request

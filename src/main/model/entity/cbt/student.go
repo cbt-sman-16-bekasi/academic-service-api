@@ -33,17 +33,18 @@ type StudentHistoryTaken struct {
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
 	StudentId uint `json:"student_id"`
 	//DetailStudent student.Student    `json:"detail_student" gorm:"foreignKey:StudentId;references:ID"`
-	StartAt       time.Time  `json:"start_at"`
-	EndAt         *time.Time `json:"end_at"`
-	Score         int        `json:"score"`
-	TotalCorrect  int        `json:"total_correct"`
-	TotalWrong    int        `json:"total_wrong"`
-	Status        string     `json:"status"`
-	RemainingTime int        `json:"remaining_time"`
-	IsFinished    bool       `json:"is_finished"`
-	IsForced      bool       `json:"is_forced"`
-	IsTimeOver    bool       `json:"is_time_over"`
-	IsCheating    bool       `json:"is_cheating"`
+	StartAt        time.Time  `json:"start_at"`
+	EndAt          *time.Time `json:"end_at"`
+	Score          int        `json:"score"`
+	TotalCorrect   int        `json:"total_correct"`
+	TotalWrong     int        `json:"total_wrong"`
+	Status         string     `json:"status"`
+	RemainingTime  int        `json:"remaining_time"`
+	IsFinished     bool       `json:"is_finished"`
+	IsForced       bool       `json:"is_forced"`
+	IsTimeOver     bool       `json:"is_time_over"`
+	IsCheating     bool       `json:"is_cheating"`
+	NeedCorrection bool       `json:"need_correction" gorm:"DEFAULT:true"`
 }
 
 func (s StudentHistoryTaken) TableName() string {
