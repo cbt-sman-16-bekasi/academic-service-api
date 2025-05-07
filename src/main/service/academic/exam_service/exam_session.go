@@ -330,7 +330,6 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	var studentAnswers []cbt.StudentAnswers
 	totalScore := 0
-	totalAllScore := 0
 	totalCorrect := 0
 
 	var questions []school.ExamQuestion
@@ -339,10 +338,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
 		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
 	}
-
-	for _, question := range questions {
-		totalAllScore += question.Score
-	}
+	totalAllScore := len(questions) * examData.TotalScore
 
 	for _, submit := range request.Result {
 		score := 0
@@ -378,7 +374,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	e.examSessionRepository.Database.Save(&studentAnswers)
 
-	existingHistoryTaken.Score = (totalScore / totalAllScore) * 100
+	existingHistoryTaken.Score = int(math.Ceil((float64(totalScore) / float64(totalAllScore)) * 100))
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 	return existingHistoryTaken
