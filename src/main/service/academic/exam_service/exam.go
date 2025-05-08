@@ -470,9 +470,9 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		response.ErrorResponse(response.ServerError, "Failed read file", err).Json(c)
 		return
 	}
-	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
-	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
+
+	result, done := e.uploadQuestion(c, exam.TypeQuestion, err, fileBytes, file)
+	if !done {
 		return
 	}
 
@@ -537,6 +537,24 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 	response.SuccessResponse("Success Upload Question", nil).Json(c)
 }
 
+func (e *ExamService) uploadQuestion(c *gin.Context, typeQuestion string, err error, fileBytes []byte, file *multipart.FileHeader) ([]parsedocx.ResultParse, bool) {
+	var result []parsedocx.ResultParse
+	if typeQuestion == "ESSAY" {
+		result, err = parsedocx.ParseDocxEssay(fileBytes, file.Filename)
+		if err != nil {
+			response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
+			return nil, false
+		}
+	} else {
+		result, err = parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
+		if err != nil {
+			response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
+			return nil, false
+		}
+	}
+	return result, true
+}
+
 func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 	idParam := c.Param("masterBankId")
 	id, _ := strconv.Atoi(idParam)
@@ -567,9 +585,9 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 		response.ErrorResponse(response.ServerError, "Failed read file", err).Json(c)
 		return
 	}
-	result, err := parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
-	if err != nil {
-		response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
+
+	result, done := e.uploadQuestion(c, bank.TypeQuestion, err, fileBytes, file)
+	if !done {
 		return
 	}
 
