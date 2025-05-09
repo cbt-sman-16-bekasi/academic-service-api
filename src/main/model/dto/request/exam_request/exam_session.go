@@ -51,7 +51,7 @@ type ExamResultSubmit struct {
 
 type ExamSessionReportRequest struct {
 	ExamCode  string  `json:"exam_code" form:"exam_code" binding:"required"`
-	SessionId *string `json:"session_id" form:"session_id"`
+	SessionId *string `json:"session_id" form:"sessionId"`
 }
 
 type ExamSessionStudentAnswer struct {
