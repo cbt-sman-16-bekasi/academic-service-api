@@ -21,7 +21,7 @@ func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]ResultParse, er
 	}
 	writer.Close()
 
-	logger.Log.Info().Msgf("Call to parse docx with fileName %s", filename)
+	logger.Log.Info().Msgf("Call to parse docx with fileName %s and url http://172.17.0.1:8085/parse-docx", filename)
 	resp, err := http.Post("http://172.17.0.1:8085/parse-docx", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func ParseDocxEssay(fileBytes []byte, filename string) ([]ResultParse, error) {
 	}
 	writer.Close()
 
-	logger.Log.Info().Msgf("Call to parse docx with fileName %s", filename)
+	logger.Log.Info().Msgf("Call to parse docx with fileName %s  and url http://172.17.0.1:8085/parse-docx/essay", filename)
 	resp, err := http.Post("http://172.17.0.1:8085/parse-docx/essay", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err

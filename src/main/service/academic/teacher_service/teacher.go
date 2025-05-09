@@ -172,7 +172,7 @@ func (t *TeacherService) CreateSubjectClassTeacher(request teacher_request.Teach
 func (t *TeacherService) validateCheckDuplicate(request teacher_request.TeacherMappingSubjectClass) {
 	for _, u := range request.ClassId {
 		var checkExistRegister teacher.TeacherClassSubject
-		t.teacherRepository.Database.Where("class_id = ? AND subject_code = ?", u, request.SubjectId).First(&checkExistRegister)
+		t.teacherRepository.Database.Where("class_id = ? AND subject_code = ? AND teacher_id = ?", u, request.SubjectId, request.TeacherId).First(&checkExistRegister)
 
 		if checkExistRegister.ID != 0 {
 			panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Teacher with class id '%d' and '%s' already exists", request.ClassId, request.SubjectId)))
