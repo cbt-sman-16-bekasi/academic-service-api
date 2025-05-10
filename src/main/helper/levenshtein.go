@@ -23,7 +23,7 @@ func NewCosineSimilarity(reference, answer string, score int) *CosineSimilarity 
 
 func (l *CosineSimilarity) EvaluateScoreEssay() int {
 	similarity := cosineSimilarity(l.Answer, l.ReferenceAnswer)
-	return int(similarity * float64(l.ScoreQuestion))
+	return int(similarity / float64(l.ScoreQuestion))
 }
 
 func preprocessText(text string) []string {
@@ -69,5 +69,18 @@ func cosineSimilarity(text1, text2 string) float64 {
 		return 0.0
 	}
 
-	return dotProduct / (math.Sqrt(norm1) * math.Sqrt(norm2))
+	return convertScore(dotProduct / (math.Sqrt(norm1) * math.Sqrt(norm2)))
+}
+
+func convertScore(score float64) float64 {
+	if score > 0.85 {
+		return 100.0
+	} else if score > 0.70 {
+		return 90.0
+	} else if score > 0.50 {
+		return 75.0
+	} else if score > 0.30 {
+		return 60.0
+	}
+	return 40.0
 }
