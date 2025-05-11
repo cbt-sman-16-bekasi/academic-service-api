@@ -109,3 +109,14 @@ type ExamSessionReportScoreView struct {
 func (e *ExamSessionReportScoreView) TableName() string {
 	return "public.v_exam_session_report_score"
 }
+
+type VClass struct {
+	ID           uint   `json:"id"`
+	ClassCode    string `json:"class_code"`
+	ClassName    string `json:"class_name"`
+	TotalStudent int    `json:"total_student"`
+}
+
+func (v *VClass) TableName() string {
+	return "public.v_class"
+}

@@ -28,8 +28,7 @@ func NewClassService() *ClassService {
 
 func (c *ClassService) FindAllClass(request pagination.Request[map[string]interface{}]) *database.Paginator {
 	paging := database.NewPagination[map[string]interface{}]().
-		SetModal([]school.Class{}).
-		SetPreloads("DetailClassCode").
+		SetModal([]view.VClass{}).
 		SetRequest(&request).
 		FindAllPaging()
 	return paging
