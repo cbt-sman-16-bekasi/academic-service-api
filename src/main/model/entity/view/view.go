@@ -111,7 +111,7 @@ func (e *ExamSessionReportScoreView) TableName() string {
 }
 
 type VClass struct {
-	ID           uint   `json:"id"`
+	ID           uint   `json:"ID" gorm:"column:id"`
 	ClassCode    string `json:"class_code"`
 	ClassName    string `json:"class_name"`
 	TotalStudent int    `json:"total_student"`
