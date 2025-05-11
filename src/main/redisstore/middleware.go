@@ -13,8 +13,8 @@ func CacheMiddleware(prefix string, ttl time.Duration) gin.HandlerFunc {
 			c.Next()
 			return
 		}
-
-		key := prefix + c.Request.URL.RawQuery
+		authHeader := c.GetHeader("Authorization")
+		key := prefix + c.Request.URL.RawQuery + authHeader
 		val, err := Get(key)
 		if err == nil && val != "" {
 			c.Data(http.StatusOK, "application/json", []byte(val))
