@@ -1,6 +1,7 @@
 package redisstore
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
@@ -14,7 +15,8 @@ func CacheMiddleware(prefix string, ttl time.Duration) gin.HandlerFunc {
 			return
 		}
 
-		key := prefix + c.Request.URL.RawQuery
+		dataClaims := jwt.GetDataClaims(c)
+		key := prefix + c.Request.URL.RawQuery + dataClaims.Username
 		val, err := Get(key)
 		if err == nil && val != "" {
 			c.Data(http.StatusOK, "application/json", []byte(val))
