@@ -69,9 +69,11 @@ func (c *ClassService) ModifyClass(id uint, request classRequest.ModifyClassRequ
 		panic(exception.NewBadRequestExceptionStruct(response.NotFound, "Class with this code not found"))
 	}
 
-	checkCode := c.repoClass.GetClassByCode(request.ClassCode)
-	if checkCode.ID != 0 && checkCode.ID != id {
-		panic(exception.NewBadRequestExceptionStruct(response.ExpectationFailed, "Class code already exists"))
+	if existingClass.ClassCode != request.ClassCode {
+		checkCode := c.repoClass.GetClassByCode(request.ClassCode)
+		if checkCode != nil {
+			panic(exception.NewBadRequestExceptionStruct(response.ExpectationFailed, "Class code already exists"))
+		}
 	}
 
 	existingClass.ClassName = request.ClassName

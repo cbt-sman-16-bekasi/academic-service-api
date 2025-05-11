@@ -17,9 +17,9 @@ func NewClassRepository() *ClassRepository {
 }
 
 func (repo *ClassRepository) GetClassByCode(classCode string) *school.Class {
-	var class school.Class
+	var class *school.Class
 	_ = repo.Database.Where("class_code = ?", classCode).First(&class)
-	return &class
+	return class
 }
 
 func (repo *ClassRepository) FindById(id uint) *school.Class {
