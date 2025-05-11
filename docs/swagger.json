@@ -330,6 +330,94 @@
                 }
             }
         },
+        "/academic/class/member/add": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Add Member of Class",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class"
+                ],
+                "summary": "This endpoint about Add Member of class",
+                "parameters": [
+                    {
+                        "description": "Request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/class_request.ModifyClassMemberRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Create Member class response",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/class_request.ModifyClassMemberRequest"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/academic/class/member/{id}/delete": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Member of Class",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class"
+                ],
+                "summary": "This endpoint about Member of class",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Request",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Delete Member class response",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/academic/class/subject/all": {
             "get": {
                 "security": [
@@ -659,6 +747,58 @@
                                     "properties": {
                                         "data": {
                                             "$ref": "#/definitions/class_response.DetailClassResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/academic/class/{classId}/member": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Member of Class",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Class"
+                ],
+                "summary": "This endpoint about Member of class",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Class ID",
+                        "name": "classId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Member class response",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/view.VStudent"
+                                            }
                                         }
                                     }
                                 }
@@ -2823,6 +2963,7 @@
         "auth_response.AuthResponse": {
             "type": "object",
             "properties": {
+                "detail": {},
                 "exp": {
                     "type": "integer"
                 },
@@ -2875,10 +3016,19 @@
                 "id": {
                     "type": "integer"
                 },
+                "is_cheating": {
+                    "type": "boolean"
+                },
                 "is_finished": {
                     "type": "boolean"
                 },
                 "is_forced": {
+                    "type": "boolean"
+                },
+                "is_time_over": {
+                    "type": "boolean"
+                },
+                "need_correction": {
                     "type": "boolean"
                 },
                 "remaining_time": {
@@ -2910,6 +3060,20 @@
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "class_request.ModifyClassMemberRequest": {
+            "type": "object",
+            "properties": {
+                "class_id": {
+                    "type": "integer"
+                },
+                "student_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
                 }
             }
         },
@@ -3123,6 +3287,12 @@
         "exam_request.ModifyExamSessionRequest": {
             "type": "object",
             "properties": {
+                "class_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "end_at": {
                     "type": "string"
                 },
@@ -3198,6 +3368,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3223,6 +3396,10 @@
                     }
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
                     "type": "integer"
                 },
                 "name": {
@@ -3260,6 +3437,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3269,13 +3449,29 @@
                 "end_date": {
                     "type": "string"
                 },
+                "error_report": {
+                    "type": "string"
+                },
                 "exam": {
                     "$ref": "#/definitions/school.Exam"
+                },
+                "exam_member": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/school.ExamSessionMember"
+                    }
                 },
                 "id": {
                     "type": "integer"
                 },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
+                    "type": "integer"
+                },
                 "name": {
+                    "type": "string"
+                },
+                "report_url": {
                     "type": "string"
                 },
                 "session_id": {
@@ -3284,10 +3480,22 @@
                 "start_date": {
                     "type": "string"
                 },
+                "status_report": {
+                    "type": "string"
+                },
                 "total_attendance": {
                     "type": "integer"
                 },
+                "total_cheating": {
+                    "type": "integer"
+                },
                 "total_student": {
+                    "type": "integer"
+                },
+                "total_submit": {
+                    "type": "integer"
+                },
+                "total_times_over": {
                     "type": "integer"
                 },
                 "updatedAt": {
@@ -3339,6 +3547,9 @@
                 "name": {
                     "type": "string"
                 },
+                "need_correction": {
+                    "type": "boolean"
+                },
                 "nisn": {
                     "type": "string"
                 },
@@ -3350,6 +3561,9 @@
                 },
                 "status": {
                     "type": "string"
+                },
+                "student_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -3358,6 +3572,9 @@
             "properties": {
                 "createdAt": {
                     "type": "string"
+                },
+                "created_by": {
+                    "type": "integer"
                 },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
@@ -3368,19 +3585,41 @@
                 "end_date": {
                     "type": "string"
                 },
+                "error_report": {
+                    "type": "string"
+                },
                 "exam": {
                     "$ref": "#/definitions/school.Exam"
+                },
+                "exam_member": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/school.ExamSessionMember"
+                    }
                 },
                 "id": {
                     "type": "integer"
                 },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
+                    "type": "integer"
+                },
                 "name": {
+                    "type": "string"
+                },
+                "report_url": {
                     "type": "string"
                 },
                 "session_id": {
                     "type": "string"
                 },
                 "start_date": {
+                    "type": "string"
+                },
+                "status_report": {
                     "type": "string"
                 },
                 "total_student": {
@@ -3397,6 +3636,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3407,6 +3649,10 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
                     "type": "integer"
                 },
                 "start_active_token": {
@@ -3437,6 +3683,9 @@
                 },
                 "id": {
                     "type": "integer"
+                },
+                "name": {
+                    "type": "string"
                 },
                 "role": {
                     "$ref": "#/definitions/user.Role"
@@ -3582,6 +3831,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3607,6 +3859,10 @@
                     }
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
                     "type": "integer"
                 },
                 "name": {
@@ -3743,6 +3999,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3752,16 +4011,64 @@
                 "end_date": {
                     "type": "string"
                 },
+                "error_report": {
+                    "type": "string"
+                },
+                "exam_member": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/school.ExamSessionMember"
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
+                    "type": "integer"
+                },
                 "name": {
+                    "type": "string"
+                },
+                "report_url": {
                     "type": "string"
                 },
                 "session_id": {
                     "type": "string"
                 },
                 "start_date": {
+                    "type": "string"
+                },
+                "status_report": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "school.ExamSessionMember": {
+            "type": "object",
+            "properties": {
+                "class": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "detail_class": {
+                    "$ref": "#/definitions/school.Class"
+                },
+                "detail_exam": {
+                    "$ref": "#/definitions/school.ExamSession"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "session_id": {
                     "type": "string"
                 },
                 "updatedAt": {
@@ -3775,6 +4082,9 @@
                 "createdAt": {
                     "type": "string"
                 },
+                "created_by": {
+                    "type": "integer"
+                },
                 "deletedAt": {
                     "$ref": "#/definitions/gorm.DeletedAt"
                 },
@@ -3785,6 +4095,10 @@
                     "type": "string"
                 },
                 "id": {
+                    "type": "integer"
+                },
+                "modified_by": {
+                    "description": "CreatedUser  user.User `json:\"detail_user\" gorm:\"foreignKey:CreatedBy\"`",
                     "type": "integer"
                 },
                 "start_active_token": {
@@ -3854,7 +4168,19 @@
                 "phone": {
                     "type": "string"
                 },
+                "principal_name": {
+                    "type": "string"
+                },
+                "principal_nip": {
+                    "type": "string"
+                },
                 "school_name": {
+                    "type": "string"
+                },
+                "vice_principal_name": {
+                    "type": "string"
+                },
+                "vice_principal_nip": {
                     "type": "string"
                 }
             }
@@ -3862,6 +4188,9 @@
         "school_response.DashboardResponse": {
             "type": "object",
             "properties": {
+                "total_access": {
+                    "type": "integer"
+                },
                 "total_class": {
                     "type": "integer"
                 },
@@ -3912,7 +4241,19 @@
                 "phone": {
                     "type": "string"
                 },
+                "principal_name": {
+                    "type": "string"
+                },
+                "principal_nip": {
+                    "type": "string"
+                },
                 "school_name": {
+                    "type": "string"
+                },
+                "vice_principal_name": {
+                    "type": "string"
+                },
+                "vice_principal_nip": {
                     "type": "string"
                 }
             }
@@ -4036,6 +4377,12 @@
                 "nuptk": {
                     "type": "string"
                 },
+                "teacherClassSubject": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/teacher.TeacherClassSubject"
+                    }
+                },
                 "updatedAt": {
                     "type": "string"
                 },
@@ -4044,22 +4391,54 @@
                 }
             }
         },
+        "teacher.TeacherClassSubject": {
+            "type": "object",
+            "properties": {
+                "class": {
+                    "$ref": "#/definitions/school.Class"
+                },
+                "classId": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "deletedAt": {
+                    "$ref": "#/definitions/gorm.DeletedAt"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "subject": {
+                    "$ref": "#/definitions/curriculum.Subject"
+                },
+                "subjectCode": {
+                    "type": "string"
+                },
+                "teacher": {
+                    "$ref": "#/definitions/teacher.Teacher"
+                },
+                "teacherId": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
         "teacher_request.TeacherModifyRequest": {
             "type": "object",
             "properties": {
+                "gender": {
+                    "type": "string"
+                },
+                "isAccess": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
                 "nuptk": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "role": {
-                    "type": "string"
-                },
-                "username": {
                     "type": "string"
                 }
             }
@@ -4067,6 +4446,12 @@
         "teacher_response.TeacherDetailResponse": {
             "type": "object",
             "properties": {
+                "gender": {
+                    "type": "string"
+                },
+                "isAccess": {
+                    "type": "boolean"
+                },
                 "name": {
                     "type": "string"
                 },
@@ -4104,6 +4489,32 @@
                 },
                 "updatedAt": {
                     "type": "string"
+                }
+            }
+        },
+        "view.VStudent": {
+            "type": "object",
+            "properties": {
+                "class_id": {
+                    "type": "integer"
+                },
+                "class_name": {
+                    "type": "string"
+                },
+                "gender": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nisn": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "integer"
                 }
             }
         }

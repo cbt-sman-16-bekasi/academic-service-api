@@ -13,6 +13,7 @@ definitions:
     type: object
   auth_response.AuthResponse:
     properties:
+      detail: {}
       exp:
         type: integer
       token:
@@ -47,9 +48,15 @@ definitions:
         type: string
       id:
         type: integer
+      is_cheating:
+        type: boolean
       is_finished:
         type: boolean
       is_forced:
+        type: boolean
+      is_time_over:
+        type: boolean
+      need_correction:
         type: boolean
       remaining_time:
         type: integer
@@ -72,6 +79,15 @@ definitions:
         type: integer
       updatedAt:
         type: string
+    type: object
+  class_request.ModifyClassMemberRequest:
+    properties:
+      class_id:
+        type: integer
+      student_id:
+        items:
+          type: integer
+        type: array
     type: object
   class_request.ModifyClassRequest:
     properties:
@@ -210,6 +226,10 @@ definitions:
     type: object
   exam_request.ModifyExamSessionRequest:
     properties:
+      class_id:
+        items:
+          type: integer
+        type: array
       end_at:
         type: string
       exam_code:
@@ -257,6 +277,8 @@ definitions:
     properties:
       code:
         type: string
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -276,6 +298,9 @@ definitions:
           $ref: '#/definitions/school.ExamQuestion'
         type: array
       id:
+        type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
         type: integer
       name:
         type: string
@@ -298,6 +323,8 @@ definitions:
     type: object
   exam_response.ExamDetailSessionResponse:
     properties:
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -306,19 +333,38 @@ definitions:
         $ref: '#/definitions/school.Exam'
       end_date:
         type: string
+      error_report:
+        type: string
       exam:
         $ref: '#/definitions/school.Exam'
+      exam_member:
+        items:
+          $ref: '#/definitions/school.ExamSessionMember'
+        type: array
       id:
         type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
+        type: integer
       name:
+        type: string
+      report_url:
         type: string
       session_id:
         type: string
       start_date:
         type: string
+      status_report:
+        type: string
       total_attendance:
         type: integer
+      total_cheating:
+        type: integer
       total_student:
+        type: integer
+      total_submit:
+        type: integer
+      total_times_over:
         type: integer
       updatedAt:
         type: string
@@ -352,6 +398,8 @@ definitions:
         type: string
       name:
         type: string
+      need_correction:
+        type: boolean
       nisn:
         type: string
       score:
@@ -360,9 +408,13 @@ definitions:
         type: string
       status:
         type: string
+      student_id:
+        type: integer
     type: object
   exam_response.ExamSessionListResponse:
     properties:
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -371,15 +423,30 @@ definitions:
         $ref: '#/definitions/school.Exam'
       end_date:
         type: string
+      error_report:
+        type: string
       exam:
         $ref: '#/definitions/school.Exam'
+      exam_member:
+        items:
+          $ref: '#/definitions/school.ExamSessionMember'
+        type: array
       id:
         type: integer
+      is_active:
+        type: boolean
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
+        type: integer
       name:
+        type: string
+      report_url:
         type: string
       session_id:
         type: string
       start_date:
+        type: string
+      status_report:
         type: string
       total_student:
         type: integer
@@ -388,6 +455,8 @@ definitions:
     type: object
   exam_response.ExamSessionTokenResponse:
     properties:
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -397,6 +466,9 @@ definitions:
       end_active_token:
         type: string
       id:
+        type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
         type: integer
       start_active_token:
         type: string
@@ -417,6 +489,8 @@ definitions:
         $ref: '#/definitions/gorm.DeletedAt'
       id:
         type: integer
+      name:
+        type: string
       role:
         $ref: '#/definitions/user.Role'
       status:
@@ -510,6 +584,8 @@ definitions:
     properties:
       code:
         type: string
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -529,6 +605,9 @@ definitions:
           $ref: '#/definitions/school.ExamQuestion'
         type: array
       id:
+        type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
         type: integer
       name:
         type: string
@@ -616,6 +695,8 @@ definitions:
     type: object
   school.ExamSession:
     properties:
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -624,19 +705,53 @@ definitions:
         $ref: '#/definitions/school.Exam'
       end_date:
         type: string
+      error_report:
+        type: string
+      exam_member:
+        items:
+          $ref: '#/definitions/school.ExamSessionMember'
+        type: array
       id:
         type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
+        type: integer
       name:
+        type: string
+      report_url:
         type: string
       session_id:
         type: string
       start_date:
+        type: string
+      status_report:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  school.ExamSessionMember:
+    properties:
+      class:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      detail_class:
+        $ref: '#/definitions/school.Class'
+      detail_exam:
+        $ref: '#/definitions/school.ExamSession'
+      id:
+        type: integer
+      session_id:
         type: string
       updatedAt:
         type: string
     type: object
   school.TokenExamSession:
     properties:
+      created_by:
+        type: integer
       createdAt:
         type: string
       deletedAt:
@@ -646,6 +761,9 @@ definitions:
       end_active_token:
         type: string
       id:
+        type: integer
+      modified_by:
+        description: CreatedUser  user.User `json:"detail_user" gorm:"foreignKey:CreatedBy"`
         type: integer
       start_active_token:
         type: string
@@ -691,11 +809,21 @@ definitions:
         type: string
       phone:
         type: string
+      principal_name:
+        type: string
+      principal_nip:
+        type: string
       school_name:
+        type: string
+      vice_principal_name:
+        type: string
+      vice_principal_nip:
         type: string
     type: object
   school_response.DashboardResponse:
     properties:
+      total_access:
+        type: integer
       total_class:
         type: integer
       total_exam:
@@ -729,7 +857,15 @@ definitions:
         type: string
       phone:
         type: string
+      principal_name:
+        type: string
+      principal_nip:
+        type: string
       school_name:
+        type: string
+      vice_principal_name:
+        type: string
+      vice_principal_nip:
         type: string
     type: object
   student.Student:
@@ -810,26 +946,55 @@ definitions:
         type: string
       nuptk:
         type: string
+      teacherClassSubject:
+        items:
+          $ref: '#/definitions/teacher.TeacherClassSubject'
+        type: array
       updatedAt:
         type: string
       user_id:
         type: integer
     type: object
+  teacher.TeacherClassSubject:
+    properties:
+      class:
+        $ref: '#/definitions/school.Class'
+      classId:
+        type: integer
+      createdAt:
+        type: string
+      deletedAt:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      subject:
+        $ref: '#/definitions/curriculum.Subject'
+      subjectCode:
+        type: string
+      teacher:
+        $ref: '#/definitions/teacher.Teacher'
+      teacherId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
   teacher_request.TeacherModifyRequest:
     properties:
+      gender:
+        type: string
+      isAccess:
+        type: boolean
       name:
         type: string
       nuptk:
         type: string
-      password:
-        type: string
-      role:
-        type: string
-      username:
-        type: string
     type: object
   teacher_response.TeacherDetailResponse:
     properties:
+      gender:
+        type: string
+      isAccess:
+        type: boolean
       name:
         type: string
       nuptk:
@@ -855,6 +1020,23 @@ definitions:
         type: string
       updatedAt:
         type: string
+    type: object
+  view.VStudent:
+    properties:
+      class_id:
+        type: integer
+      class_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      nisn:
+        type: string
+      user_id:
+        type: integer
     type: object
 host: api.sman16bekasi.id/gateway-service
 info:
@@ -920,6 +1102,36 @@ paths:
       summary: This endpoint about Class Code like 10, 11, 12
       tags:
       - School
+  /academic/class/{classId}/member:
+    get:
+      consumes:
+      - application/json
+      description: Member of Class
+      parameters:
+      - description: Class ID
+        in: path
+        name: classId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Member class response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/view.VStudent'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Member of class
+      tags:
+      - Class
   /academic/class/all:
     get:
       consumes:
@@ -1047,6 +1259,58 @@ paths:
       security:
       - BearerAuth: []
       summary: This endpoint about detail of class
+      tags:
+      - Class
+  /academic/class/member/{id}/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Member of Class
+      parameters:
+      - description: Request
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Delete Member class response
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Member of class
+      tags:
+      - Class
+  /academic/class/member/add:
+    post:
+      consumes:
+      - application/json
+      description: Add Member of Class
+      parameters:
+      - description: Request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/class_request.ModifyClassMemberRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Create Member class response
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/class_request.ModifyClassMemberRequest'
+              type: object
+      security:
+      - BearerAuth: []
+      summary: This endpoint about Add Member of class
       tags:
       - Class
   /academic/class/subject/all:

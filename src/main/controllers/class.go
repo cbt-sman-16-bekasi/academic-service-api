@@ -134,3 +134,65 @@ func (s *ClassController) DeleteClass(c *gin.Context) {
 	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success delete class", gin.H{"id": id}).Json(c)
 }
+
+// MemberOfClass Member of Class
+// @Summary This endpoint about Member of class
+// @Description Member of Class
+// @Tags Class
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param classId path int true "Class ID"
+//
+// @Success 200 {object} response.BaseResponse{data=[]view.VStudent} "Member class response"
+// @Router /academic/class/{classId}/member [get]
+func (s *ClassController) MemberOfClass(c *gin.Context) {
+
+	var idParam = c.Param("classId")
+	id, _ := strconv.Atoi(idParam)
+
+	res := s.classService.MemberOfClass(uint(id))
+	response.SuccessResponse("Success get class", res).Json(c)
+}
+
+// AddMemberOfClass Add Member of Class
+// @Summary This endpoint about Add Member of class
+// @Description Add Member of Class
+// @Tags Class
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param request body class_request.ModifyClassMemberRequest true "Request"
+//
+// @Success 200 {object} response.BaseResponse{data=class_request.ModifyClassMemberRequest} "Create Member class response"
+// @Router /academic/class/member/add [post]
+func (s *ClassController) AddMemberOfClass(c *gin.Context) {
+
+	var req class_request.ModifyClassMemberRequest
+	_ = c.BindJSON(&req)
+
+	s.classService.AddMemberOfClass(req)
+	response.SuccessResponse("Success", req).Json(c)
+}
+
+// DeleteMemberOfClass Member of Class
+// @Summary This endpoint about Member of class
+// @Description Member of Class
+// @Tags Class
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Request"
+//
+// @Success 200 {object} response.BaseResponse "Delete Member class response"
+// @Router /academic/class/member/{id}/delete [delete]
+func (s *ClassController) DeleteMemberOfClass(c *gin.Context) {
+
+	var idParam = c.Param("id")
+	id, _ := strconv.Atoi(idParam)
+	s.classService.RemoveMemberOfClass(uint(id))
+	response.SuccessResponse("Success", gin.H{"id": id}).Json(c)
+}
