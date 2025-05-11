@@ -13,6 +13,7 @@ type User struct {
 	Role       uint   `gorm:"default:1" json:"-"`
 	Status     uint   `gorm:"default:1" json:"status"`
 	Name       string `json:"name"`
+	ProfileURL string `json:"profile_url"`
 	RoleUser   Role   `gorm:"foreignKey:Role;references:ID" json:"role"`
 }
 

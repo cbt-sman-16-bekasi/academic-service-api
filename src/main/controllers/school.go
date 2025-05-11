@@ -257,3 +257,19 @@ func (s *SchoolController) AuthCBTLogin(c *gin.Context) {
 	resp := s.studentService.LoginByNISN(request)
 	response.SuccessResponse("Success login", resp).Json(c)
 }
+
+func (s *SchoolController) ChangePassword(c *gin.Context) {
+	var request auth_request.ChangePasswordRequest
+	_ = c.BindJSON(&request)
+
+	s.authService.ChangePassword(c, request)
+	response.SuccessResponse("Success change password", nil).Json(c)
+}
+
+func (s *SchoolController) ChangeProfile(c *gin.Context) {
+	var request auth_request.ChangeProfileRequest
+	_ = c.BindJSON(&request)
+
+	s.authService.ChangeProfile(c, request)
+	response.SuccessResponse("Success change profile", nil).Json(c)
+}

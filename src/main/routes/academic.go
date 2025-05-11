@@ -53,6 +53,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 	academic.POST("/auth/login", schoolController.AuthLogin)
 	gr.POST("/auth/cbt/login", schoolController.AuthCBTLogin)
 	gr.POST("/cbt/token/validate", jwt.AuthMiddleware(), examController.ValidateToken)
+	gr.POST("/auth/change-password", jwt.AuthMiddleware(), schoolController.ChangePassword)
+	gr.POST("/auth/change-profile", jwt.AuthMiddleware(), schoolController.ChangeProfile)
 	gr.POST("/cbt/exam/submit", jwt.AuthMiddleware(), examController.SubmitExamSession)
 	gr.POST("/upload/base64", jwt.AuthMiddleware(), func(context *gin.Context) {
 		var request request2.UploadBase64Request
