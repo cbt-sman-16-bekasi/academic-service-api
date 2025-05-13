@@ -75,6 +75,7 @@ func (s *UserService) GetAllRole() []user.Role {
 }
 
 func (s *UserService) GetAllUser(request pagination.Request[map[string]interface{}]) *database.Paginator {
+
 	return database.NewPagination[map[string]interface{}]().
 		SetModal([]view.VUser{}).
 		SetRequest(&request).
