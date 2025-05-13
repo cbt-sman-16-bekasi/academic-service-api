@@ -150,7 +150,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		bank.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
 			redisstore.CacheMiddleware(redisstore.CacheBankQuestion, redisstore.TtlDuration), examController.GetAllBankQuestion)
 		bank.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailMasterBankQuestion)
-		bank.GET("/detail/by-subject", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailMasterBankQuestionSubject)
+		bank.GET("/detail/bank/subject", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetDetailMasterBankQuestionSubject)
 		bank.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateMasterBankQuestion)
 		bank.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.UpdateMasterBankQuestion)
 		bank.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "delete"), examController.DeleteMasterBankQuestion)
