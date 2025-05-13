@@ -37,22 +37,21 @@ func (s *TypeExam) TableName() string {
 
 type Exam struct {
 	gorm.Model
-	Code                   string             `gorm:"unique" json:"code"`
-	Name                   string             `json:"name"`
-	Description            string             `json:"description" gorm:"type:text"`
-	SubjectCode            string             `json:"-"`
-	DetailSubject          curriculum.Subject `gorm:"foreignKey:SubjectCode;references:Code" json:"subject_code"`
-	TypeExam               string             `json:"-"`
-	DetailTypeExam         TypeExam           `json:"detail_type_exam" gorm:"foreignKey:TypeExam;references:Code"`
-	RandomQuestion         bool               `json:"random_question"`
-	RandomAnswer           bool               `json:"random_answer"`
-	ShowResult             bool               `json:"show_result"`
-	Duration               int                `json:"duration"`
-	TypeQuestion           string             `json:"type_question" gorm:"type:varchar(50)"`
-	TotalScore             int                `json:"total_score" gorm:"type:int"`
-	ExamMember             []ExamMember       `json:"exam_member" gorm:"foreignKey:ExamCode;references:Code"`
-	ExamQuestion           []ExamQuestion     `json:"exam_question" gorm:"foreignKey:ExamCode;references:Code"`
-	MasterBankQuestionCode string             `json:"master_bank_question_code"`
+	Code           string             `gorm:"unique" json:"code"`
+	Name           string             `json:"name"`
+	Description    string             `json:"description" gorm:"type:text"`
+	SubjectCode    string             `json:"-"`
+	DetailSubject  curriculum.Subject `gorm:"foreignKey:SubjectCode;references:Code" json:"subject_code"`
+	TypeExam       string             `json:"-"`
+	DetailTypeExam TypeExam           `json:"detail_type_exam" gorm:"foreignKey:TypeExam;references:Code"`
+	RandomQuestion bool               `json:"random_question"`
+	RandomAnswer   bool               `json:"random_answer"`
+	ShowResult     bool               `json:"show_result"`
+	Duration       int                `json:"duration"`
+	TypeQuestion   string             `json:"type_question" gorm:"type:varchar(50)"`
+	TotalScore     int                `json:"total_score" gorm:"type:int"`
+	ExamMember     []ExamMember       `json:"exam_member" gorm:"foreignKey:ExamCode;references:Code"`
+	ExamQuestion   []ExamQuestion     `json:"exam_question" gorm:"foreignKey:ExamCode;references:Code"`
 	core.AuditUser
 }
 
