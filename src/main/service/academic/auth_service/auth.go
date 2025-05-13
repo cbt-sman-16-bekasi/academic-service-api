@@ -113,7 +113,7 @@ func (r *AuthService) ChangeProfile(c *gin.Context, request auth_request.ChangeP
 	dataUser := r.userRepository.ReadUser(dataClaims.Username)
 	if dataUser.Username != request.Username {
 		existUsername := r.userRepository.ReadUser(request.Username)
-		if existUsername == nil {
+		if existUsername != nil {
 			panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Username already exists"))
 		}
 		dataUser.Username = request.Username
