@@ -77,7 +77,7 @@ type ExamQuestion struct {
 	QuestionId     string             `gorm:"unique" json:"question_id"`
 	BankQuestionId string             `json:"bank_question_id"`
 	Question       string             `json:"question" gorm:"type:text"`
-	Answer         string             `json:"-"`
+	Answer         string             `json:"answer"`
 	AnswerSingle   string             `json:"answer_single"`
 	TypeQuestion   string             `json:"type_question" gorm:"type:varchar(50)"`
 	Score          int                `json:"score"`

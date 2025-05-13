@@ -51,6 +51,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	})
 	academic.PUT("/school/update", jwt.AuthMiddleware(), jwt.RequirePermission([]string{"ADMIN"}, "update"), schoolController.ModifySchool)
 	academic.POST("/auth/login", schoolController.AuthLogin)
+	academic.GET("/recalculate", examController.ExamSessionRecalculate)
 	gr.POST("/auth/cbt/login", schoolController.AuthCBTLogin)
 	gr.POST("/cbt/token/validate", jwt.AuthMiddleware(), examController.ValidateToken)
 	gr.POST("/auth/change-password", jwt.AuthMiddleware(), schoolController.ChangePassword)

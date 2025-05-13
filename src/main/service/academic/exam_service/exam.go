@@ -362,7 +362,7 @@ func (e *ExamService) updateBankQuestion(tx *gorm.DB, exam school.Exam, question
 				}
 			}
 
-			bankQuestion := &school.BankQuestion{
+			bankQuestion = school.BankQuestion{
 				QuestionId:             questionId + "_" + member,
 				MasterBankQuestionCode: masterBankQuestion.Code,
 				TypeQuestion:           exam.TypeQuestion,
@@ -371,7 +371,7 @@ func (e *ExamService) updateBankQuestion(tx *gorm.DB, exam school.Exam, question
 				AnswerSingle:           request.Answer,
 				QuestionFrom:           "MANUAL",
 			}
-			if err := tx.Create(&bankQuestion).Error; err != nil {
+			if err = tx.Create(&bankQuestion).Error; err != nil {
 				tx.Rollback()
 				panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "failed to update exam question"))
 			}
@@ -607,7 +607,7 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 			QuestionFrom:           "IMPORT",
 		}
 
-		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
+		if err = e.examRepository.Database.Create(&examQuestion).Error; err != nil {
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 			break
 		}
@@ -640,7 +640,7 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 				Option:     row.E,
 			})
 
-			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
+			if err = e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
 				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 				break
 			}

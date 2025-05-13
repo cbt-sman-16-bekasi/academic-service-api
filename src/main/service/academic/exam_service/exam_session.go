@@ -338,7 +338,10 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
 		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
 	}
-	totalAllScore := len(questions) * examData.TotalScore
+	totalQuestions := len(questions)
+
+	scoreQuestion := examData.TotalScore
+	totalQMS := scoreQuestion * totalQuestions
 
 	for _, submit := range request.Result {
 		score := 0
@@ -352,7 +355,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		}
 
 		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
-			score = question.Score
+			score = scoreQuestion
 			totalCorrect++
 		}
 
@@ -374,7 +377,8 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	e.examSessionRepository.Database.Save(&studentAnswers)
 
-	existingHistoryTaken.Score = int(math.Ceil((float64(totalScore) / float64(totalAllScore)) * 100))
+	averageScore := (float64(totalScore) / float64(totalQMS)) * 100
+	existingHistoryTaken.Score = int(math.Ceil(averageScore))
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 	return existingHistoryTaken
@@ -584,6 +588,101 @@ func (e *ExamSessionService) CorrectionAnswerStudent(request exam_request.ExamSe
 	}
 
 	return request
+}
+
+func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
+	var scoreTaken []cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = 'SESSION-EkQpGDDa7I'").Find(&scoreTaken)
+
+	var newScoreTaken []cbt.StudentHistoryTaken
+	startDataCalculate := 1
+	totalDataCalculate := len(scoreTaken)
+	for _, dt := range scoreTaken {
+		logger.Log.Info().Msgf("[%d/%d] Student %d start recalculate Before score: %d", startDataCalculate, totalDataCalculate, dt.StudentId, dt.Score)
+		var answers []cbt.StudentAnswers
+		e.examSessionRepository.Database.Where("student_id = ? AND session_id = ?", dt.StudentId, dt.SessionId).Find(&answers)
+
+		if len(answers) == 0 {
+			logger.Log.Error().Msgf("Failed recalculate, answers student not found")
+			dt.Score = 0
+			newScoreTaken = append(newScoreTaken, dt)
+			continue
+		}
+
+		var exam school.Exam
+		e.examSessionRepository.Database.Where("code = ?", dt.ExamCode).First(&exam)
+		if exam.ID == 0 {
+			logger.Log.Error().Msgf("Failed recalculate, exam not found %s", dt.ExamCode)
+			continue
+		}
+
+		var questions []school.ExamQuestion
+		err := redisstore.GetJSON(dt.ExamCode, &questions)
+		if err != nil || questions == nil || len(questions) == 0 {
+			logger.Log.Error().Msg("Get question to database, at cache nil")
+			e.examSessionRepository.Database.Where("exam_code", dt.ExamCode).Preload("QuestionOption").Find(&questions)
+			_ = redisstore.SetJSON(dt.ExamCode, &questions, time.Hour*24)
+		}
+		totalQuestions := len(questions)
+
+		scoreQuestion := exam.TotalScore
+		totalQMS := scoreQuestion * totalQuestions
+		totalScore := 0
+
+		var newAnswer []cbt.StudentAnswers
+		totalCorrect := 0
+		for _, answer := range answers {
+			score := 0
+
+			var question *school.ExamQuestion
+			for _, examQuestion := range questions {
+				if examQuestion.QuestionId == answer.QuestionId {
+					question = &examQuestion
+					break
+				}
+			}
+			if question == nil {
+				logger.Log.Error().Msgf("Failed recalculate, question not found %s for %s", dt.ExamCode, answer.QuestionId)
+				continue
+			}
+
+			if answer.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+				score = exam.TotalScore
+				totalCorrect++
+			}
+
+			if exam.TypeQuestion == "ESSAY" {
+				essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, answer.AnswerId, question.Score)
+				score = essayHelper.EvaluateScoreEssay()
+				totalCorrect++
+			}
+			answer.Score = score
+			totalScore += score
+			//logger.Log.Info().
+			//	Str("QUESTION KEY", answer.QuestionId).
+			//	Str("TYPE QUESTION", exam.TypeQuestion).
+			//	Str("ANSWER USER", answer.AnswerId).
+			//	Str("ANSWER KEY", question.Answer).
+			//	Str("SCORE", fmt.Sprintf("%d", score)).
+			//	Str("EXAM SCORE", fmt.Sprintf("%d", exam.TotalScore)).
+			//	Msgf("[%d]", i+1)
+			newAnswer = append(newAnswer, answer)
+		}
+
+		e.examSessionRepository.Database.Save(&newAnswer)
+
+		//logger.Log.Info().
+		//	Str("Total score", fmt.Sprintf("%d", totalScore)).
+		//	Str("Total question", fmt.Sprintf("%d", totalQuestions)).
+		//	Str("Total QMS", fmt.Sprintf("%d", totalQMS)).
+		//	Msg("[FINAL SCORE]")
+		averageScore := (float64(totalScore) / float64(totalQMS)) * 100
+		dt.Score = int(math.Ceil(averageScore))
+		newScoreTaken = append(newScoreTaken, dt)
+		logger.Log.Info().Msgf("[%d/%d] Student %d finish recalculate After score: %d", startDataCalculate, totalDataCalculate, dt.StudentId, dt.Score)
+		startDataCalculate++
+	}
+	e.examSessionRepository.Database.Save(&newScoreTaken)
 }
 
 func StringToUintSlice(s string) ([]uint, error) {

@@ -253,3 +253,7 @@ func (e *ExamController) ExamSessionAnswerStudentCorrection(c *gin.Context) {
 	res := e.examSessionService.CorrectionAnswerStudent(request)
 	response.SuccessResponse("Success correction exam session answer student", res).Json(c)
 }
+
+func (e *ExamController) ExamSessionRecalculate(c *gin.Context) {
+	e.examSessionService.CorrectionScoreUserMoreThan100()
+}
