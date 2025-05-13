@@ -66,3 +66,11 @@ func (s *UserController) ResetPassword(c *gin.Context) {
 	s.userService.ResetPasswordUser(uint(id))
 	response.SuccessResponse("Berhasil reset password. Password baru sama dengan Username", nil).Json(c)
 }
+
+func (s *UserController) CreateUser(c *gin.Context) {
+	var req user_request.UserUpdateRequest
+	_ = c.BindJSON(&req)
+
+	s.userService.CreateUser(req)
+	response.SuccessResponse("Success create user data", req).Json(c)
+}

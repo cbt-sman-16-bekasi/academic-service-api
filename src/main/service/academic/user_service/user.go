@@ -103,6 +103,8 @@ func (s *UserService) EnhanceSimpleUser(userId uint, request user_request.UserUp
 
 	userData.Name = request.Name
 	userData.Status = uint(request.Status)
+
+	s.userRepo.Database.Save(&userData)
 	return request
 }
 
@@ -119,4 +121,20 @@ func (s *UserService) ResetPasswordUser(userId uint) {
 	userData.Salt = salt
 
 	s.userRepo.Database.Save(&userData)
+}
+
+func (s *UserService) CreateUser(request user_request.UserUpdateRequest) user_request.UserUpdateRequest {
+	existUser := s.userRepo.ReadUser(request.Username)
+	if existUser != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("User already exists: %s", request.Username)))
+	}
+
+	s.CreateNewUser(&user.User{
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
+		Username:   request.Username,
+		Role:       uint(*request.Role),
+		Status:     uint(request.Status),
+		Name:       request.Name,
+	})
+	return request
 }

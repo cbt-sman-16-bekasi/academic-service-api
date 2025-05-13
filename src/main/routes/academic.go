@@ -144,6 +144,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	{
 		user.GET("/roles", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), userController.GetAllRoles)
 		user.GET("/all", jwt.RequirePermission([]string{"ADMIN"}, "list"), userController.GetAllUser)
+		user.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), userController.CreateUser)
 		user.PUT("/:id/update", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.UpdateUser)
 		user.GET("/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), userController.GetDetailUser)
 		user.POST("/:id/reset-password", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.ResetPassword)
