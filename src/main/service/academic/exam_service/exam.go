@@ -326,7 +326,7 @@ func (e *ExamService) setQuestionOptions(questionID string, request exam_request
 }
 
 func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExamQuestionRequest) exam_request.ModifyExamQuestionRequest {
-	exam := e.examRepository.FindByCode(request.ExamCode)
+	//exam := e.examRepository.FindByCode(request.ExamCode)
 
 	question := e.examRepository.FindByIdQuestion(id)
 	if question.ID == 0 {
@@ -355,13 +355,10 @@ func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExa
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "failed to update exam question"))
 	}
 	var options = e.setQuestionOptions(question.QuestionId, request)
-	e.examRepository.Database.Create(&options)
 	if err := tx.Create(&options).Error; err != nil {
 		tx.Rollback()
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "failed to update exam question"))
 	}
-
-	e.updateBankQuestion(tx, exam, questionId, request)
 
 	// 7. Commit transaksi
 	if err := tx.Commit().Error; err != nil {
