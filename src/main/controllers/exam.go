@@ -266,6 +266,14 @@ func (e *ExamController) GetDetailMasterBankQuestion(c *gin.Context) {
 	response.SuccessResponse("Success get exam detail", detail).Json(c)
 }
 
+func (e *ExamController) GetDetailMasterBankQuestionSubject(c *gin.Context) {
+	var request exam_request.ModifyMasterBankQuestionRequest
+	_ = c.BindQuery(&request)
+
+	res := e.examService.GetDetailBankQuestionBySubject(request)
+	response.SuccessResponse("Success detail master bank question", res).Json(c)
+}
+
 func (e *ExamController) CreateMasterBankQuestion(c *gin.Context) {
 	var request exam_request.ModifyMasterBankQuestionRequest
 	_ = c.BindJSON(&request)
@@ -337,4 +345,12 @@ func (e *ExamController) GetExamMember(c *gin.Context) {
 
 	res := e.examService.GetExamMember(idParam)
 	response.SuccessResponse("Success get exam member", res).Json(c)
+}
+
+func (e *ExamController) AddExamQuestionFromBank(c *gin.Context) {
+	var request exam_request.AddExamQuestionFromBank
+	_ = c.BindJSON(&request)
+
+	resp := e.examService.AddQuestionFromBank(request)
+	response.SuccessResponse("Success add exam question", resp).Json(c)
 }

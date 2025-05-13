@@ -252,6 +252,45 @@ func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestion
 	return request
 }
 
+func (e *ExamService) AddQuestionFromBank(request exam_request.AddExamQuestionFromBank) exam_request.AddExamQuestionFromBank {
+	var questionBank []school.BankQuestion
+	e.examRepository.Database.Where("id IN ?", request.BankExamQuestion).Preload("QuestionOption").Find(&questionBank)
+
+	var questions []school.ExamQuestion
+	for _, question := range questionBank {
+		qID := helper.RandomString(10)
+		qst := school.ExamQuestion{
+			Model:          gorm.Model{},
+			ExamCode:       request.ExamCode,
+			QuestionId:     question.QuestionId + qID,
+			BankQuestionId: question.QuestionId,
+			Question:       question.Question,
+			Answer:         question.Answer,
+			AnswerSingle:   question.AnswerSingle,
+			TypeQuestion:   question.TypeQuestion,
+			Score:          0,
+			QuestionFrom:   "BANK",
+		}
+
+		if question.TypeQuestion == "PILIHAN_GANDA" {
+			var options []school.ExamAnswerOption
+
+			for _, option := range question.QuestionOption {
+				options = append(options, school.ExamAnswerOption{
+					QuestionId: question.QuestionId,
+					AnswerId:   option.AnswerId,
+					Option:     option.Option,
+				})
+			}
+			e.examRepository.Database.Create(&qst)
+		}
+		questions = append(questions, qst)
+	}
+	e.examRepository.Database.Create(&questions)
+
+	return request
+}
+
 func (e *ExamService) setQuestionOptions(questionID string, request exam_request.ModifyExamQuestionRequest) []school.ExamAnswerOption {
 	var options []school.ExamAnswerOption
 	options = append(options, school.ExamAnswerOption{
@@ -784,12 +823,23 @@ func (e *ExamService) GetDetailBankQuestion(id uint) exam_response.MasterBankQue
 		Preload("DetailClassCode").
 		First(&detail)
 
-	var questions []school.BankQuestion
+	var total int64
 	e.examRepository.Database.Where("master_bank_question_code = ?", detail.Code).
-		Find(&questions)
+		Count(&total)
 	res := exam_response.MasterBankQuestionResponse{
 		MasterBankQuestion: detail,
-		TotalQuestion:      len(questions),
+		TotalQuestion:      int(total),
+	}
+	return res
+}
+
+func (e *ExamService) GetDetailBankQuestionBySubject(request exam_request.ModifyMasterBankQuestionRequest) exam_response.MasterBankQuestionResponse {
+	var detail school.MasterBankQuestion
+	e.examRepository.Database.Where("subject_code = ? AND class_code = ? AND type_question = ?", request.SubjectCode, request.ClassCode, request.TypeQuestion).
+		First(&detail)
+
+	res := exam_response.MasterBankQuestionResponse{
+		MasterBankQuestion: detail,
 	}
 	return res
 }
