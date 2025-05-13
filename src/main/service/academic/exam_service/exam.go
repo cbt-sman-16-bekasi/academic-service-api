@@ -196,7 +196,7 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 		OptionC:    e.getOptionByAnswerId(existing.QuestionId+"_C", options).Option,
 		OptionD:    e.getOptionByAnswerId(existing.QuestionId+"_D", options).Option,
 		OptionE:    e.getOptionByAnswerId(existing.QuestionId+"_E", options).Option,
-		Answer:     strings.Split(existing.Answer, "_")[1],
+		Answer:     strings.Split(existing.AnswerSingle, "_")[1],
 		Score:      existing.Score,
 	}
 }
