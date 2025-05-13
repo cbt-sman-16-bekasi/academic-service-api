@@ -143,6 +143,10 @@ func academicRoutes(gr *gin.RouterGroup) {
 	user := academic.Group("/user").Use(jwt.AuthMiddleware())
 	{
 		user.GET("/roles", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), userController.GetAllRoles)
+		user.GET("/all", jwt.RequirePermission([]string{"ADMIN"}, "list"), userController.GetAllUser)
+		user.PUT("/:id/update", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.UpdateUser)
+		user.GET("/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), userController.GetDetailUser)
+		user.POST("/:id/reset-password", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.ResetPassword)
 	}
 
 	bank := academic.Group("/bank").Use(jwt.AuthMiddleware())
