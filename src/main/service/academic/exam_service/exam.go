@@ -342,7 +342,6 @@ func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExa
 	}()
 
 	question.Question = request.Question
-	question.Score = exam.ScoreQuestion
 	question.Answer = questionId + "_" + request.Answer
 	question.AnswerSingle = request.Answer
 
