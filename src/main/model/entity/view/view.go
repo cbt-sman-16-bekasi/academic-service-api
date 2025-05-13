@@ -120,3 +120,19 @@ type VClass struct {
 func (v *VClass) TableName() string {
 	return "public.v_class"
 }
+
+type VUser struct {
+	ID         int64     `json:"id" gorm:"column:id"`
+	SchoolCode string    `json:"school_code" gorm:"column:school_code"`
+	Username   string    `json:"username" gorm:"column:username"`
+	Name       string    `json:"name" gorm:"column:name"`
+	ProfileURL string    `json:"profile_url" gorm:"column:profile_url"`
+	Status     int       `json:"status" gorm:"column:status"`
+	RoleName   string    `json:"role_name" gorm:"column:role_name"`
+	Role       int       `json:"role" gorm:"column:role"`
+	LastUpdate time.Time `json:"last_update" gorm:"column:last_update"`
+}
+
+func (v *VUser) TableName() string {
+	return "public.v_user"
+}

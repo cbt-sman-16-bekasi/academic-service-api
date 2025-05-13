@@ -25,7 +25,7 @@ func (r *UserRepository) ReadUser(username string) (user *user.User) {
 }
 
 func (r *UserRepository) FindById(id uint) (user *user.User) {
-	r.Database.Where("id = ?", id).Preload("RoleUser").First(&user)
+	r.Database.Where("id = ? AND status = '1'", id).Preload("RoleUser").First(&user)
 	if user.ID == 0 {
 		user = nil
 	}
