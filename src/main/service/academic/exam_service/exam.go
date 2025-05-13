@@ -186,6 +186,10 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam with id %d not found", id)))
 	}
 
+	answer := existing.AnswerSingle
+	if existing.TypeQuestion == "PILIHAN_GANDA" {
+		answer = strings.Split(existing.AnswerSingle, "_")[1]
+	}
 	options := existing.QuestionOption
 	return exam_response.DetailExamQuestionResponse{
 		ExamCode:   existing.ExamCode,
@@ -196,7 +200,7 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 		OptionC:    e.getOptionByAnswerId(existing.QuestionId+"_C", options).Option,
 		OptionD:    e.getOptionByAnswerId(existing.QuestionId+"_D", options).Option,
 		OptionE:    e.getOptionByAnswerId(existing.QuestionId+"_E", options).Option,
-		Answer:     strings.Split(existing.AnswerSingle, "_")[1],
+		Answer:     answer,
 		Score:      existing.Score,
 	}
 }
