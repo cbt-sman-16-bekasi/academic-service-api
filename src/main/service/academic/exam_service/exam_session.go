@@ -340,7 +340,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	}
 	totalQuestions := len(questions)
 
-	scoreQuestion := examData.TotalScore
+	scoreQuestion := examData.ScoreQuestion
 	totalQMS := scoreQuestion * totalQuestions
 
 	for _, submit := range request.Result {
@@ -576,7 +576,7 @@ func (e *ExamSessionService) CorrectionAnswerStudent(request exam_request.ExamSe
 		}
 
 		totalQuestion := len(*request.AnswerResult)
-		score := exam.TotalScore
+		score := exam.ScoreQuestion
 		totalQMS := totalQuestion * score
 		averageScore := (float64(totalScore) / float64(totalQMS)) * 100
 		e.examSessionRepository.Database.Model(&cbt.StudentHistoryTaken{}).
@@ -625,7 +625,7 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 		}
 		totalQuestions := len(questions)
 
-		scoreQuestion := exam.TotalScore
+		scoreQuestion := exam.ScoreQuestion
 		totalQMS := scoreQuestion * totalQuestions
 		totalScore := 0
 
@@ -647,7 +647,7 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 			}
 
 			if answer.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
-				score = exam.TotalScore
+				score = exam.ScoreQuestion
 				totalCorrect++
 			}
 
@@ -664,7 +664,7 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 			//	Str("ANSWER USER", answer.AnswerId).
 			//	Str("ANSWER KEY", question.Answer).
 			//	Str("SCORE", fmt.Sprintf("%d", score)).
-			//	Str("EXAM SCORE", fmt.Sprintf("%d", exam.TotalScore)).
+			//	Str("EXAM SCORE", fmt.Sprintf("%d", exam.ScoreQuestion)).
 			//	Msgf("[%d]", i+1)
 			newAnswer = append(newAnswer, answer)
 		}

@@ -49,7 +49,7 @@ type Exam struct {
 	ShowResult     bool               `json:"show_result"`
 	Duration       int                `json:"duration"`
 	TypeQuestion   string             `json:"type_question" gorm:"type:varchar(50)"`
-	TotalScore     int                `json:"total_score" gorm:"type:int"`
+	ScoreQuestion  int                `json:"score_question" gorm:"type:int"`
 	ExamMember     []ExamMember       `json:"exam_member" gorm:"foreignKey:ExamCode;references:Code"`
 	ExamQuestion   []ExamQuestion     `json:"exam_question" gorm:"foreignKey:ExamCode;references:Code"`
 	core.AuditUser

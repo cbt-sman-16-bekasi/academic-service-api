@@ -84,7 +84,7 @@ func (e *ExamService) GetAllExam(c *gin.Context, request pagination.Request[map[
 			TypeExam:      record.DetailTypeExam,
 			TotalQuestion: int(totalQuestion),
 			Duration:      record.Duration,
-			TotalScore:    record.TotalScore,
+			TotalScore:    record.ScoreQuestion,
 		})
 	}
 
@@ -98,7 +98,7 @@ func (e *ExamService) GetDetailExam(id uint) exam_response.ExamDetailResponse {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam with id %d not found", id)))
 	}
 
-	totalScore := len(data.ExamQuestion) * data.TotalScore
+	totalScore := len(data.ExamQuestion) * data.ScoreQuestion
 
 	return exam_response.ExamDetailResponse{
 		Exam:          data,
@@ -119,7 +119,7 @@ func (e *ExamService) CreateNewExam(c *gin.Context, request exam_request.ModifyE
 		ShowResult:     request.ShowResult,
 		Duration:       request.Duration,
 		TypeQuestion:   request.TypeQuestion,
-		TotalScore:     request.Score,
+		ScoreQuestion:  request.Score,
 	}
 	claims := jwt.GetDataClaims(c)
 	data.CreatedBy = uint(jwt.GetID(claims.Username))
@@ -151,7 +151,7 @@ func (e *ExamService) UpdateExam(c *gin.Context, id uint, request exam_request.M
 	existing.ShowResult = request.ShowResult
 	existing.Duration = request.Duration
 	existing.TypeQuestion = request.TypeQuestion
-	existing.TotalScore = request.Score
+	existing.ScoreQuestion = request.Score
 
 	claims := jwt.GetDataClaims(c)
 	existing.ModifiedBy = uint(jwt.GetID(claims.Username))
@@ -227,7 +227,7 @@ func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestion
 		Question:     request.Question,
 		Answer:       questionID + "_" + request.Answer,
 		AnswerSingle: request.Answer,
-		Score:        exam.TotalScore,
+		Score:        exam.ScoreQuestion,
 		QuestionFrom: "MANUAL",
 		TypeQuestion: exam.TypeQuestion,
 	}
@@ -338,7 +338,7 @@ func (e *ExamService) UpdateExamQuestion(id uint, request exam_request.ModifyExa
 	}()
 
 	question.Question = request.Question
-	question.Score = exam.TotalScore
+	question.Score = exam.ScoreQuestion
 	question.Answer = questionId + "_" + request.Answer
 	question.AnswerSingle = request.Answer
 
@@ -525,7 +525,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			QuestionId:   questionID,
 			Question:     question,
 			Answer:       questionID + "_" + answer,
-			Score:        exam.TotalScore,
+			Score:        exam.ScoreQuestion,
 			AnswerSingle: answer,
 			TypeQuestion: exam.TypeQuestion,
 			QuestionFrom: "IMPORT",
