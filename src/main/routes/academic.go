@@ -95,8 +95,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 		masterClass.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
 			redisstore.CacheMiddleware(redisstore.CacheClass, redisstore.TtlDuration), classController.GetAllClass)
 		masterClass.GET("/:classId/member", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), classController.MemberOfClass)
-		masterClass.GET("/member/add", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), classController.AddMemberOfClass)
-		masterClass.GET("/member/:id/delete", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "delete"), classController.DeleteMemberOfClass)
+		masterClass.POST("/member/add", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), classController.AddMemberOfClass)
+		masterClass.DELETE("/member/:id/delete", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "delete"), classController.DeleteMemberOfClass)
 		masterClass.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), classController.GetDetailClass)
 		masterClass.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), classController.CreateNewClass)
 		masterClass.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), classController.UpdateClass)
@@ -146,7 +146,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		user.GET("/all", jwt.RequirePermission([]string{"ADMIN"}, "list"), userController.GetAllUser)
 		user.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), userController.CreateUser)
 		user.PUT("/:id/update", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.UpdateUser)
-		user.GET("/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), userController.GetDetailUser)
+		user.GET("/:id/detail", jwt.RequirePermission([]string{"ADMIN"}, "read"), userController.GetDetailUser)
 		user.POST("/:id/reset-password", jwt.RequirePermission([]string{"ADMIN"}, "update"), userController.ResetPassword)
 	}
 
