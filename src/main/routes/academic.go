@@ -173,7 +173,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		examRoute.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.UpdateExam)
 		examRoute.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "delete"), examController.DeleteExam)
 		examRoute.GET("/:examId/question", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAllExamQuestion)
-		examRoute.GET("/question/bank/add", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.AddExamQuestionFromBank)
+		examRoute.POST("/question/bank/add", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.AddExamQuestionFromBank)
 		examRoute.GET("/:examId/question/template/download", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.DownloadTemplateQuestion)
 		examRoute.POST("/:examId/question/template/upload", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.UploadQuestion)
 	}
