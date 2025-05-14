@@ -188,7 +188,14 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 
 	answer := existing.AnswerSingle
 	if existing.TypeQuestion == "PILIHAN_GANDA" {
-		answer = strings.Split(existing.AnswerSingle, "_")[1]
+		splitString := strings.Split(existing.Answer, "_")
+		if len(splitString) > 0 {
+			answer = strings.Split(existing.Answer, "_")[1]
+		}
+		answer = strings.TrimSpace(answer)
+		answer = strings.ToUpper(answer)
+		answer = strings.ReplaceAll(answer, "<p>", "")
+		answer = strings.ReplaceAll(answer, "</p>", "")
 	}
 	options := existing.QuestionOption
 	return exam_response.DetailExamQuestionResponse{
