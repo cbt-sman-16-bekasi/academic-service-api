@@ -135,6 +135,7 @@ func (s *UserService) CreateUser(request user_request.UserUpdateRequest) user_re
 		Role:       uint(*request.Role),
 		Status:     uint(request.Status),
 		Name:       request.Name,
+		Password:   request.Username,
 	})
 	return request
 }
