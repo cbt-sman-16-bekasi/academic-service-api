@@ -192,10 +192,9 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 		if len(splitString) > 0 {
 			answer = strings.Split(existing.Answer, "_")[1]
 		}
-		answer = strings.TrimSpace(answer)
-		answer = strings.ToUpper(answer)
 		answer = strings.ReplaceAll(answer, "<p>", "")
 		answer = strings.ReplaceAll(answer, "</p>", "")
+		answer = strings.ToUpper(answer)
 	}
 	options := existing.QuestionOption
 	return exam_response.DetailExamQuestionResponse{
@@ -526,6 +525,16 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		questionID := "QUESTION-" + helper.RandomString(10)
 		question := row.Soal
 		answer := row.Jawaban
+
+		if answer == "" {
+			panic("Please check again your question, Please provide answer or 'Jawaban'")
+		}
+
+		if exam.TypeQuestion == "PILIHAN_GANDA" {
+			answer = strings.ReplaceAll(answer, "<p>", "")
+			answer = strings.ReplaceAll(answer, "</p>", "")
+			answer = strings.ToUpper(answer)
+		}
 
 		examQuestion := school.ExamQuestion{
 			ExamCode:     exam.Code,
