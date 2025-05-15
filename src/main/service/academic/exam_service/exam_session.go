@@ -538,7 +538,7 @@ func (e *ExamSessionService) GetAnswerStudent(request exam_request.ExamSessionSt
 	var data []school.ExamEssayResult
 	e.examSessionRepository.Database.Raw(`select q.question_id, sa.session_id, q.question, q.answer_single, sa.answer_id as answer_user, sa.id as answerID, sa.score from school_service.exam_question q
 left join school_service.exam e on e.code = q.exam_code
-LEFT JOIN cbt_service.student_answers sa ON sa.question_id = q.question_id AND sa.student_id = ? AND sa.session_id = ?
+LEFT JOIN cbt_service.student_answers sa ON sa.question_id = q.question_id AND sa.student_id = ? AND sa.session_id = ? AND sa.deleted_at is null
 WHERE e.type_question = 'ESSAY' and q.exam_code = ?`, request.StudentId, request.SessionId, request.ExamCode).Scan(&data)
 
 	for _, datum := range data {
