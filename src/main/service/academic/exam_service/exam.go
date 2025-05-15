@@ -292,12 +292,12 @@ func (e *ExamService) AddQuestionFromBank(request exam_request.AddExamQuestionFr
 
 			for _, option := range question.QuestionOption {
 				options = append(options, school.ExamAnswerOption{
-					QuestionId: question.QuestionId,
+					QuestionId: qst.QuestionId,
 					AnswerId:   option.AnswerId,
 					Option:     option.Option,
 				})
 			}
-			e.examRepository.Database.Create(&qst)
+			e.examRepository.Database.Create(&options)
 		}
 		questions = append(questions, qst)
 	}
