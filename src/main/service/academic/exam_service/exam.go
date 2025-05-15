@@ -188,20 +188,29 @@ func (e *ExamService) GetDetailExamQuestion(id uint) exam_response.DetailExamQue
 
 	answer := existing.AnswerSingle
 	if existing.TypeQuestion == "PILIHAN_GANDA" {
+		splitString := strings.Split(existing.AnswerSingle, "_")
+		if len(splitString) > 0 {
+			answer = strings.Split(existing.AnswerSingle, "_")[len(splitString)-1]
+		}
 		answer = strings.ReplaceAll(answer, "<p>", "")
 		answer = strings.ReplaceAll(answer, "</p>", "")
 		answer = strings.ToUpper(answer)
 	}
-	options := existing.QuestionOption
+	var options []school.ExamAnswerOption
+	e.examRepository.Database.Debug().Where("question_id = ?", existing.QuestionId).Find(&options)
+	questionID := existing.QuestionId
+	if existing.QuestionFrom == "BANK" {
+		questionID = existing.BankQuestionId
+	}
 	return exam_response.DetailExamQuestionResponse{
 		ExamCode:   existing.ExamCode,
 		QuestionId: existing.QuestionId,
 		Question:   existing.Question,
-		OptionA:    e.getOptionByAnswerId(existing.QuestionId+"_A", options).Option,
-		OptionB:    e.getOptionByAnswerId(existing.QuestionId+"_B", options).Option,
-		OptionC:    e.getOptionByAnswerId(existing.QuestionId+"_C", options).Option,
-		OptionD:    e.getOptionByAnswerId(existing.QuestionId+"_D", options).Option,
-		OptionE:    e.getOptionByAnswerId(existing.QuestionId+"_E", options).Option,
+		OptionA:    e.getOptionByAnswerId(questionID+"_A", options).Option,
+		OptionB:    e.getOptionByAnswerId(questionID+"_B", options).Option,
+		OptionC:    e.getOptionByAnswerId(questionID+"_C", options).Option,
+		OptionD:    e.getOptionByAnswerId(questionID+"_D", options).Option,
+		OptionE:    e.getOptionByAnswerId(questionID+"_E", options).Option,
 		Answer:     answer,
 		Score:      existing.Score,
 	}
@@ -521,6 +530,16 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		questionID := "QUESTION-" + helper.RandomString(10)
 		question := row.Soal
 		answer := row.Jawaban
+
+		if answer == "" {
+			panic("Please check again your question, Please provide answer or 'Jawaban'")
+		}
+
+		if exam.TypeQuestion == "PILIHAN_GANDA" {
+			answer = strings.ReplaceAll(answer, "<p>", "")
+			answer = strings.ReplaceAll(answer, "</p>", "")
+			answer = strings.ToUpper(answer)
+		}
 
 		examQuestion := school.ExamQuestion{
 			ExamCode:     exam.Code,
