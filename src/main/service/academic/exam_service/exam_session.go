@@ -464,102 +464,99 @@ func (e *ExamSessionService) GenerateReportSession(sessionID string) {
 	var schoolData school.School
 	e.examSessionRepository.Database.Where("school_code=?", "db74a42e-23a7-4cd2-bbe5-49cf79f86453").First(&schoolData)
 
-	var sessionReport view.ExamSessionReadyReport
+	var sessionReport *view.ExamSessionReadyReport
 	e.examSessionRepository.Database.Where("session_id = ?", sessionID).First(&sessionReport)
+	if sessionReport.SessionID == "" {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Pembuatan laporan nilai tidak dapat dilakukan karena sesi ujian Anda belum dinyatakan selesai. Mohon periksa status sesi ujian atau pastikan seluruh hasil ujian telah dikoreksi."))
+	}
 
-	var sessionData school.ExamSession
-	e.examSessionRepository.Database.Where("session_id = ?", sessionID).First(&sessionData)
-	e.updateStatusSession(sessionReport.SessionID, "PROGRESS", nil, nil)
+	go func(schoolData school.School, sessionReport *view.ExamSessionReadyReport) {
+		var sessionData school.ExamSession
+		e.examSessionRepository.Database.Where("session_id = ?", sessionID).First(&sessionData)
+		e.updateStatusSession(sessionReport.SessionID, "PROGRESS", nil, nil)
 
-	logger.Log.Info().Msgf("ExamSession Report %v", sessionReport)
-	report := reporting_service.NewReport(schoolData)
+		logger.Log.Info().Msgf("ExamSession Report %v", sessionReport)
+		report := reporting_service.NewReport(schoolData)
 
-	var reportSession []reporting_service.DataExamSession
-	classIds, _ := StringToUintSlice(sessionReport.KelasID)
-	classNames := strings.Split(sessionReport.Kelas, ",")
-	for i, classId := range classIds {
-		dataScore := e.GetAllAttendance(exam_request.ExamSessionAttendanceRequest{
-			ExamSessionId: sessionReport.SessionID,
-			ClassId:       &classId,
-		})
-
-		var reportScore []reporting_service.DataNilai
-		for _, data := range dataScore {
-			reportScore = append(reportScore, reporting_service.DataNilai{
-				NISN:      data.Nisn,
-				Name:      data.Name,
-				ClassName: data.Class,
-				Gender:    "-",
-				Score:     float64(data.Score),
+		var reportSession []reporting_service.DataExamSession
+		classIds, _ := StringToUintSlice(sessionReport.KelasID)
+		classNames := strings.Split(sessionReport.Kelas, ",")
+		for i, classId := range classIds {
+			dataScore := e.GetAllAttendance(exam_request.ExamSessionAttendanceRequest{
+				ExamSessionId: sessionReport.SessionID,
+				ClassId:       &classId,
 			})
+
+			var reportScore []reporting_service.DataNilai
+			for _, data := range dataScore {
+				reportScore = append(reportScore, reporting_service.DataNilai{
+					NISN:      data.Nisn,
+					Name:      data.Name,
+					ClassName: data.Class,
+					Gender:    "-",
+					Score:     float64(data.Score),
+				})
+			}
+			dataSession := reporting_service.DataExamSession{
+				TypeExam:     sessionReport.TypeExam,
+				Subject:      sessionReport.Subject,
+				ClassName:    classNames[i],
+				SessionName:  sessionReport.SessionName,
+				SessionStart: sessionReport.StartDate,
+				SessionEnd:   sessionReport.EndDate,
+				ScoreData:    reportScore,
+			}
+			reportSession = append(reportSession, dataSession)
 		}
-		dataSession := reporting_service.DataExamSession{
-			TypeExam:     sessionReport.TypeExam,
-			Subject:      sessionReport.Subject,
-			ClassName:    classNames[i],
+		report.SetData(reportSession)
+
+		err := report.Generate()
+		if err != nil {
+			errString := fmt.Sprintf("%v", err)
+			e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errString)
+			logger.Log.Error().Msgf("Generate reportSession Error: %s", err.Error())
+			return
+		}
+
+		resUrlReport, isSuccess := report.GetResult()
+		logger.Log.Info().Str("URL", fmt.Sprintf("%v", resUrlReport)).Str("Status", fmt.Sprintf("%v", isSuccess)).Msg("Generate reportSession Result")
+		if !isSuccess {
+			errorReport := ErrorsToString(report.GetError())
+			e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errorReport)
+			logger.Log.Error().Msgf("Generate reportSession Error: %s", errorReport)
+			return
+		}
+
+		e.updateStatusSession(sessionReport.SessionID, "READY", resUrlReport, nil)
+
+		var totalStudents int64
+		e.studentRepo.Database.Model(&student.StudentClass{}).Where("class_id IN ?", classIds).Count(&totalStudents)
+
+		examSessionReport := cbt.ExamSessionReport{
+			SessionID:    sessionID,
+			ExamCode:     sessionData.ExamCode,
 			SessionName:  sessionReport.SessionName,
-			SessionStart: sessionReport.StartDate,
-			SessionEnd:   sessionReport.EndDate,
-			ScoreData:    reportScore,
+			ExamName:     sessionReport.ExamName,
+			Subject:      sessionReport.Subject,
+			Kelas:        sessionReport.Kelas,
+			Total:        int(totalStudents),
+			StartDate:    sessionReport.StartDate,
+			EndDate:      sessionReport.EndDate,
+			Status:       "SELESAI",
+			CreatedBy:    sessionData.CreatedBy,
+			StatusReport: "READY",
+			ReportURL:    *resUrlReport,
 		}
-		reportSession = append(reportSession, dataSession)
-	}
-	report.SetData(reportSession)
 
-	err := report.Generate()
-	if err != nil {
-		errString := fmt.Sprintf("%v", err)
-		e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errString)
-		logger.Log.Error().Msgf("Generate reportSession Error: %s", err.Error())
-		return
-	}
+		err = e.examSessionRepository.Database.
+			Create(&examSessionReport).Error
 
-	resUrlReport, isSuccess := report.GetResult()
-	logger.Log.Info().Str("URL", fmt.Sprintf("%v", resUrlReport)).Str("Status", fmt.Sprintf("%v", isSuccess)).Msg("Generate reportSession Result")
-	if !isSuccess {
-		errorReport := ErrorsToString(report.GetError())
-		e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errorReport)
-		logger.Log.Error().Msgf("Generate reportSession Error: %s", errorReport)
-		return
-	}
+		if err != nil {
+			log.Println("Failed to upsert ExamSessionReport:", err)
+		}
 
-	e.updateStatusSession(sessionReport.SessionID, "READY", resUrlReport, nil)
-
-	var totalStudents int64
-	e.studentRepo.Database.Model(&student.StudentClass{}).Where("class_id IN ?", classIds).Count(&totalStudents)
-
-	examSessionReport := cbt.ExamSessionReport{
-		SessionID:    sessionID,
-		ExamCode:     sessionData.ExamCode,
-		SessionName:  sessionReport.SessionName,
-		ExamName:     sessionReport.ExamName,
-		Subject:      sessionReport.Subject,
-		Kelas:        sessionReport.Kelas,
-		Total:        int(totalStudents),
-		StartDate:    sessionReport.StartDate,
-		EndDate:      sessionReport.EndDate,
-		Status:       "SELESAI",
-		CreatedBy:    sessionData.CreatedBy,
-		StatusReport: "READY",
-		ReportURL:    *resUrlReport,
-	}
-
-	err = e.examSessionRepository.Database.
-		Clauses(clause.OnConflict{
-			Columns: []clause.Column{{Name: "session_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"exam_code", "session_name", "exam_name", "subject",
-				"kelas", "total", "start_date", "end_date",
-				"status", "created_by", "status_report", "report_url",
-			}),
-		}).
-		Create(&examSessionReport).Error
-
-	if err != nil {
-		log.Println("Failed to upsert ExamSessionReport:", err)
-	}
-
-	observer.Trigger(model.EventExamSessionReportChanged)
+		observer.Trigger(model.EventExamSessionReportChanged)
+	}(schoolData, sessionReport)
 }
 
 func (e *ExamSessionService) updateStatusSession(sessionID string, status string, resUrlReport *string, err *string) *gorm.DB {
@@ -570,10 +567,10 @@ func (e *ExamSessionService) updateStatusSession(sessionID string, status string
 	})
 }
 
-func (e *ExamSessionService) GetAllReport(request exam_request.ExamSessionReportRequest) []view.ExamSessionReportScoreView {
-	var data []view.ExamSessionReportScoreView
+func (e *ExamSessionService) GetAllReport(request exam_request.ExamSessionReportRequest) []cbt.ExamSessionReport {
+	var data []cbt.ExamSessionReport
 	q := e.examSessionRepository.Database.Where("exam_code=?", request.ExamCode)
-	if request.SessionId != nil {
+	if request.SessionId != nil && *request.SessionId != "" {
 		q = q.Where("session_id=?", *request.SessionId)
 	}
 	q.Find(&data)

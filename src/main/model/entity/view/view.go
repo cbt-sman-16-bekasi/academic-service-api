@@ -56,17 +56,19 @@ func (v *VStudent) TableName() string {
 }
 
 type ExamSessionView struct {
-	ID          string    `gorm:"column:id" json:"id"`
-	SessionID   string    `gorm:"column:session_id" json:"session_id"`
-	SessionName string    `gorm:"column:session_name" json:"session_name"`
-	ExamName    string    `gorm:"column:exam_name" json:"exam_name"`
-	Subject     *string   `gorm:"column:subject" json:"subject"` // nullable
-	Kelas       *string   `gorm:"column:kelas" json:"kelas"`     // nullable (hasil string_agg)
-	Total       *int      `gorm:"column:total" json:"total"`     // nullable (karena join bisa kosong)
-	StartDate   time.Time `gorm:"column:start_date" json:"start_date"`
-	EndDate     time.Time `gorm:"column:end_date" json:"end_date"`
-	Status      string    `gorm:"column:status" json:"status"`
-	CreatedBy   uint      `gorm:"column:created_by" json:"created_by"`
+	ID           string    `gorm:"column:id" json:"id"`
+	SessionID    string    `gorm:"column:session_id" json:"session_id"`
+	SessionName  string    `gorm:"column:session_name" json:"session_name"`
+	ExamName     string    `gorm:"column:exam_name" json:"exam_name"`
+	Subject      *string   `gorm:"column:subject" json:"subject"` // nullable
+	Kelas        *string   `gorm:"column:kelas" json:"kelas"`     // nullable (hasil string_agg)
+	Total        *int      `gorm:"column:total" json:"total"`     // nullable (karena join bisa kosong)
+	StartDate    time.Time `gorm:"column:start_date" json:"start_date"`
+	EndDate      time.Time `gorm:"column:end_date" json:"end_date"`
+	Status       string    `gorm:"column:status" json:"status"`
+	StatusReport string    `gorm:"column:status_report" json:"status_report"`
+	ReportUrl    string    `gorm:"column:report_url" json:"report_url"`
+	CreatedBy    uint      `gorm:"column:created_by" json:"created_by"`
 }
 
 func (e *ExamSessionView) TableName() string {
