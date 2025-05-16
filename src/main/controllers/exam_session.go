@@ -262,6 +262,6 @@ func (e *ExamController) ExamSessionGenerateReport(c *gin.Context) {
 	var request exam_request.ExamSessionGenerateReportRequest
 	_ = c.BindJSON(&request)
 
-	go e.examSessionService.GenerateReportSession(request.SessionId)
+	e.examSessionService.GenerateReportSession(request.SessionId)
 	response.SuccessResponse("Your request still process, Please check your request to page 'Laporan Nilai'", request).Json(c)
 }

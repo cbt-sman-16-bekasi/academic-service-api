@@ -261,12 +261,12 @@ func (report *Report) Generate() error {
 
 func (report *Report) saveReportToMinio() error {
 	firstData := report.data[0]
-	filename := fmt.Sprintf("%s_%s_%s.xlsx",
+	filename := fmt.Sprintf("%s_%s_%s_%s.xlsx",
 		firstData.TypeExam,
 		firstData.Subject,
-		firstData.SessionEnd.Format("20060102"))
+		firstData.SessionEnd.Format("20060102"),
+		time.Now().Format("20060102"))
 
-	// Simpan ke buffer (tidak ke file lokal)
 	buf := new(bytes.Buffer)
 	if err := report.excelFile.Write(buf); err != nil {
 		return fmt.Errorf("failed to write excel to buffer: %w", err)
