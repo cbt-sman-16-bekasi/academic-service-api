@@ -60,3 +60,7 @@ type ExamSessionStudentAnswer struct {
 	StudentId    uint                      `json:"student_id" form:"student_id"`
 	AnswerResult *[]school.ExamEssayResult `json:"answer_result"`
 }
+
+type ExamSessionGenerateReportRequest struct {
+	SessionId string `json:"session_id" form:"sessionId"`
+}
