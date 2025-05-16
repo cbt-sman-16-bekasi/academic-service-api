@@ -197,6 +197,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 			redisstore.CacheMiddleware(redisstore.CacheExamSession, redisstore.TtlDuration), examController.GetAllExamSession)
 		examSession.GET("/report", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
 			redisstore.CacheMiddleware(redisstore.CacheExamSessionReport, redisstore.TtlDuration), examController.ExamSessionReport)
+		examSession.POST("/generate/report", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.ExamSessionGenerateReport)
 		examSession.GET("/answer/student", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionAnswerResultStudent)
 		examSession.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), examController.GetExamSession)
 		examSession.POST("/create", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "create"), examController.CreateExamSession)
