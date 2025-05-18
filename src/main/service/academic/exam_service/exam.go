@@ -552,44 +552,70 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 			QuestionFrom: "IMPORT",
 		}
 
-		if err := e.examRepository.Database.Create(&examQuestion).Error; err != nil {
+		tx := e.examRepository.Database.Begin()
+
+		if err := tx.Create(&examQuestion).Error; err != nil {
+			tx.Rollback()
 			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 			break
+		}
+
+		examRequest := exam_request.ModifyExamQuestionRequest{
+			ExamCode: exam.Code,
+			Question: question,
+			Answer:   examQuestion.Answer,
 		}
 
 		if exam.TypeQuestion == "PILIHAN_GANDA" {
 			var examQuestionOption []school.ExamAnswerOption
 
+			examRequest.OptionA = questionID + "_A"
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_A",
 				Option:     row.A,
 			})
+
+			examRequest.OptionA = questionID + "_B"
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_B",
 				Option:     row.B,
 			})
+
+			examRequest.OptionA = questionID + "_C"
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_C",
 				Option:     row.C,
 			})
+
+			examRequest.OptionA = questionID + "_D"
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_D",
 				Option:     row.D,
 			})
+
+			examRequest.OptionA = questionID + "_E"
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_E",
 				Option:     row.E,
 			})
 
-			if err := e.examRepository.Database.Create(&examQuestionOption).Error; err != nil {
+			if err := tx.Create(&examQuestionOption).Error; err != nil {
+				tx.Rollback()
 				response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
 				break
 			}
+		}
+		e.insertBankQuestion(tx, *exam, questionID, examRequest)
+
+		if err := tx.Commit().Error; err != nil {
+			tx.Rollback()
+			response.ErrorResponse(response.ServerError, fmt.Sprintf("Gagal simpan data di baris %d", i+2), err).Json(c)
+			break
 		}
 
 	}
@@ -763,9 +789,9 @@ func (e *ExamService) insertBankQuestion(tx *gorm.DB, exam school.Exam, question
 
 	for _, member := range classCode {
 		var masterBank school.MasterBankQuestion
-		e.examRepository.Database.Where("subject_code = ? AND class_code = ?",
+		e.examRepository.Database.Where("subject_code = ? AND class_code = ? AND type_question = ?",
 			exam.SubjectCode,
-			member).First(&masterBank)
+			member, exam.TypeQuestion).First(&masterBank)
 
 		if masterBank.ID == 0 {
 			masterBank = school.MasterBankQuestion{
@@ -796,11 +822,13 @@ func (e *ExamService) insertBankQuestion(tx *gorm.DB, exam school.Exam, question
 			panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed save bank question"))
 		}
 
-		options := e.setBankQuestionOptions(questionID+"_"+member, request)
+		if exam.TypeQuestion == "PILIHAN_GANDA" {
+			options := e.setBankQuestionOptions(questionID+"_"+member, request)
 
-		if err := tx.Create(&options).Error; err != nil {
-			tx.Rollback()
-			panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed save bank question"))
+			if err := tx.Create(&options).Error; err != nil {
+				tx.Rollback()
+				panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed save bank question"))
+			}
 		}
 	}
 }
