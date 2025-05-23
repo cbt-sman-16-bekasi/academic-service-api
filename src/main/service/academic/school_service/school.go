@@ -156,6 +156,8 @@ func (s *SchoolService) DeleteClassSubject(id uint) {
 
 func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
 	var dashboard view.DashboardSummary
+
+	// TODO: Set for access role non admin
 	s.repo.Database.First(&dashboard)
 	return schoolResponse.DashboardResponse{
 		TotalClass:       dashboard.TotalClasses,
