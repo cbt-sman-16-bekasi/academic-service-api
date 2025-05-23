@@ -154,10 +154,13 @@ func (s *SchoolService) DeleteClassSubject(id uint) {
 	s.repoClassSubject.DeleteById(id)
 }
 
-func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
+func (s *SchoolService) DashboardUser(c *gin.Context) schoolResponse.DashboardResponse {
 	var dashboard view.DashboardSummary
 
-	// TODO: Set for access role non admin
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		// TODO: Set for access role non admin
+	}
 	s.repo.Database.First(&dashboard)
 	return schoolResponse.DashboardResponse{
 		TotalClass:       dashboard.TotalClasses,

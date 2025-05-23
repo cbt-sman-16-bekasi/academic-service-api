@@ -213,7 +213,7 @@ func (s *SchoolController) AuthLogin(c *gin.Context) {
 // @Success 200 {object} response.BaseResponse{data=school_response.DashboardResponse} "Dashboard response"
 // @Router /academic/dashboard [get]
 func (s *SchoolController) GetDashboard(c *gin.Context) {
-	dt := s.srv.DashboardUser()
+	dt := s.srv.DashboardUser(c)
 	response.SuccessResponse("Success get dashboard", dt).Json(c)
 }
 
