@@ -39,7 +39,7 @@ func (c *ClassService) FindAllClass(ctx *gin.Context, request pagination.Request
 
 		var classes = make([]interface{}, 0)
 		for _, class := range teacherClassSubject {
-			classes = append(classes, class.ID)
+			classes = append(classes, class.ClassId)
 		}
 		filter["id"] = classes
 		request.Filter = &filter
