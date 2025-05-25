@@ -174,6 +174,7 @@ func (s *ClassController) AddMemberOfClass(c *gin.Context) {
 	_ = c.BindJSON(&req)
 
 	s.classService.AddMemberOfClass(req)
+	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success", req).Json(c)
 }
 
@@ -194,5 +195,6 @@ func (s *ClassController) DeleteMemberOfClass(c *gin.Context) {
 	var idParam = c.Param("id")
 	id, _ := strconv.Atoi(idParam)
 	s.classService.RemoveMemberOfClass(uint(id))
+	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success", gin.H{"id": id}).Json(c)
 }

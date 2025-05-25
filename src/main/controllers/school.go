@@ -2,9 +2,11 @@ package controllers
 
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/school_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/auth_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/school_service"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/student_service"
@@ -135,6 +137,7 @@ func (s *SchoolController) CreateClassSubject(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	res := s.srv.CreateClassSubject(request)
+	observer.Trigger(model.EventSubjectsChanged)
 	response.SuccessResponse("Success create class subject", res).Json(c)
 }
 
@@ -159,6 +162,7 @@ func (s *SchoolController) ModifyClassSubject(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	res := s.srv.UpdateClassSubject(uint(id), request)
+	observer.Trigger(model.EventSubjectsChanged)
 	response.SuccessResponse("Success update class subject", res).Json(c)
 }
 
@@ -180,6 +184,7 @@ func (s *SchoolController) DeleteClassSubject(c *gin.Context) {
 	id, _ := strconv.Atoi(idParam)
 
 	s.srv.DeleteClassSubject(uint(id))
+	observer.Trigger(model.EventSubjectsChanged)
 	response.SuccessResponse("Success delete class subject", gin.H{"id": id}).Json(c)
 }
 

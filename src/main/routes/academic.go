@@ -105,7 +105,8 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	classSubject := class.Group("/subject").Use(jwt.AuthMiddleware())
 	{
-		classSubject.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), schoolController.GetAllClassSubject)
+		classSubject.GET("/all", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"),
+			redisstore.CacheMiddleware(redisstore.CacheSubjects, redisstore.TtlDuration), schoolController.GetAllClassSubject)
 		classSubject.GET("/detail/:id", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "read"), schoolController.GetClassSubject)
 		classSubject.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), schoolController.CreateClassSubject)
 		classSubject.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), schoolController.ModifyClassSubject)
