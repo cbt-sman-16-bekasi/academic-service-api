@@ -42,7 +42,7 @@ func (s *ClassController) GetAllClass(c *gin.Context) {
 	var req pagination.Request[map[string]interface{}]
 	_ = c.BindQuery(&req)
 
-	var data *database.Paginator = s.classService.FindAllClass(req)
+	var data *database.Paginator = s.classService.FindAllClass(c, req)
 	response.SuccessResponse("Success get all class", data).Json(c)
 }
 
