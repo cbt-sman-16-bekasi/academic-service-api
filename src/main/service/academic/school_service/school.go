@@ -154,7 +154,22 @@ func (s *SchoolService) DeleteClassSubject(id uint) {
 	s.repoClassSubject.DeleteById(id)
 }
 
-func (s *SchoolService) DashboardUser() schoolResponse.DashboardResponse {
+func (s *SchoolService) DashboardUser(c *gin.Context) schoolResponse.DashboardResponse {
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		var dashboard view.DashboardTeacher
+		s.repo.Database.Where("teacher_id = ?", jwt.GetID(claims.Username)).First(&dashboard)
+		return schoolResponse.DashboardResponse{
+			TotalClass:       dashboard.TotalClasses,
+			TotalSubject:     dashboard.TotalClassSubjects,
+			TotalStudent:     dashboard.TotalStudents,
+			TotalExam:        dashboard.TotalExams,
+			TotalSessionExam: dashboard.TotalExamSessions,
+			TotalReportExam:  dashboard.TotalReport,
+			TotalAccess:      dashboard.TotalUsers,
+		}
+	}
+
 	var dashboard view.DashboardSummary
 	s.repo.Database.First(&dashboard)
 	return schoolResponse.DashboardResponse{
