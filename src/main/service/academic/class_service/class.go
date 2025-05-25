@@ -2,13 +2,16 @@ package class_service
 
 import (
 	"errors"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	classRequest "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
 	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
 	classResponse "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/class_response"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/teacher"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
+	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
@@ -26,7 +29,21 @@ func NewClassService() *ClassService {
 	}
 }
 
-func (c *ClassService) FindAllClass(request pagination.Request[map[string]interface{}]) *database.Paginator {
+func (c *ClassService) FindAllClass(ctx *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	claims := jwt.GetDataClaims(ctx)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+
+		var teacherClassSubject []teacher.TeacherClassSubject
+		_ = c.repoClass.Database.Where("teacher_id = ?", jwt.GetID(claims.Username)).Find(&teacherClassSubject)
+
+		var classes = make([]interface{}, 0)
+		for _, class := range teacherClassSubject {
+			classes = append(classes, class.ID)
+		}
+		filter["id"] = classes
+		request.Filter = &filter
+	}
 	paging := database.NewPagination[map[string]interface{}]().
 		SetModal([]view.VClass{}).
 		SetRequest(&request).
