@@ -3,12 +3,13 @@ package curriculum_service
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/curriculum_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/repository/school_repository"
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/exception"
 	"github.com/yon-module/yon-framework/pagination"
 	response2 "github.com/yon-module/yon-framework/server/response"
-	"gorm.io/gorm"
 	"strings"
 )
 
@@ -27,12 +28,40 @@ func (s *SubjectService) CreateSubject(subject curriculum_request.SubjectRequest
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Code already exists"))
 	}
 
+	tx := s.repo.Database.Begin()
 	data := curriculum.Subject{
-		Model:   gorm.Model{},
 		Code:    subject.Code,
 		Subject: subject.Name,
 	}
-	s.repo.Database.Create(&data)
+
+	if err := tx.Create(&data).Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	if err := tx.Where("subject_code = ?", data.Code).Delete(&school.ClassSubject{}).Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	var classSubject []school.ClassSubject
+	for _, c := range subject.ClassCode {
+		classSubject = append(classSubject, school.ClassSubject{
+			ClassCode:   c,
+			SubjectCode: data.Code,
+		})
+	}
+
+	if err := tx.Create(&classSubject).Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
 	return subject
 }
 
@@ -51,9 +80,40 @@ func (s *SubjectService) UpdateSubject(id uint64, subject curriculum_request.Sub
 		}
 	}
 
+	tx := s.repo.Database.Begin()
+
 	existing.Subject = subject.Name
 	existing.Code = subject.Code
-	s.repo.Database.Save(&existing)
+
+	if err := tx.Save(&existing).Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
+
+	if subject.ClassCode != nil && len(subject.ClassCode) > 0 {
+		if err := tx.Where("subject_code = ?", existing.Code).Delete(&school.ClassSubject{}).Error; err != nil {
+			tx.Rollback()
+			panic(err)
+		}
+
+		var classSubject []school.ClassSubject
+		for _, c := range subject.ClassCode {
+			classSubject = append(classSubject, school.ClassSubject{
+				ClassCode:   c,
+				SubjectCode: existing.Code,
+			})
+		}
+
+		if err := tx.Create(&classSubject).Error; err != nil {
+			tx.Rollback()
+			panic(err)
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		panic(err)
+	}
 
 	return subject
 }
@@ -78,7 +138,7 @@ func (s *SubjectService) GetSubject(id uint64) curriculum.Subject {
 
 func (s *SubjectService) GetAllSubject(request pagination.Request[map[string]interface{}]) *database.Paginator {
 	return database.NewPagination[map[string]interface{}]().
-		SetModal([]curriculum.Subject{}).
+		SetModal([]view.VSubject{}).
 		SetRequest(&request).
 		FindAllPaging()
 }
