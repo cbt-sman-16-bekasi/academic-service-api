@@ -193,3 +193,8 @@ func GetID(key string) float64 {
 	}
 	panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Data user not found"))
 }
+
+func GetIDClaims(c *gin.Context) float64 {
+	claims := GetDataClaims(c)
+	return GetID(claims.SchoolCode)
+}

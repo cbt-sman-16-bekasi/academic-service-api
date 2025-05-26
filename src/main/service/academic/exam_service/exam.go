@@ -226,7 +226,7 @@ func (e *ExamService) getOptionByAnswerId(answerId string, options []school.Exam
 	return option
 }
 
-func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestionRequest) exam_request.ModifyExamQuestionRequest {
+func (e *ExamService) CreateExamQuestion(claims jwt.Claims, request exam_request.ModifyExamQuestionRequest) exam_request.ModifyExamQuestionRequest {
 	exam := e.examRepository.FindByCode(request.ExamCode)
 	tx := e.examRepository.Database.Begin()
 	defer func() {
@@ -259,7 +259,7 @@ func (e *ExamService) CreateExamQuestion(request exam_request.ModifyExamQuestion
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed to create exam question Options"))
 	}
 
-	e.insertBankQuestion(tx, exam, questionID, request)
+	e.insertBankQuestion(jwt.GetID(claims.Username), tx, exam, questionID, request)
 
 	if err := tx.Commit().Error; err != nil {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Failed Commit save to database"))
@@ -493,6 +493,7 @@ func (e *ExamService) DownloadTemplateUploadQuestion(examId uint, c *gin.Context
 }
 
 func (e *ExamService) UploadQuestion(c *gin.Context) {
+	claims := jwt.GetDataClaims(c)
 	idParam := c.Param("examId")
 	id, _ := strconv.Atoi(idParam)
 	exam := e.examRepository.FindById(uint(id))
@@ -610,7 +611,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 				break
 			}
 		}
-		e.insertBankQuestion(tx, *exam, questionID, examRequest)
+		e.insertBankQuestion(jwt.GetID(claims.Username), tx, *exam, questionID, examRequest)
 
 		if err := tx.Commit().Error; err != nil {
 			tx.Rollback()
@@ -775,7 +776,7 @@ func ReadAndValidateExcel(file multipart.File) ([][]string, error) {
 	return rows[1:], nil
 }
 
-func (e *ExamService) insertBankQuestion(tx *gorm.DB, exam school.Exam, questionID string, request exam_request.ModifyExamQuestionRequest) {
+func (e *ExamService) insertBankQuestion(createdId float64, tx *gorm.DB, exam school.Exam, questionID string, request exam_request.ModifyExamQuestionRequest) {
 	var classCode []string
 	seen := make(map[string]bool)
 
@@ -800,6 +801,7 @@ func (e *ExamService) insertBankQuestion(tx *gorm.DB, exam school.Exam, question
 				ClassCode:    member,
 				TypeQuestion: exam.TypeQuestion,
 			}
+			masterBank.CreatedBy = uint(createdId)
 
 			if err := tx.Create(&masterBank).Error; err != nil {
 				tx.Rollback()
@@ -893,7 +895,7 @@ func (e *ExamService) GetDetailBankQuestionBySubject(request exam_request.Modify
 	return res
 }
 
-func (e *ExamService) CreateMasterBankQuestion(request exam_request.ModifyMasterBankQuestionRequest) *school.MasterBankQuestion {
+func (e *ExamService) CreateMasterBankQuestion(createdId float64, request exam_request.ModifyMasterBankQuestionRequest) *school.MasterBankQuestion {
 	code := "BANK_" + helper.RandomString(10)
 	body := &school.MasterBankQuestion{
 		BankName:     request.BankName,
@@ -902,11 +904,12 @@ func (e *ExamService) CreateMasterBankQuestion(request exam_request.ModifyMaster
 		TypeQuestion: request.TypeQuestion,
 		Code:         code,
 	}
+	body.CreatedBy = uint(createdId)
 	e.examRepository.Database.Create(&body)
 	return body
 }
 
-func (e *ExamService) UpdateMasterBankQuestion(id uint, request exam_request.ModifyMasterBankQuestionRequest) *school.MasterBankQuestion {
+func (e *ExamService) UpdateMasterBankQuestion(createdId float64, id uint, request exam_request.ModifyMasterBankQuestionRequest) *school.MasterBankQuestion {
 	var detail school.MasterBankQuestion
 	e.examRepository.Database.Where("id = ?", id).
 		First(&detail)
@@ -918,6 +921,7 @@ func (e *ExamService) UpdateMasterBankQuestion(id uint, request exam_request.Mod
 	detail.SubjectCode = request.SubjectCode
 	detail.ClassCode = request.ClassCode
 	detail.TypeQuestion = request.TypeQuestion
+	detail.ModifiedBy = uint(createdId)
 
 	e.examRepository.Database.Save(&detail)
 	return &detail
