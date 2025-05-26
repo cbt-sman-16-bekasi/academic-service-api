@@ -127,8 +127,8 @@ func (s *SubjectService) DeleteSubject(id uint64) {
 	s.repo.Database.Delete(&existCode)
 }
 
-func (s *SubjectService) GetSubject(id uint64) curriculum.Subject {
-	var existCode curriculum.Subject
+func (s *SubjectService) GetSubject(id uint64) view.VSubject {
+	var existCode view.VSubject
 	s.repo.Database.Debug().Where("id = ?", id).First(&existCode)
 	if existCode.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "ID not found"))
