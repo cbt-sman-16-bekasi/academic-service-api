@@ -196,5 +196,5 @@ func GetID(key string) float64 {
 
 func GetIDClaims(c *gin.Context) float64 {
 	claims := GetDataClaims(c)
-	return GetID(claims.SchoolCode)
+	return GetID(claims.Username)
 }
