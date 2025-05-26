@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
@@ -189,7 +190,8 @@ func (e *ExamController) CreateExamQuestion(c *gin.Context) {
 	var request exam_request.ModifyExamQuestionRequest
 	_ = c.BindJSON(&request)
 
-	resp := e.examService.CreateExamQuestion(request)
+	claims := jwt.GetDataClaims(c)
+	resp := e.examService.CreateExamQuestion(claims, request)
 	response.SuccessResponse("Success create exam question", resp).Json(c)
 }
 
@@ -278,7 +280,7 @@ func (e *ExamController) CreateMasterBankQuestion(c *gin.Context) {
 	var request exam_request.ModifyMasterBankQuestionRequest
 	_ = c.BindJSON(&request)
 
-	res := e.examService.CreateMasterBankQuestion(request)
+	res := e.examService.CreateMasterBankQuestion(jwt.GetIDClaims(c), request)
 	observer.Trigger(model.EventBankQuestionChanged)
 	response.SuccessResponse("Success create master bank question", res).Json(c)
 }
@@ -288,7 +290,7 @@ func (e *ExamController) UpdateMasterBankQuestion(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	id, _ := strconv.Atoi(c.Param("id"))
-	resp := e.examService.UpdateMasterBankQuestion(uint(id), request)
+	resp := e.examService.UpdateMasterBankQuestion(jwt.GetIDClaims(c), uint(id), request)
 	observer.Trigger(model.EventBankQuestionChanged)
 	response.SuccessResponse("Success update master bank question", resp).Json(c)
 }
