@@ -1,6 +1,9 @@
 package view
 
-import "time"
+import (
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
+	"time"
+)
 
 type MasterBankQuestionResponse struct {
 	ID           uint   `json:"id"`
@@ -137,4 +140,13 @@ type VUser struct {
 
 func (v *VUser) TableName() string {
 	return "public.v_user"
+}
+
+type VSubject struct {
+	curriculum.Subject
+	ClassCode string `json:"class_code" gorm:"column:class_code"`
+}
+
+func (v *VSubject) TableName() string {
+	return "public.v_subject"
 }
