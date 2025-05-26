@@ -27,7 +27,7 @@ func (s *SubjectService) CreateSubject(subject curriculum_request.SubjectRequest
 	if existCode.ID != 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "Code already exists"))
 	}
-	
+
 	tx := s.repo.Database.Begin()
 	data := curriculum.Subject{
 		Code:    subject.Code,
@@ -47,7 +47,7 @@ func (s *SubjectService) CreateSubject(subject curriculum_request.SubjectRequest
 	var classSubject []school.ClassSubject
 	for _, c := range subject.ClassCode {
 		classSubject = append(classSubject, school.ClassSubject{
-			ClassCode: c,
+			ClassCode:   c,
 			SubjectCode: data.Code,
 		})
 	}
@@ -90,22 +90,24 @@ func (s *SubjectService) UpdateSubject(id uint64, subject curriculum_request.Sub
 		panic(err)
 	}
 
-	if err := tx.Where("subject_code = ?", existing.Code).Delete(&school.ClassSubject{}).Error; err != nil {
-		tx.Rollback()
-		panic(err)
-	}
+	if subject.ClassCode != nil && len(subject.ClassCode) > 0 {
+		if err := tx.Where("subject_code = ?", existing.Code).Delete(&school.ClassSubject{}).Error; err != nil {
+			tx.Rollback()
+			panic(err)
+		}
 
-	var classSubject []school.ClassSubject
-	for _, c := range subject.ClassCode {
-		classSubject = append(classSubject, school.ClassSubject{
-			ClassCode: c,
-			SubjectCode: existing.Code,
-		})
-	}
+		var classSubject []school.ClassSubject
+		for _, c := range subject.ClassCode {
+			classSubject = append(classSubject, school.ClassSubject{
+				ClassCode:   c,
+				SubjectCode: existing.Code,
+			})
+		}
 
-	if err := tx.Create(&classSubject).Error; err != nil {
-		tx.Rollback()
-		panic(err)
+		if err := tx.Create(&classSubject).Error; err != nil {
+			tx.Rollback()
+			panic(err)
+		}
 	}
 
 	if err := tx.Commit().Error; err != nil {
