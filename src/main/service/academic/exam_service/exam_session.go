@@ -139,17 +139,15 @@ func (e *ExamSessionService) DeleteExamSession(id uint) {
 }
 
 func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAttendanceRequest) []exam_response.ExamSessionAttendanceResponse {
-	var studentClasses []student.StudentClass
+	var studentData []view.VStudent
 	e.examSessionRepository.Database.Where("class_id = ?", request.ClassId).
-		Preload("DetailStudent").
-		Preload("DetailClass").
-		Find(&studentClasses)
+		Find(&studentData)
 
 	var responses []exam_response.ExamSessionAttendanceResponse
 
-	for _, class := range studentClasses {
+	for _, std := range studentData {
 		var studentAttendance cbt.StudentHistoryTaken
-		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, class.DetailStudent.ID).First(&studentAttendance)
+		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, std.ID).First(&studentAttendance)
 		status := studentAttendance.Status
 
 		if status == "STARTED" {
@@ -169,14 +167,14 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			}
 		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
-			Nisn:           class.DetailStudent.Nisn,
-			Name:           strings.ToUpper(class.DetailStudent.Name),
-			Class:          class.DetailClass.ClassName,
+			Nisn:           std.NISN,
+			Name:           strings.ToUpper(std.Name),
+			Class:          std.ClassName,
 			StartAt:        &studentAttendance.StartAt,
 			EndAt:          studentAttendance.EndAt,
 			Score:          studentAttendance.Score,
 			Status:         status,
-			StudentId:      class.DetailStudent.ID,
+			StudentId:      std.ID,
 			NeedCorrection: studentAttendance.NeedCorrection,
 		})
 	}
