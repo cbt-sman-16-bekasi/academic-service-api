@@ -78,12 +78,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		id, ok := claims["id"]
+		if !ok {
+			id = "0"
+		}
+
 		userClaims := Claims{
 			Username:   claims["username"].(string),
 			Role:       claims["role"].(string),
 			SchoolCode: claims["school_code"].(string),
 			Permission: toStringSlice(claims["permission"]),
-			Id:         uint(claims["id"].(float64)),
+			Id:         uint(id.(float64)),
 		}
 
 		c.Set("claims", userClaims)
