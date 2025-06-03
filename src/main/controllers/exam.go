@@ -6,6 +6,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/exam_service"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/service/academic/student_service"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
@@ -16,6 +17,7 @@ type ExamController struct {
 	typeExamService    *exam_service.TypeExamService
 	examService        *exam_service.ExamService
 	examSessionService *exam_service.ExamSessionService
+	studentService     *student_service.StudentService
 }
 
 func NewExamController() *ExamController {
@@ -23,6 +25,7 @@ func NewExamController() *ExamController {
 		typeExamService:    exam_service.NewTypeExamService(),
 		examService:        exam_service.NewExamService(),
 		examSessionService: exam_service.NewExamSessionService(),
+		studentService:     student_service.NewStudentService(),
 	}
 }
 

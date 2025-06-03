@@ -34,9 +34,15 @@ func (s *SummaryExamSession) TableName() string {
 }
 
 type ExamSessionActiveToday struct {
-	ID        uint   `json:"id"`
-	SessionID string `json:"session_id"`
-	Class     uint   `json:"class"`
+	ID          uint      `json:"id"`
+	SessionID   string    `json:"session_id"`
+	Class       uint      `json:"class"`
+	StartDate   time.Time `json:"start_date"`
+	EndDate     time.Time `json:"end_date"`
+	SessionName string    `json:"session_name"`
+	ExamName    string    `json:"exam_name"`
+	SubjectName string    `json:"subject_name"`
+	TypeExam    string    `json:"type_exam"`
 }
 
 func (e *ExamSessionActiveToday) TableName() string {

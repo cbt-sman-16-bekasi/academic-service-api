@@ -19,3 +19,7 @@ type ChangeProfileRequest struct {
 	Username   string `json:"username"`
 	ProfileURL string `json:"profile_url"`
 }
+
+type CBTSelectedSession struct {
+	SessionID string `json:"session_id"`
+}

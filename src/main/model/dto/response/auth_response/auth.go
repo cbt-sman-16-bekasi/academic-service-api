@@ -5,6 +5,7 @@ import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
 )
 
 type AuthResponse struct {
@@ -15,10 +16,11 @@ type AuthResponse struct {
 }
 
 type AuthResponseCBT struct {
-	Token       string                   `json:"token"`
-	Exp         int64                    `json:"exp"`
-	User        *student.StudentClass    `json:"user"`
-	Exam        *school.Exam             `json:"exam"`
-	ExamSession *school.ExamSession      `json:"exam_session"`
-	ExamTaken   *cbt.StudentHistoryTaken `json:"exam_taken"`
+	Token       string                        `json:"token,omitempty"`
+	Exp         int64                         `json:"exp,omitempty"`
+	User        *student.StudentClass         `json:"user,omitempty"`
+	Exam        *school.Exam                  `json:"exam,omitempty"`
+	ExamSession *school.ExamSession           `json:"exam_session,omitempty"`
+	ExamTaken   *cbt.StudentHistoryTaken      `json:"exam_taken,omitempty"`
+	ExamActive  []view.ExamSessionActiveToday `json:"exam_active,omitempty"`
 }

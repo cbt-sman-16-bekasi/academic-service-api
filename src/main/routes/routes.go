@@ -17,5 +17,6 @@ func init() {
 	})
 
 	server.AddRoutes(academicRoutes)
+	server.AddRoutes(cbtRouter)
 	observer.RegisterEvent()
 }
