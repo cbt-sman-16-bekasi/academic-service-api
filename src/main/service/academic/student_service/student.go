@@ -184,13 +184,30 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
 	}
 
-	var sessionActives []string
-	for _, today := range examActive {
-		sessionActives = append(sessionActives, today.SessionID)
+	exp := time.Now().Add(time.Hour * 24).Unix()
+	token, err := jwt.GenerateJWT(jwt.Claims{
+		Username:   request.Username,
+		Role:       "STUDENT",
+		Permission: []string{"create", "update", "delete", "read", "list"},
+		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
+		Id:         std.ID,
+	})
+
+	if err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(response2.ServerError, err.Error()))
 	}
 
-	// Get session active with user has not submitted
-	examSession := s.studentRepo.ExamRepo.GetExamSessionActiveNow(sessionActives, std.ID)
+	return auth_response.AuthResponseCBT{
+		Token:      token,
+		Exp:        exp,
+		User:       &studentClass,
+		ExamActive: examActive,
+	}
+}
+
+func (s *StudentService) RetrieveDetailSession(claims jwt.Claims, request auth_request.CBTSelectedSession) auth_response.AuthResponseCBT {
+	var examSession school.ExamSession
+	s.studentRepo.ExamRepo.Database.Where("session_id = ?", request.SessionID).First(&examSession)
 	if examSession.ID == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam session with that class."))
 	}
@@ -208,7 +225,7 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 	}
 
 	var exam school.Exam
-	err = s.studentRepo.Database.Where("code", examSession.ExamCode).Preload("DetailSubject").First(&exam).Error
+	err := s.studentRepo.Database.Where("code", examSession.ExamCode).Preload("DetailSubject").First(&exam).Error
 	if err != nil || errors.Is(err, gorm.ErrRecordNotFound) {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
 	}
@@ -228,26 +245,11 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 	examQuestionRandom := randomizeExam(examQuestion, exam.RandomQuestion, exam.RandomAnswer)
 	exam.ExamQuestion = examQuestionRandom
 
-	exp := time.Now().Add(time.Hour * 24).Unix()
-	token, err := jwt.GenerateJWT(jwt.Claims{
-		Username:   request.Username,
-		Role:       "STUDENT",
-		Permission: []string{"create", "update", "delete", "read", "list"},
-		SchoolCode: "db74a42e-23a7-4cd2-bbe5-49cf79f86453",
-	})
-
-	if err != nil {
-		panic(exception.NewIntenalServerExceptionStruct(response2.ServerError, err.Error()))
-	}
-
 	var existingHistoryTaken cbt.StudentHistoryTaken
-	s.studentRepo.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, std.ID).First(&existingHistoryTaken)
+	s.studentRepo.Database.Debug().Where("session_id = ? AND student_id = ?", examSession.SessionId, claims.Id).First(&existingHistoryTaken)
 	return auth_response.AuthResponseCBT{
-		Token:       token,
-		Exp:         exp,
 		Exam:        &exam,
-		User:        &studentClass,
-		ExamSession: examSession,
+		ExamSession: &examSession,
 		ExamTaken:   &existingHistoryTaken,
 	}
 }

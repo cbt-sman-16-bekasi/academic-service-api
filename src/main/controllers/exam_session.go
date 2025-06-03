@@ -3,6 +3,7 @@ package controllers
 import (
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
 	"github.com/gin-gonic/gin"
@@ -212,6 +213,15 @@ func (e *ExamController) ValidateToken(c *gin.Context) {
 	claims := jwt.GetDataClaims(c)
 	resp := e.examSessionService.ValidateTokenDo(claims, request)
 	response.SuccessResponse("Success validate token", resp).Json(c)
+}
+
+func (e *ExamController) RetrieveDetailSessionCbt(c *gin.Context) {
+	var request auth_request.CBTSelectedSession
+	_ = c.BindJSON(&request)
+
+	claims := jwt.GetDataClaims(c)
+	resp := e.studentService.RetrieveDetailSession(claims, request)
+	response.SuccessResponse("Success retrieve token", resp).Json(c)
 }
 
 func (e *ExamController) SubmitExamSession(c *gin.Context) {

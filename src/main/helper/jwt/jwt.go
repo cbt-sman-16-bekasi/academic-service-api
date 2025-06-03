@@ -22,7 +22,7 @@ type Claims struct {
 	Role       string   `json:"role"`
 	Permission []string `json:"permission"`
 	SchoolCode string   `json:"school_code"`
-	ID         uint     `json:"id"`
+	Id         uint     `json:"id"`
 }
 
 func GenerateJWT(claim Claims) (string, error) {
@@ -32,6 +32,7 @@ func GenerateJWT(claim Claims) (string, error) {
 		"permission":  claim.Permission,
 		"school_code": claim.SchoolCode,
 		"exp":         time.Now().Add(time.Hour * 24).Unix(),
+		"id":          claim.Id,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -82,6 +83,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			Role:       claims["role"].(string),
 			SchoolCode: claims["school_code"].(string),
 			Permission: toStringSlice(claims["permission"]),
+			Id:         uint(claims["id"].(float64)),
 		}
 
 		c.Set("claims", userClaims)
