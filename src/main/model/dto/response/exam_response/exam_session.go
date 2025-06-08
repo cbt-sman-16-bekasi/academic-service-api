@@ -29,7 +29,7 @@ type ExamSessionAttendanceResponse struct {
 	Class          string     `json:"class"`
 	StartAt        *time.Time `json:"start_at"`
 	EndAt          *time.Time `json:"end_at"`
-	Score          int        `json:"score"`
+	Score          float64    `json:"score"`
 	Status         string     `json:"status"`
 	NeedCorrection bool       `json:"need_correction"`
 }

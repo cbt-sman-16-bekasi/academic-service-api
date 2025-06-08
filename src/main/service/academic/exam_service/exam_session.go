@@ -378,8 +378,9 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	e.examSessionRepository.Database.Save(&studentAnswers)
 
-	averageScore := (float64(totalScore) / float64(totalQMS)) * 100
-	existingHistoryTaken.Score = int(math.Ceil(averageScore))
+	roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
+	averageScore := roundScore * 100
+	existingHistoryTaken.Score = averageScore
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 	return existingHistoryTaken
@@ -717,8 +718,9 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 		//	Str("Total question", fmt.Sprintf("%d", totalQuestions)).
 		//	Str("Total QMS", fmt.Sprintf("%d", totalQMS)).
 		//	Msg("[FINAL SCORE]")
-		averageScore := (float64(totalScore) / float64(totalQMS)) * 100
-		dt.Score = int(math.Ceil(averageScore))
+		roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
+		averageScore := roundScore * 100
+		dt.Score = averageScore
 		newScoreTaken = append(newScoreTaken, dt)
 		logger.Log.Info().Msgf("[%d/%d] Student %d finish recalculate After score: %d", startDataCalculate, totalDataCalculate, dt.StudentId, dt.Score)
 		startDataCalculate++
