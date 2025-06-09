@@ -35,7 +35,7 @@ type StudentHistoryTaken struct {
 	//DetailStudent student.Student    `json:"detail_student" gorm:"foreignKey:StudentId;references:ID"`
 	StartAt        time.Time  `json:"start_at"`
 	EndAt          *time.Time `json:"end_at"`
-	Score          int        `json:"score"`
+	Score          float64    `json:"score"`
 	TotalCorrect   int        `json:"total_correct"`
 	TotalWrong     int        `json:"total_wrong"`
 	Status         string     `json:"status"`
