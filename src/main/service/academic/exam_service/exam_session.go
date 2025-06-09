@@ -264,15 +264,16 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, studentData.ID).First(&existingHistoryTaken)
 	if existingHistoryTaken.ID == 0 {
 		existingHistoryTaken = cbt.StudentHistoryTaken{
-			ExamCode:      tokenExamSession.DetailExamSession.ExamCode,
-			SessionId:     examSession.SessionId,
-			StudentId:     studentData.ID,
-			StartAt:       timeNow,
-			EndAt:         nil,
-			Status:        "STARTED",
-			RemainingTime: int(remainingInMinutes),
-			IsFinished:    false,
-			IsForced:      false,
+			ExamCode:       tokenExamSession.DetailExamSession.ExamCode,
+			SessionId:      examSession.SessionId,
+			StudentId:      studentData.ID,
+			StartAt:        timeNow,
+			EndAt:          nil,
+			Status:         "STARTED",
+			RemainingTime:  int(remainingInMinutes),
+			IsFinished:     false,
+			IsForced:       false,
+			NeedCorrection: false,
 		}
 	} else {
 		existingHistoryTaken.RemainingTime = int(remainingInMinutes)
@@ -283,6 +284,10 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 		existingHistoryTaken.IsFinished = true
 		existingHistoryTaken.EndAt = &timeNow
 		existingHistoryTaken.Status = "COMPLETED"
+	}
+
+	if tokenExamSession.DetailExamSession.DetailExam.TypeQuestion == "ESSAY" {
+		existingHistoryTaken.NeedCorrection = true
 	}
 
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
@@ -493,7 +498,7 @@ func (e *ExamSessionService) GenerateReportSession(sessionID string) {
 					Name:      data.Name,
 					ClassName: data.Class,
 					Gender:    "-",
-					Score:     float64(data.Score),
+					Score:     data.Score,
 				})
 			}
 			dataSession := reporting_service.DataExamSession{
