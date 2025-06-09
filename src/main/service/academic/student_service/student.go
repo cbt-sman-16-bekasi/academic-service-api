@@ -180,7 +180,23 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 	var examActive []view.ExamSessionActiveToday
 	s.studentRepo.Database.Where("class = ?", studentClass.ClassId).Find(&examActive)
 
-	if len(examActive) == 0 {
+	var examActiveFilter []view.ExamSessionActiveToday
+	now := time.Now()
+	for _, today := range examActive {
+		if today.StartDate.After(now) {
+			continue
+		}
+
+		if today.EndDate.Before(now) {
+			continue
+		}
+
+		if now.Before(today.EndDate) && today.StartDate.Before(now) {
+			examActiveFilter = append(examActiveFilter, today)
+		}
+	}
+
+	if len(examActiveFilter) == 0 {
 		panic(exception.NewBadRequestExceptionStruct(response2.BadRequest, "You don't have a exam with that class."))
 	}
 
@@ -201,7 +217,7 @@ func (s *StudentService) LoginByNISN(request auth_request.CBTAuthRequest) auth_r
 		Token:      token,
 		Exp:        exp,
 		User:       &studentClass,
-		ExamActive: examActive,
+		ExamActive: examActiveFilter,
 	}
 }
 

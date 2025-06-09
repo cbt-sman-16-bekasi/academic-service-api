@@ -46,7 +46,7 @@ type ExamSessionActiveToday struct {
 }
 
 func (e *ExamSessionActiveToday) TableName() string {
-	return "public.v_exam_session_active_today"
+	return "public.v_exam_session_active"
 }
 
 type VStudent struct {
