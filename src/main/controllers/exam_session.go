@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
@@ -9,7 +11,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
-	"strconv"
 )
 
 // GetAllExamSession Get All exam session
@@ -274,4 +275,12 @@ func (e *ExamController) ExamSessionGenerateReport(c *gin.Context) {
 
 	e.examSessionService.GenerateReportSession(request.SessionId)
 	response.SuccessResponse("Your request still process, Please check your request to page 'Laporan Nilai'", request).Json(c)
+}
+
+func (e *ExamController) ExamSessionReset(c *gin.Context) {
+	var request exam_request.ExamSessionResetRequest
+	_ = c.BindJSON(&request)
+
+	e.examSessionService.ResetSessionStudent(request)
+	response.SuccessResponse("Success reset session student", request).Json(c)
 }

@@ -1,7 +1,14 @@
 package exam_service
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
@@ -25,11 +32,6 @@ import (
 	"github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"log"
-	"math"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type ExamSessionService struct {
@@ -731,6 +733,23 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 		startDataCalculate++
 	}
 	e.examSessionRepository.Database.Save(&newScoreTaken)
+}
+
+func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessionResetRequest) {
+	var dataStudent cbt.StudentHistoryTaken
+
+	result := e.examSessionRepository.Database.
+		Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+		First(&dataStudent)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(
+			response.BadRequest,
+			"Can't delete session student. Session student is empty",
+		))
+	}
+
+	e.examSessionRepository.Database.Unscoped().Delete(&dataStudent)
 }
 
 func StringToUintSlice(s string) ([]uint, error) {
