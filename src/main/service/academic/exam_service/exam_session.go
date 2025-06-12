@@ -317,6 +317,10 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
 	}
 
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
 	timeNow := time.Now()
 	existingHistoryTaken.IsForced = request.IsForced
 	existingHistoryTaken.IsTimeOver = request.IsTimeOver
