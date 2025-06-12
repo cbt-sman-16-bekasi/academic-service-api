@@ -1,8 +1,9 @@
 package exam_request
 
 import (
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"time"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 )
 
 type ModifyExamSessionRequest struct {
@@ -63,4 +64,9 @@ type ExamSessionStudentAnswer struct {
 
 type ExamSessionGenerateReportRequest struct {
 	SessionId string `json:"session_id" form:"sessionId"`
+}
+
+type ExamSessionResetRequest struct {
+	SessionId string `json:"session_id" form:"sessionId"`
+	StudentId uint   `json:"student_id" form:"student_id"`
 }

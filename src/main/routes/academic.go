@@ -1,13 +1,14 @@
 package routes
 
 import (
+	"io"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/controllers"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/bucket"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/server/response"
-	"io"
 )
 
 func academicRoutes(gr *gin.RouterGroup) {
@@ -187,6 +188,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		examSession.GET("/attendance", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.GetAttendance)
 		examSession.GET("/attendance/download", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.DownloadAttendance)
 		examSession.GET("/member/:sessionId", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionMember)
+		examSession.GET("/reset", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionReset)
 	}
 
 	examSessionToken := exam.Group("/session/token").Use(jwt.AuthMiddleware())
