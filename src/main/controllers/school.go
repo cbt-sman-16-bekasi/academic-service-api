@@ -241,6 +241,7 @@ func (s *SchoolController) ModifySchool(c *gin.Context) {
 	claims := jwt.GetDataClaims(c)
 
 	res := s.srv.ModifySchool(claims, request)
+	observer.Trigger(model.EventInformationSchoolChanged)
 	response.SuccessResponse("Success update class school", res).Json(c)
 }
 

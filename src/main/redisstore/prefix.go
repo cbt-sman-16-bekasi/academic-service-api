@@ -16,3 +16,4 @@ const (
 )
 
 var TtlDuration = time.Duration(30 * time.Second)
+var TtlOneDay = time.Duration(24 * time.Hour)
