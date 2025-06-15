@@ -22,7 +22,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 
 	academic := gr.Group("/academic")
 
-	academic.GET("/school", schoolController.GetSchool)
+	academic.GET("/school", redisstore.CacheMiddleware(redisstore.CacheInformationSchool, redisstore.TtlOneDay), schoolController.GetSchool)
 	academic.GET("/:bucketName/:folder/:objectName/download", func(c *gin.Context) {
 		bucketName := c.Param("bucketName")
 		objectName := c.Param("objectName")
