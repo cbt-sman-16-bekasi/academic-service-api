@@ -29,7 +29,9 @@ func (e *ExamRepository) FindById(id uint) *school.Exam {
 		Preload("ExamMember.DetailClass.DetailClassCode").
 		Preload("DetailTypeExam").
 		Preload("DetailTypeExam.DetailRole").
-		Preload("ExamQuestion").
+		Preload("ExamQuestion", func(db *gorm.DB) *gorm.DB {
+			return db.Order("id ASC")
+		}).
 		Preload("ExamQuestion.QuestionOption").Preload(clause.Associations).First(&exam)
 	return &exam
 }

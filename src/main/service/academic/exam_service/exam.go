@@ -99,11 +99,13 @@ func (e *ExamService) GetDetailExam(id uint) exam_response.ExamDetailResponse {
 	}
 
 	totalScore := len(data.ExamQuestion) * data.ScoreQuestion
+	totalQuestion := len(data.ExamQuestion) * data.ScoreQuestion
+	average := (float64(totalQuestion) / float64(totalScore)) * 100
 
 	return exam_response.ExamDetailResponse{
 		Exam:          data,
 		TotalQuestion: len(data.ExamQuestion),
-		TotalScore:    totalScore,
+		TotalScore:    int(average),
 	}
 }
 

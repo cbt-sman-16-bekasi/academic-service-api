@@ -9,10 +9,6 @@ import (
 // CacheMiddleware untuk cache GET endpoint
 func CacheMiddleware(prefix string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.Request.Method != http.MethodGet {
-			c.Next()
-			return
-		}
 		authHeader := c.GetHeader("Authorization")
 		key := prefix + c.Request.URL.RawQuery + authHeader
 		val, err := Get(key)
