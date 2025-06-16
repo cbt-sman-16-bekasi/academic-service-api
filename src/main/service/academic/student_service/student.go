@@ -249,12 +249,12 @@ func (s *StudentService) RetrieveDetailSession(claims jwt.Claims, request auth_r
 	var examQuestion []school.ExamQuestion
 	err = redisstore.GetJSON(exam.Code, &examQuestion)
 	if err != nil {
-		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Find(&examQuestion)
+		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Order("id ASC").Find(&examQuestion)
 		_ = redisstore.SetJSON(exam.Code, examQuestion, time.Hour*24)
 	}
 
 	if examQuestion == nil {
-		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Find(&examQuestion)
+		s.userRepository.Database.Where("exam_code", exam.Code).Preload("QuestionOption").Order("id ASC").Find(&examQuestion)
 		_ = redisstore.SetJSON(exam.Code, examQuestion, time.Hour*24)
 	}
 
