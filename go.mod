@@ -14,7 +14,7 @@ require (
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
 	github.com/xuri/excelize/v2 v2.9.0
-	github.com/yon-module/yon-framework v1.1.750
+	github.com/yon-module/yon-framework v1.1.751
 	golang.org/x/crypto v0.39.0
 	gorm.io/gorm v1.30.0
 )
@@ -30,6 +30,8 @@ require (
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
+	github.com/getsentry/sentry-go v0.33.0 // indirect
+	github.com/getsentry/sentry-go/gin v0.33.0 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.1 // indirect
