@@ -953,7 +953,7 @@ func (e *ExamService) GetQuestionByMasterCode(masterCode string) []school.BankQu
 func (e *ExamService) GetBankQuestionById(id uint) *school.BankQuestion {
 	var question school.BankQuestion
 	e.examRepository.Database.Where("id = ?", id).
-		Preload("QuestionOption").
+		Preload("QuestionOption", func(db *gorm.DB) *gorm.DB { return db.Order("answer_id asc") }).
 		First(&question)
 	return &question
 }
