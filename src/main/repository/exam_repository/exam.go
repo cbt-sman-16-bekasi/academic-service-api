@@ -38,7 +38,7 @@ func (e *ExamRepository) FindById(id uint) *school.Exam {
 
 func (e *ExamRepository) FindByIdQuestion(id uint) *school.ExamQuestion {
 	var question school.ExamQuestion
-	e.Database.Where("id = ?", id).Preload("QuestionOption").First(&question)
+	e.Database.Where("id = ?", id).Preload("QuestionOption", func(db *gorm.DB) *gorm.DB { return db.Order("answer_id asc") }).First(&question)
 
 	return &question
 }
