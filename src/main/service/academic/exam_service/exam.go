@@ -572,35 +572,35 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		if exam.TypeQuestion == "PILIHAN_GANDA" {
 			var examQuestionOption []school.ExamAnswerOption
 
-			examRequest.OptionA = questionID + "_A"
+			examRequest.OptionA = row.A
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_A",
 				Option:     row.A,
 			})
 
-			examRequest.OptionA = questionID + "_B"
+			examRequest.OptionB = row.B
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_B",
 				Option:     row.B,
 			})
 
-			examRequest.OptionA = questionID + "_C"
+			examRequest.OptionC = row.C
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_C",
 				Option:     row.C,
 			})
 
-			examRequest.OptionA = questionID + "_D"
+			examRequest.OptionD = row.D
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_D",
 				Option:     row.D,
 			})
 
-			examRequest.OptionA = questionID + "_E"
+			examRequest.OptionE = row.E
 			examQuestionOption = append(examQuestionOption, school.ExamAnswerOption{
 				QuestionId: questionID,
 				AnswerId:   questionID + "_E",
