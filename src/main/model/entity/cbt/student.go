@@ -33,18 +33,20 @@ type StudentHistoryTaken struct {
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
 	StudentId uint `json:"student_id"`
 	//DetailStudent student.Student    `json:"detail_student" gorm:"foreignKey:StudentId;references:ID"`
-	StartAt        time.Time  `json:"start_at"`
-	EndAt          *time.Time `json:"end_at"`
-	Score          float64    `json:"score"`
-	TotalCorrect   int        `json:"total_correct"`
-	TotalWrong     int        `json:"total_wrong"`
-	Status         string     `json:"status"`
-	RemainingTime  int        `json:"remaining_time"`
-	IsFinished     bool       `json:"is_finished"`
-	IsForced       bool       `json:"is_forced"`
-	IsTimeOver     bool       `json:"is_time_over"`
-	IsCheating     bool       `json:"is_cheating"`
-	NeedCorrection bool       `json:"need_correction" gorm:"DEFAULT:true"`
+	StartAt             time.Time  `json:"start_at"`
+	EndAt               *time.Time `json:"end_at"`
+	Score               float64    `json:"score"`
+	TotalCorrect        int        `json:"total_correct"`
+	TotalWrong          int        `json:"total_wrong"`
+	Status              string     `json:"status"`
+	RemainingTime       int        `json:"remaining_time"`
+	IsFinished          bool       `json:"is_finished"`
+	IsForced            bool       `json:"is_forced"`
+	IsTimeOver          bool       `json:"is_time_over"`
+	IsCheating          bool       `json:"is_cheating"`
+	NeedCorrection      bool       `json:"need_correction" gorm:"DEFAULT:true"`
+	LastCorrectionScore *time.Time `json:"lastCorrectionScore" gorm:"column:last_correction_score"`
+	LastCorrectionBy    string     `json:"lastCorrectionBy" gorm:"column:last_correction_by"`
 }
 
 func (s StudentHistoryTaken) TableName() string {
