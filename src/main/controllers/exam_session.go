@@ -284,3 +284,11 @@ func (e *ExamController) ExamSessionReset(c *gin.Context) {
 	e.examSessionService.ResetSessionStudent(request)
 	response.SuccessResponse("Success reset session student", request).Json(c)
 }
+
+func (e *ExamController) ExamSessionCorrectionScore(c *gin.Context) {
+	var request exam_request.ExamSessionCorrectionRequest
+	_ = c.BindJSON(&request)
+
+	e.examSessionService.CorrectionScoreStudent(c, request)
+	response.SuccessResponse("Success change score student", request).Json(c)
+}

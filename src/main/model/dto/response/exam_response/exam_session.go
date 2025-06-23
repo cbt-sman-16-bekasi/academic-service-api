@@ -23,15 +23,17 @@ type ExamDetailSessionResponse struct {
 }
 
 type ExamSessionAttendanceResponse struct {
-	Nisn           string     `json:"nisn"`
-	StudentId      uint       `json:"student_id"`
-	Name           string     `json:"name"`
-	Class          string     `json:"class"`
-	StartAt        *time.Time `json:"start_at"`
-	EndAt          *time.Time `json:"end_at"`
-	Score          float64    `json:"score"`
-	Status         string     `json:"status"`
-	NeedCorrection bool       `json:"need_correction"`
+	Nisn                string     `json:"nisn"`
+	StudentId           uint       `json:"student_id"`
+	Name                string     `json:"name"`
+	Class               string     `json:"class"`
+	StartAt             *time.Time `json:"start_at"`
+	EndAt               *time.Time `json:"end_at"`
+	Score               float64    `json:"score"`
+	Status              string     `json:"status"`
+	NeedCorrection      bool       `json:"need_correction"`
+	LastCorrectionScore string     `json:"lastCorrectionScore"`
+	LastCorrectionBy    string     `json:"lastCorrectionBy"`
 }
 
 type ExamSessionTokenResponse struct {

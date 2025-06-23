@@ -168,16 +168,23 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 				status = "Terindikasi Kecurangan"
 			}
 		}
+
+		lastCorrection := ""
+		if studentAttendance.LastCorrectionScore != nil {
+			lastCorrection = studentAttendance.LastCorrectionScore.Format("2006-01-02 15:04:05")
+		}
 		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
-			Nisn:           std.NISN,
-			Name:           strings.ToUpper(std.Name),
-			Class:          std.ClassName,
-			StartAt:        &studentAttendance.StartAt,
-			EndAt:          studentAttendance.EndAt,
-			Score:          studentAttendance.Score,
-			Status:         status,
-			StudentId:      std.ID,
-			NeedCorrection: studentAttendance.NeedCorrection,
+			Nisn:                std.NISN,
+			Name:                strings.ToUpper(std.Name),
+			Class:               std.ClassName,
+			StartAt:             &studentAttendance.StartAt,
+			EndAt:               studentAttendance.EndAt,
+			Score:               studentAttendance.Score,
+			Status:              status,
+			StudentId:           std.ID,
+			NeedCorrection:      studentAttendance.NeedCorrection,
+			LastCorrectionScore: lastCorrection,
+			LastCorrectionBy:    studentAttendance.LastCorrectionBy,
 		})
 	}
 
@@ -754,6 +761,39 @@ func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessio
 	}
 
 	e.examSessionRepository.Database.Unscoped().Delete(&dataStudent)
+}
+
+func (e *ExamSessionService) CorrectionScoreStudent(c *gin.Context, request exam_request.ExamSessionCorrectionRequest) {
+	var dataStudent cbt.StudentHistoryTaken
+	result := e.examSessionRepository.Database.
+		Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+		First(&dataStudent)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(
+			response.BadRequest,
+			"Can't change score student. Session student is empty",
+		))
+	}
+	dataLogin := jwt.GetDataClaims(c)
+
+	var dataUser map[string]interface{}
+	jwt.ExtractDetailUser(dataLogin.Username, &dataUser)
+
+	dataStudent.Score = request.Score
+	now := time.Now()
+	dataStudent.LastCorrectionScore = &now
+
+	name, ok := dataUser["name"].(string)
+	if ok {
+		dataStudent.LastCorrectionBy = name
+	}
+	if err := e.examSessionRepository.Database.Save(&dataStudent); err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(
+			response.ServerError,
+			fmt.Sprintf("Can't update student student. Session student is empty. Error: %s", err.Error),
+		))
+	}
 }
 
 func StringToUintSlice(s string) ([]uint, error) {

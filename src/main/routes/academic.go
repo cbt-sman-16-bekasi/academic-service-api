@@ -189,6 +189,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		examSession.GET("/attendance/download", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.DownloadAttendance)
 		examSession.GET("/member/:sessionId", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionMember)
 		examSession.POST("/reset", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionReset)
+		examSession.POST("/change/score", jwt.RequirePermission([]string{"ADMIN"}, "update"), examController.ExamSessionCorrectionScore)
 	}
 
 	examSessionToken := exam.Group("/session/token").Use(jwt.AuthMiddleware())
