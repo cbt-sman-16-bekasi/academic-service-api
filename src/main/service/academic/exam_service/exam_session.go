@@ -791,7 +791,7 @@ func (e *ExamSessionService) CorrectionScoreStudent(c *gin.Context, request exam
 	if err := e.examSessionRepository.Database.Save(&dataStudent).Error; err != nil {
 		panic(exception.NewIntenalServerExceptionStruct(
 			response.ServerError,
-			fmt.Sprintf("Can't update score student. Error: %s", err.Error),
+			fmt.Sprintf("Can't update score student. Error: %s", err.Error()),
 		))
 	}
 }
