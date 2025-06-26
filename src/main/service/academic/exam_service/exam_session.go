@@ -177,7 +177,7 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			Nisn:                std.NISN,
 			Name:                strings.ToUpper(std.Name),
 			Class:               std.ClassName,
-			StartAt:             &studentAttendance.StartAt,
+			StartAt:             studentAttendance.StartAt,
 			EndAt:               studentAttendance.EndAt,
 			Score:               studentAttendance.Score,
 			Status:              status,
@@ -276,7 +276,7 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 			ExamCode:       tokenExamSession.DetailExamSession.ExamCode,
 			SessionId:      examSession.SessionId,
 			StudentId:      studentData.ID,
-			StartAt:        timeNow,
+			StartAt:        &timeNow,
 			EndAt:          nil,
 			Status:         "STARTED",
 			RemainingTime:  int(remainingInMinutes),
@@ -331,7 +331,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	timeNow := time.Now()
 	existingHistoryTaken.IsForced = request.IsForced
 	existingHistoryTaken.IsTimeOver = request.IsTimeOver
-	existingHistoryTaken.IsForced = request.IsForced
+	existingHistoryTaken.IsCheating = request.IsCheat
 	existingHistoryTaken.IsFinished = true
 	existingHistoryTaken.EndAt = &timeNow
 	existingHistoryTaken.Status = "COMPLETED"
@@ -740,7 +740,6 @@ func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
 		averageScore := roundScore * 100
 		dt.Score = averageScore
 		newScoreTaken = append(newScoreTaken, dt)
-		logger.Log.Info().Msgf("[%d/%d] Student %d finish recalculate After score: %d", startDataCalculate, totalDataCalculate, dt.StudentId, dt.Score)
 		startDataCalculate++
 	}
 	e.examSessionRepository.Database.Save(&newScoreTaken)
@@ -760,7 +759,25 @@ func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessio
 		))
 	}
 
-	e.examSessionRepository.Database.Unscoped().Delete(&dataStudent)
+	now := time.Now()
+	dataStudent.StartAt = nil
+	dataStudent.EndAt = nil
+	dataStudent.LastResetSession = &now
+	dataStudent.LastScore = dataStudent.Score
+	dataStudent.Score = 0
+	dataStudent.LastResetReason = request.Reason
+	e.examSessionRepository.Database.Save(&dataStudent)
+
+	history := cbt.HistoryResetSession{
+		ExamCode:  dataStudent.ExamCode,
+		SessionId: dataStudent.SessionId,
+		StudentId: dataStudent.StudentId,
+		Reason:    request.Reason,
+		ResetBy:   "",
+	}
+
+	e.examSessionRepository.Database.Create(&history)
+
 }
 
 func (e *ExamSessionService) CorrectionScoreStudent(c *gin.Context, request exam_request.ExamSessionCorrectionRequest) {
@@ -794,6 +811,17 @@ func (e *ExamSessionService) CorrectionScoreStudent(c *gin.Context, request exam
 			fmt.Sprintf("Can't update score student. Error: %s", err.Error()),
 		))
 	}
+
+	history := cbt.HistoryChangeScoreSession{
+		ExamCode:  dataStudent.ExamCode,
+		SessionId: dataStudent.SessionId,
+		StudentId: dataStudent.StudentId,
+		Reason:    request.Reason,
+		ChangeBy:  name,
+		LastScore: dataStudent.Score,
+		NewScore:  request.Score,
+	}
+	e.examSessionRepository.Database.Create(&history)
 }
 
 func StringToUintSlice(s string) ([]uint, error) {

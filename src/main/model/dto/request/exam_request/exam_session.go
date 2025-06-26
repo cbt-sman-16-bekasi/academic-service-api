@@ -69,10 +69,12 @@ type ExamSessionGenerateReportRequest struct {
 type ExamSessionResetRequest struct {
 	SessionId string `json:"session_id" form:"sessionId"`
 	StudentId uint   `json:"student_id" form:"student_id"`
+	Reason    string `json:"reason" form:"reason"`
 }
 
 type ExamSessionCorrectionRequest struct {
 	SessionId string  `json:"session_id" form:"sessionId"`
 	StudentId uint    `json:"student_id" form:"student_id"`
 	Score     float64 `json:"score" form:"score"`
+	Reason    string  `json:"reason" form:"reason"`
 }
