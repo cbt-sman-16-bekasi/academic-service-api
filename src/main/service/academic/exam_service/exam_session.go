@@ -331,7 +331,7 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	timeNow := time.Now()
 	existingHistoryTaken.IsForced = request.IsForced
 	existingHistoryTaken.IsTimeOver = request.IsTimeOver
-	existingHistoryTaken.IsForced = request.IsForced
+	existingHistoryTaken.IsCheating = request.IsCheat
 	existingHistoryTaken.IsFinished = true
 	existingHistoryTaken.EndAt = &timeNow
 	existingHistoryTaken.Status = "COMPLETED"
