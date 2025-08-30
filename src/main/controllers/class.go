@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"strconv"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/observer"
@@ -9,7 +11,6 @@ import (
 	"github.com/yon-module/yon-framework/database"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
-	"strconv"
 )
 
 type ClassController struct {
@@ -197,4 +198,26 @@ func (s *ClassController) DeleteMemberOfClass(c *gin.Context) {
 	s.classService.RemoveMemberOfClass(uint(id))
 	observer.Trigger(model.EventClassChanged)
 	response.SuccessResponse("Success", gin.H{"id": id}).Json(c)
+}
+
+// DeleteMemberBatchOfClass Member of Class
+// @Summary This endpoint about delete batch Member of class
+// @Description Delete batch Member of Class
+// @Tags Class
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+//
+// @Param id path int true "Request"
+//
+// @Success 200 {object} response.BaseResponse "Delete Member class response"
+// @Router /academic/class/batch/delete [delete]
+func (s *ClassController) DeleteMemberBatchOfClass(c *gin.Context) {
+
+	var req class_request.ModifyClassMemberRequest
+	_ = c.BindJSON(&req)
+
+	s.classService.DeleteBatchMemberOfClass(req)
+	observer.Trigger(model.EventClassChanged)
+	response.SuccessResponse("Success", req).Json(c)
 }

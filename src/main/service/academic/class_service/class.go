@@ -2,6 +2,7 @@ package class_service
 
 import (
 	"errors"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	classRequest "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/class_request"
 	response2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response"
@@ -94,6 +95,7 @@ func (c *ClassService) ModifyClass(id uint, request classRequest.ModifyClassRequ
 
 func (c *ClassService) DeleteById(id uint) {
 	c.repoClass.Delete(id)
+	c.repoClass.Database.Where("class_id = ?", id).Delete(&student.StudentClass{})
 }
 
 func (c *ClassService) MemberOfClass(classId uint) []view.VStudent {
@@ -130,4 +132,11 @@ func (c *ClassService) RemoveMemberOfClass(id uint) {
 		}
 		panic(exception.NewIntenalServerExceptionStruct(response.BadRequest, "Failed remove member, please try again!"))
 	}
+}
+
+func (c *ClassService) DeleteBatchMemberOfClass(request classRequest.ModifyClassMemberRequest) classRequest.ModifyClassMemberRequest {
+	for _, member := range request.StudentId {
+		c.repoClass.Database.Where("student_id = ? AND class_id = ?", member, request.ClassId).Delete(&student.StudentClass{})
+	}
+	return request
 }
