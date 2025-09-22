@@ -7,11 +7,13 @@ import (
 )
 
 type ModifyExamSessionRequest struct {
-	Name     string    `json:"name"`
-	ExamCode string    `json:"exam_code"`
-	StartAt  time.Time `json:"start_at"`
-	EndAt    time.Time `json:"end_at"`
-	ClassId  []int     `json:"class_id"`
+	Name                    string    `json:"name"`
+	ExamCode                string    `json:"exam_code"`
+	StartAt                 time.Time `json:"start_at"`
+	EndAt                   time.Time `json:"end_at"`
+	ClassId                 []int     `json:"class_id"`
+	MaxCheatIndication      int       `json:"max_cheat_indication"`
+	MaxResetCheatIndication int       `json:"max_reset_cheat_indication"`
 }
 
 type ExamSessionGenerateToken struct {
@@ -77,4 +79,12 @@ type ExamSessionCorrectionRequest struct {
 	StudentId uint    `json:"student_id" form:"student_id"`
 	Score     float64 `json:"score" form:"score"`
 	Reason    string  `json:"reason" form:"reason"`
+}
+
+type SuspiciousActivityReport struct {
+	ExamCode      string             `json:"exam_code"`
+	ExamSessionId string             `json:"exam_session_id"`
+	Reason        string             `json:"reason"`
+	StudentId     uint               `json:"student_id"`
+	Result        []ExamResultSubmit `json:"result"`
 }

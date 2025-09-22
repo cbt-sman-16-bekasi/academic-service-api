@@ -1,8 +1,9 @@
 package exam_response
 
 import (
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 	"time"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
 )
 
 type ExamSessionListResponse struct {
@@ -14,12 +15,13 @@ type ExamSessionListResponse struct {
 
 type ExamDetailSessionResponse struct {
 	*school.ExamSession
-	Exam            school.Exam `json:"exam"`
-	TotalStudent    int64       `json:"total_student"`
-	TotalAttendance int64       `json:"total_attendance"`
-	TotalSubmit     int64       `json:"total_submit"`
-	TotalCheating   int64       `json:"total_cheating"`
-	TotalTimesOver  int64       `json:"total_times_over"`
+	Exam               school.Exam `json:"exam"`
+	TotalStudent       int64       `json:"total_student"`
+	TotalAttendance    int64       `json:"total_attendance"`
+	TotalSubmit        int64       `json:"total_submit"`
+	TotalCheating      int64       `json:"total_cheating"`
+	TotalTimesOver     int64       `json:"total_times_over"`
+	MaxCheatIndication int         `json:"max_cheat_indication"`
 }
 
 type ExamSessionAttendanceResponse struct {

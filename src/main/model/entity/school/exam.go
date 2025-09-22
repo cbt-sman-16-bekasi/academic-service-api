@@ -1,11 +1,12 @@
 package school
 
 import (
+	"time"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/core"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/user"
 	"gorm.io/gorm"
-	"time"
 )
 
 const (
@@ -146,16 +147,18 @@ func (s *BankAnswerOption) TableName() string {
 
 type ExamSession struct {
 	gorm.Model
-	SessionId         string              `gorm:"unique" json:"session_id"`
-	ExamCode          string              `json:"-"`
-	DetailExam        Exam                `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
-	Name              string              `json:"name"`
-	StartDate         time.Time           `json:"start_date"`
-	EndDate           time.Time           `json:"end_date"`
-	ExamSessionMember []ExamSessionMember `json:"exam_member" gorm:"foreignKey:SessionId;references:SessionId"`
-	ReportUrl         string              `json:"report_url"`
-	StatusReport      string              `json:"status_report"`
-	ErrorReport       string              `json:"error_report"`
+	SessionId                      string              `gorm:"unique" json:"session_id"`
+	ExamCode                       string              `json:"-"`
+	DetailExam                     Exam                `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
+	Name                           string              `json:"name"`
+	StartDate                      time.Time           `json:"start_date"`
+	EndDate                        time.Time           `json:"end_date"`
+	ExamSessionMember              []ExamSessionMember `json:"exam_member" gorm:"foreignKey:SessionId;references:SessionId"`
+	ReportUrl                      string              `json:"report_url"`
+	StatusReport                   string              `json:"status_report"`
+	ErrorReport                    string              `json:"error_report"`
+	MaxCheatIndication             int                 `json:"max_cheat_indication"`
+	TotalResetSuspiciousIndication int                 `json:"total_reset_suspicious_indication"`
 	core.AuditUser
 }
 

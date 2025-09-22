@@ -73,23 +73,26 @@ func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDet
 	e.examSessionRepository.Database.Where("session_id = ?", data.SessionId).First(&summarySession)
 
 	return exam_response.ExamDetailSessionResponse{
-		ExamSession:     data,
-		Exam:            data.DetailExam,
-		TotalStudent:    0,
-		TotalAttendance: summarySession.TotalLogin,
-		TotalSubmit:     summarySession.TotalStudentSubmit,
-		TotalCheating:   summarySession.TotalCheating,
-		TotalTimesOver:  summarySession.TotalTimeIsOver,
+		ExamSession:        data,
+		Exam:               data.DetailExam,
+		TotalStudent:       0,
+		TotalAttendance:    summarySession.TotalLogin,
+		TotalSubmit:        summarySession.TotalStudentSubmit,
+		TotalCheating:      summarySession.TotalCheating,
+		TotalTimesOver:     summarySession.TotalTimeIsOver,
+		MaxCheatIndication: summarySession.MaxCheatIndication,
 	}
 }
 
 func (e *ExamSessionService) CreateExamSession(c *gin.Context, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
 	data := &school.ExamSession{
-		SessionId: "SESSION-" + helper.RandomString(10),
-		ExamCode:  request.ExamCode,
-		Name:      request.Name,
-		StartDate: request.StartAt,
-		EndDate:   request.EndAt,
+		SessionId:                      "SESSION-" + helper.RandomString(10),
+		ExamCode:                       request.ExamCode,
+		Name:                           request.Name,
+		StartDate:                      request.StartAt,
+		EndDate:                        request.EndAt,
+		MaxCheatIndication:             request.MaxCheatIndication,
+		TotalResetSuspiciousIndication: request.MaxResetCheatIndication,
 	}
 
 	claims := jwt.GetDataClaims(c)
@@ -119,6 +122,8 @@ func (e *ExamSessionService) UpdateExamSession(c *gin.Context, id uint, request 
 	existing.Name = request.Name
 	existing.StartDate = request.StartAt
 	existing.EndDate = request.EndAt
+	existing.MaxCheatIndication = request.MaxCheatIndication
+	existing.TotalResetSuspiciousIndication = request.MaxResetCheatIndication
 
 	claims := jwt.GetDataClaims(c)
 	existing.ModifiedBy = uint(jwt.GetID(claims.Username))
@@ -307,6 +312,13 @@ func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_req
 	}
 
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	go e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
+		ExamCode:      request.ExamCode,
+		ExamSessionId: request.ExamSessionId,
+		StudentId:     studentData.ID,
+	})
+
 	return existingHistoryTaken
 }
 
@@ -412,6 +424,12 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	existingHistoryTaken.Score = averageScore
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	go e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
+		ExamCode:      request.ExamCode,
+		ExamSessionId: request.ExamSessionId,
+		StudentId:     studentData.ID,
+	})
 	return existingHistoryTaken
 }
 
@@ -866,4 +884,100 @@ func ErrorsToString(errs []error) string {
 		}
 	}
 	return strings.Join(strs, ", ")
+}
+
+func (e *ExamSessionService) SuspiciousActivityReport(claims jwt.Claims, request exam_request.SuspiciousActivityReport) {
+	var sessionData school.ExamSession
+	e.examSessionRepository.Database.Where("session_id", request.ExamSessionId).First(&sessionData)
+	if sessionData.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "session not found"))
+	}
+
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, request.StudentId).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	existingHistoryTaken.SuspiciousIndication += 1
+
+	data := cbt.SuspiciousActivity{
+		ExamCode:  request.ExamCode,
+		SessionId: request.ExamSessionId,
+		StudentId: request.StudentId,
+		Reason:    request.Reason,
+	}
+
+	e.examSessionRepository.Database.Create(&data)
+
+	if existingHistoryTaken.SuspiciousIndication >= sessionData.MaxCheatIndication && existingHistoryTaken.TotalResetSuspiciousIndication < sessionData.TotalResetSuspiciousIndication {
+		existingHistoryTaken.Status = "BANNED"
+		existingHistoryTaken.ReasonStatus = "Banned by system. Reason: " + request.Reason
+	}
+
+	if existingHistoryTaken.TotalResetSuspiciousIndication >= sessionData.TotalResetSuspiciousIndication {
+		e.SubmitExamSession(claims, exam_request.ExamSessionSubmit{
+			ExamCode:      request.ExamCode,
+			ExamSessionId: request.ExamSessionId,
+			IsForced:      true,
+			IsTimeOver:    false,
+			IsCheat:       true,
+			Result:        request.Result,
+		})
+		return
+	}
+
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	e.setCacheDataSession(existingHistoryTaken, request)
+
+}
+
+func (e *ExamSessionService) setCacheDataSession(existingHistoryTaken cbt.StudentHistoryTaken, request exam_request.SuspiciousActivityReport) {
+	if math.IsNaN(existingHistoryTaken.Score) {
+		existingHistoryTaken.Score = 0
+	}
+
+	marshal, _ := json.Marshal(&existingHistoryTaken)
+	_ = redisstore.SetJSON(
+		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
+		marshal,
+		6*time.Hour,
+	)
+}
+
+func (e *ExamSessionService) SessionInfo(request exam_request.SuspiciousActivityReport) cbt.StudentHistoryTaken {
+	var existingHistoryTaken cbt.StudentHistoryTaken
+
+	_ = redisstore.GetJSON(
+		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
+		&existingHistoryTaken,
+	)
+
+	return existingHistoryTaken
+}
+
+func (e *ExamSessionService) ResetSuspiciousActivity(request exam_request.SuspiciousActivityReport) {
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, request.StudentId).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	existingHistoryTaken.SuspiciousIndication = 0
+	existingHistoryTaken.TotalResetSuspiciousIndication += 1
+	existingHistoryTaken.Status = "STARTED"
+
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	go e.setCacheDataSession(existingHistoryTaken, request)
+
 }

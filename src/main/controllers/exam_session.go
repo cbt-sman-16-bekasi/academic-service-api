@@ -292,3 +292,28 @@ func (e *ExamController) ExamSessionCorrectionScore(c *gin.Context) {
 	e.examSessionService.CorrectionScoreStudent(c, request)
 	response.SuccessResponse("Success change score student", request).Json(c)
 }
+
+func (e *ExamController) ExamSessionSuspiciousActivityReport(c *gin.Context) {
+	var request exam_request.SuspiciousActivityReport
+	_ = c.BindJSON(&request)
+
+	claims := jwt.GetDataClaims(c)
+	e.examSessionService.SuspiciousActivityReport(claims, request)
+	response.SuccessResponse("Success submit report", request).Json(c)
+}
+
+func (e *ExamController) SessionInfo(c *gin.Context) {
+	var request exam_request.SuspiciousActivityReport
+	_ = c.BindJSON(&request)
+
+	res := e.examSessionService.SessionInfo(request)
+	response.SuccessResponse("Success session", res).Json(c)
+}
+
+func (e *ExamController) ResetSuspicious(c *gin.Context) {
+	var request exam_request.SuspiciousActivityReport
+	_ = c.BindJSON(&request)
+
+	e.examSessionService.ResetSuspiciousActivity(request)
+	response.SuccessResponse("Success session", request).Json(c)
+}

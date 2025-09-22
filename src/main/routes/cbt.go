@@ -1,13 +1,14 @@
 package routes
 
 import (
+	"time"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/controllers"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/bucket"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	request2 "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request"
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/server/response"
-	"time"
 )
 
 func cbtRouter(gr *gin.RouterGroup) {
@@ -21,6 +22,8 @@ func cbtRouter(gr *gin.RouterGroup) {
 	gr.POST("/auth/change-password", jwt.AuthMiddleware(), schoolController.ChangePassword)
 	gr.POST("/auth/change-profile", jwt.AuthMiddleware(), schoolController.ChangeProfile)
 	gr.POST("/cbt/exam/submit", jwt.AuthMiddleware(), examController.SubmitExamSession)
+	gr.POST("/cbt/exam/report", jwt.AuthMiddleware(), examController.ExamSessionSuspiciousActivityReport)
+	gr.POST("/cbt/session", jwt.AuthMiddleware(), examController.SessionInfo)
 	gr.POST("/upload/base64", jwt.AuthMiddleware(), func(context *gin.Context) {
 		var request request2.UploadBase64Request
 		if err := context.ShouldBindJSON(&request); err != nil {

@@ -1,8 +1,9 @@
 package view
 
 import (
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 	"time"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/curriculum"
 )
 
 type MasterBankQuestionResponse struct {
@@ -27,6 +28,7 @@ type SummaryExamSession struct {
 	TotalStudentSubmit int64  `gorm:"column:total_student_submit"`
 	TotalCheating      int64  `gorm:"column:total_cheating"`
 	TotalTimeIsOver    int64  `gorm:"column:total_time_is_over"`
+	MaxCheatIndication int    `gorm:"max_cheat_indication"`
 }
 
 func (s *SummaryExamSession) TableName() string {
