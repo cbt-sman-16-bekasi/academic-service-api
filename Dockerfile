@@ -43,4 +43,4 @@ ENV TZ=Asia/Jakarta
 
 EXPOSE 8080
 
-CMD
+CMD ["./main"]
