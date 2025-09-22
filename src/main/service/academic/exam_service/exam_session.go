@@ -918,7 +918,7 @@ func (e *ExamSessionService) SuspiciousActivityReport(claims jwt.Claims, request
 		existingHistoryTaken.ReasonStatus = "Banned by system. Reason: " + request.Reason
 	}
 
-	if existingHistoryTaken.TotalResetSuspiciousIndication >= sessionData.TotalResetSuspiciousIndication {
+	if existingHistoryTaken.SuspiciousIndication >= sessionData.MaxCheatIndication && existingHistoryTaken.TotalResetSuspiciousIndication >= sessionData.TotalResetSuspiciousIndication {
 		e.SubmitExamSession(claims, exam_request.ExamSessionSubmit{
 			ExamCode:      request.ExamCode,
 			ExamSessionId: request.ExamSessionId,
