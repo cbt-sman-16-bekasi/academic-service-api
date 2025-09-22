@@ -944,7 +944,7 @@ func (e *ExamSessionService) setCacheDataSession(existingHistoryTaken cbt.Studen
 	marshal, _ := json.Marshal(&existingHistoryTaken)
 	_ = redisstore.SetJSON(
 		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
-		marshal,
+		string(marshal),
 		6*time.Hour,
 	)
 }
