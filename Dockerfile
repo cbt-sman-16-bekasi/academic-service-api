@@ -1,5 +1,5 @@
 # Start from golang base image
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 LABEL maintainer="Muhammad Suryono <msuryono0@gmail.com>"
 
