@@ -941,11 +941,14 @@ func (e *ExamSessionService) setCacheDataSession(existingHistoryTaken cbt.Studen
 		existingHistoryTaken.Score = 0
 	}
 
-	_ = redisstore.SetJSON(
+	err := redisstore.SetJSON(
 		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
 		existingHistoryTaken,
 		6*time.Hour,
 	)
+	if err != nil {
+		logger.Log.Error().Msgf("Failed set cache data session, err %s", err.Error())
+	}
 }
 
 func (e *ExamSessionService) SessionInfo(request exam_request.SuspiciousActivityReport) cbt.StudentHistoryTaken {
