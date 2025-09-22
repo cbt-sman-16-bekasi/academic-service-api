@@ -951,10 +951,15 @@ func (e *ExamSessionService) setCacheDataSession(existingHistoryTaken cbt.Studen
 func (e *ExamSessionService) SessionInfo(request exam_request.SuspiciousActivityReport) cbt.StudentHistoryTaken {
 	var existingHistoryTaken cbt.StudentHistoryTaken
 
-	_ = redisstore.GetJSON(
+	err := redisstore.GetJSON(
 		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
 		&existingHistoryTaken,
 	)
+
+	if err != nil {
+		logger.Log.Error().Msgf("Failed get session info, err %s", err.Error())
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "session not found"))
+	}
 
 	return existingHistoryTaken
 }
@@ -976,6 +981,6 @@ func (e *ExamSessionService) ResetSuspiciousActivity(request exam_request.Suspic
 
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 
-	go e.setCacheDataSession(existingHistoryTaken, request)
+	e.setCacheDataSession(existingHistoryTaken, request)
 
 }
