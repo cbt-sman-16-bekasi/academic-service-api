@@ -73,14 +73,15 @@ func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDet
 	e.examSessionRepository.Database.Where("session_id = ?", data.SessionId).First(&summarySession)
 
 	return exam_response.ExamDetailSessionResponse{
-		ExamSession:        data,
-		Exam:               data.DetailExam,
-		TotalStudent:       0,
-		TotalAttendance:    summarySession.TotalLogin,
-		TotalSubmit:        summarySession.TotalStudentSubmit,
-		TotalCheating:      summarySession.TotalCheating,
-		TotalTimesOver:     summarySession.TotalTimeIsOver,
-		MaxCheatIndication: summarySession.MaxCheatIndication,
+		ExamSession:             data,
+		Exam:                    data.DetailExam,
+		TotalStudent:            0,
+		TotalAttendance:         summarySession.TotalLogin,
+		TotalSubmit:             summarySession.TotalStudentSubmit,
+		TotalCheating:           summarySession.TotalCheating,
+		TotalTimesOver:          summarySession.TotalTimeIsOver,
+		MaxCheatIndication:      summarySession.MaxCheatIndication,
+		MaxResetCheatIndication: summarySession.MaxResetCheatIndication,
 	}
 }
 

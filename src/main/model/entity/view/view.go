@@ -22,13 +22,14 @@ func (s *MasterBankQuestionResponse) TableName() string {
 }
 
 type SummaryExamSession struct {
-	ID                 uint   `gorm:"column:id"`
-	SessionID          string `gorm:"column:session_id"`
-	TotalLogin         int64  `gorm:"column:total_login"`
-	TotalStudentSubmit int64  `gorm:"column:total_student_submit"`
-	TotalCheating      int64  `gorm:"column:total_cheating"`
-	TotalTimeIsOver    int64  `gorm:"column:total_time_is_over"`
-	MaxCheatIndication int    `gorm:"max_cheat_indication"`
+	ID                      uint   `gorm:"column:id"`
+	SessionID               string `gorm:"column:session_id"`
+	TotalLogin              int64  `gorm:"column:total_login"`
+	TotalStudentSubmit      int64  `gorm:"column:total_student_submit"`
+	TotalCheating           int64  `gorm:"column:total_cheating"`
+	TotalTimeIsOver         int64  `gorm:"column:total_time_is_over"`
+	MaxCheatIndication      int    `gorm:"max_cheat_indication"`
+	MaxResetCheatIndication int    `gorm:"max_reset_cheat_indication"`
 }
 
 func (s *SummaryExamSession) TableName() string {
