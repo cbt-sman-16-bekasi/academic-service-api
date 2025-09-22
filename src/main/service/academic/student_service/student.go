@@ -3,6 +3,13 @@ package student_service
 import (
 	"errors"
 	"fmt"
+	"math"
+	"math/rand"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/student_request"
@@ -25,11 +32,6 @@ import (
 	"github.com/yon-module/yon-framework/pagination"
 	response2 "github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
-	"math/rand"
-	"path/filepath"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type StudentService struct {
@@ -263,6 +265,10 @@ func (s *StudentService) RetrieveDetailSession(claims jwt.Claims, request auth_r
 
 	var existingHistoryTaken cbt.StudentHistoryTaken
 	s.studentRepo.Database.Debug().Where("session_id = ? AND student_id = ?", examSession.SessionId, claims.Id).First(&existingHistoryTaken)
+
+	if math.IsNaN(existingHistoryTaken.Score) {
+		existingHistoryTaken.Score = 0
+	}
 	return auth_response.AuthResponseCBT{
 		Exam:        &exam,
 		ExamSession: &examSession,

@@ -1,6 +1,7 @@
 package exam_service
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -173,7 +174,12 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 		if studentAttendance.LastCorrectionScore != nil {
 			lastCorrection = studentAttendance.LastCorrectionScore.Format("2006-01-02 15:04:05")
 		}
-		responses = append(responses, exam_response.ExamSessionAttendanceResponse{
+
+		if math.IsNaN(studentAttendance.Score) {
+			studentAttendance.Score = 0
+		}
+
+		data := exam_response.ExamSessionAttendanceResponse{
 			Nisn:                std.NISN,
 			Name:                strings.ToUpper(std.Name),
 			Class:               std.ClassName,
@@ -185,7 +191,8 @@ func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAt
 			NeedCorrection:      studentAttendance.NeedCorrection,
 			LastCorrectionScore: lastCorrection,
 			LastCorrectionBy:    studentAttendance.LastCorrectionBy,
-		})
+		}
+		responses = append(responses, data)
 	}
 
 	return responses
@@ -398,6 +405,10 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
 	averageScore := roundScore * 100
+
+	if math.IsNaN(averageScore) {
+		averageScore = 0
+	}
 	existingHistoryTaken.Score = averageScore
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
@@ -759,14 +770,16 @@ func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessio
 		))
 	}
 
-	now := time.Now()
-	dataStudent.StartAt = nil
-	dataStudent.EndAt = nil
-	dataStudent.LastResetSession = &now
-	dataStudent.LastScore = dataStudent.Score
-	dataStudent.Score = 0
-	dataStudent.LastResetReason = request.Reason
-	e.examSessionRepository.Database.Save(&dataStudent)
+	if math.IsNaN(dataStudent.Score) {
+		dataStudent.Score = 0
+	}
+
+	marshal, err := json.Marshal(&dataStudent)
+	if err != nil {
+		logger.Log.Error().Msgf("Failed reset session student, marshal err %s", err.Error())
+	}
+	logger.Log.Info().Msgf("DEBUG studentAttendance: %+v", dataStudent)
+	logger.Log.Info().Msgf("DEBUG marshalled JSON: %s", string(marshal))
 
 	history := cbt.HistoryResetSession{
 		ExamCode:  dataStudent.ExamCode,
@@ -774,9 +787,14 @@ func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessio
 		StudentId: dataStudent.StudentId,
 		Reason:    request.Reason,
 		ResetBy:   "",
+		LastData:  string(marshal),
 	}
 
-	e.examSessionRepository.Database.Create(&history)
+	e.examSessionRepository.Database.
+		Session(&gorm.Session{PrepareStmt: false}).Create(&history)
+
+	e.examSessionRepository.Database.
+		Session(&gorm.Session{PrepareStmt: false}).Delete(&dataStudent)
 
 }
 

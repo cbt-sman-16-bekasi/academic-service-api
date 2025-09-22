@@ -1,8 +1,9 @@
 package cbt
 
 import (
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 const TableNameStudentAnswers = "cbt_service.student_answers"
@@ -67,8 +68,9 @@ type HistoryResetSession struct {
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
 	StudentId uint `json:"student_id"`
 	//DetailStudent student.Student    `json:"detail_student" gorm:"foreignKey:StudentId;references:ID"`
-	Reason  string `json:"reason"`
-	ResetBy string `json:"reset_by"`
+	Reason   string `json:"reason"`
+	ResetBy  string `json:"reset_by"`
+	LastData string `json:"last_data"`
 }
 
 func (s HistoryResetSession) TableName() string {
