@@ -3,12 +3,15 @@ package parsedocx
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/yon-module/yon-framework/logger"
 	"mime/multipart"
 	"net/http"
+	"regexp"
+	"strings"
+
+	"github.com/yon-module/yon-framework/logger"
 )
 
-func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]ResultParse, error) {
+func PilihanGanda(fileBytes []byte, filename string) ([]ResultParse, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -38,7 +41,7 @@ func ParseDocxPilihanGanda(fileBytes []byte, filename string) ([]ResultParse, er
 	return result, nil
 }
 
-func ParseDocxEssay(fileBytes []byte, filename string) ([]ResultParse, error) {
+func Essay(fileBytes []byte, filename string) ([]ResultParse, error) {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
@@ -66,4 +69,10 @@ func ParseDocxEssay(fileBytes []byte, filename string) ([]ResultParse, error) {
 	logger.Log.Info().Msgf("Parse docx with result size: %v", len(result))
 
 	return result, nil
+}
+
+func StripHTML(input string) string {
+	re := regexp.MustCompile(`(?s)<.*?>`)
+	output := re.ReplaceAllString(input, "")
+	return strings.TrimSpace(output)
 }

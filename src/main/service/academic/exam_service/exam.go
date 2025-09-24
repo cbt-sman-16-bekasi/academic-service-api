@@ -3,6 +3,13 @@ package exam_service
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
+	"mime/multipart"
+	"path/filepath"
+	"strconv"
+	"strings"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/bucket"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
@@ -21,12 +28,6 @@ import (
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
 	"gorm.io/gorm"
-	"io"
-	"log"
-	"mime/multipart"
-	"path/filepath"
-	"strconv"
-	"strings"
 )
 
 type ExamService struct {
@@ -539,8 +540,7 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 		}
 
 		if exam.TypeQuestion == "PILIHAN_GANDA" {
-			answer = strings.ReplaceAll(answer, "<p>", "")
-			answer = strings.ReplaceAll(answer, "</p>", "")
+			answer = parsedocx.StripHTML(answer)
 			answer = strings.ToUpper(answer)
 		}
 
@@ -629,13 +629,13 @@ func (e *ExamService) UploadQuestion(c *gin.Context) {
 func (e *ExamService) uploadQuestion(c *gin.Context, typeQuestion string, err error, fileBytes []byte, file *multipart.FileHeader) ([]parsedocx.ResultParse, bool) {
 	var result []parsedocx.ResultParse
 	if typeQuestion == "ESSAY" {
-		result, err = parsedocx.ParseDocxEssay(fileBytes, file.Filename)
+		result, err = parsedocx.Essay(fileBytes, file.Filename)
 		if err != nil {
 			response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
 			return nil, false
 		}
 	} else {
-		result, err = parsedocx.ParseDocxPilihanGanda(fileBytes, file.Filename)
+		result, err = parsedocx.PilihanGanda(fileBytes, file.Filename)
 		if err != nil {
 			response.ErrorResponse(response.ServerError, "Failed to parse docx", err).Json(c)
 			return nil, false
@@ -685,6 +685,11 @@ func (e *ExamService) UploadBankQuestion(c *gin.Context) {
 		questionID := "QUESTION-" + helper.RandomString(10)
 		question := row.Soal
 		answer := row.Jawaban
+
+		if bank.TypeQuestion == "PILIHAN_GANDA" {
+			answer = parsedocx.StripHTML(answer)
+			answer = strings.ToUpper(answer)
+		}
 
 		examQuestion := school.BankQuestion{
 			MasterBankQuestionCode: bank.Code,
