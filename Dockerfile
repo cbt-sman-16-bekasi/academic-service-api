@@ -1,5 +1,5 @@
 # Start from golang base image
-FROM golang:1.24-alpine AS builder
+FROM public.ecr.aws/docker/library/golang:1.24-alpine AS builder
 
 LABEL maintainer="Muhammad Suryono <msuryono0@gmail.com>"
 
@@ -23,7 +23,7 @@ WORKDIR /app/src/main
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main .
 
 # --------- runtime stage ----------
-FROM alpine:3.19
+FROM public.ecr.aws/docker/library/alpine:3.19
 
 # Install runtime dependencies only
 RUN apk add --no-cache ca-certificates tzdata fontconfig
