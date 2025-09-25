@@ -10,7 +10,7 @@ jobs:
     name: Build & Push to repository
     runs-on: ubuntu-latest
     env:
-      IMG_NAME: ghcr.io/cbt-sman-16-bekasi/academic-api-service
+      IMG_NAME: ghcr.io/muhammadsuryono/academic-api-service
       TAGS: ${GITHUB_REF##*/}
     steps:
       - uses: actions/checkout@v3
@@ -18,6 +18,6 @@ jobs:
 
       - name: Build and Push image
         run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "cbt-sman-16-bekasi" --password-stdin
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "muhammadsuryono" --password-stdin
           docker image build -t ${{ env.IMG_NAME }}:${{ env.TAGS }}-v2 .
           docker push ${{ env.IMG_NAME }}:${{ env.TAGS }}-v2
