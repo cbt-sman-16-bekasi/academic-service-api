@@ -326,3 +326,9 @@ func (e *ExamController) SyncAnswer(c *gin.Context) {
 	resp := e.examSessionService.SyncAnswer(claims, request)
 	response.SuccessResponse("Success sync", resp).Json(c)
 }
+
+func (e *ExamController) LastAnswer(c *gin.Context) {
+	claims := jwt.GetDataClaims(c)
+	resp := e.examSessionService.RetrieveLatestAnswer(claims, c.Query("sessionId"))
+	response.SuccessResponse("Success sync", resp).Json(c)
+}

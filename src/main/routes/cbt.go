@@ -23,6 +23,7 @@ func cbtRouter(gr *gin.RouterGroup) {
 	gr.POST("/auth/change-profile", jwt.AuthMiddleware(), schoolController.ChangeProfile)
 	gr.POST("/cbt/exam/submit", jwt.AuthMiddleware(), examController.SubmitExamSession)
 	gr.POST("/cbt/exam/answer/sync", jwt.AuthMiddleware(), examController.SyncAnswer)
+	gr.POST("/cbt/exam/answer/latest", jwt.AuthMiddleware(), examController.LastAnswer)
 	gr.POST("/cbt/exam/report", jwt.AuthMiddleware(), examController.ExamSessionSuspiciousActivityReport)
 	gr.POST("/cbt/session", jwt.AuthMiddleware(), examController.SessionInfo)
 	gr.POST("/upload/base64", jwt.AuthMiddleware(), func(context *gin.Context) {

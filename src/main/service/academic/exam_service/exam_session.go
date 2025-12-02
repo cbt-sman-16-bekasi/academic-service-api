@@ -1072,3 +1072,14 @@ func (e *ExamSessionService) SyncAnswer(claims jwt.Claims, request exam_request.
 
 	return existingHistoryTaken
 }
+
+func (e *ExamSessionService) RetrieveLatestAnswer(claims jwt.Claims, sessionId string) []cbt.StudentAnswers {
+	studentData := e.studentRepo.FindByNISN(claims.Username)
+
+	var existingAnswers []cbt.StudentAnswers
+	e.examSessionRepository.Database.
+		Where("session_id = ? AND student_id = ?", sessionId, studentData.ID).
+		Find(&existingAnswers)
+
+	return existingAnswers
+}
