@@ -361,13 +361,10 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 		existingHistoryTaken.NeedCorrection = true
 	}
 
-	// Correction result
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
-		Delete(&cbt.StudentAnswers{})
-
-	var studentAnswers []cbt.StudentAnswers
-	totalScore := 0
-	totalCorrect := 0
+	var existingAnswers []cbt.StudentAnswers
+	e.examSessionRepository.Database.
+		Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+		Find(&existingAnswers)
 
 	var questions []school.ExamQuestion
 	err := redisstore.GetJSON(request.ExamCode, &questions)
@@ -379,40 +376,56 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 
 	scoreQuestion := examData.ScoreQuestion
 	totalQMS := scoreQuestion * totalQuestions
+	totalScore := 0
+	totalCorrect := 0
 
-	for _, submit := range request.Result {
-		score := 0
+	if len(request.Result) != len(existingAnswers) {
+		// Correction result
+		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+			Delete(&cbt.StudentAnswers{})
+		var studentAnswers []cbt.StudentAnswers
 
-		var question school.ExamQuestion
-		for _, examQuestion := range questions {
-			if examQuestion.QuestionId == submit.QuestionId {
-				question = examQuestion
-				break
+		for _, submit := range request.Result {
+			score := 0
+
+			var question school.ExamQuestion
+			for _, examQuestion := range questions {
+				if examQuestion.QuestionId == submit.QuestionId {
+					question = examQuestion
+					break
+				}
+			}
+
+			if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+				score = scoreQuestion
+				totalCorrect++
+			}
+
+			if examData.TypeQuestion == "ESSAY" {
+				essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
+				score = essayHelper.EvaluateScoreEssay()
+				totalCorrect++
+			}
+			studentAnswers = append(studentAnswers, cbt.StudentAnswers{
+				ExamCode:   existingHistoryTaken.ExamCode,
+				SessionId:  existingHistoryTaken.SessionId,
+				StudentId:  studentData.ID,
+				QuestionId: submit.QuestionId,
+				AnswerId:   submit.AnswerId,
+				Score:      score,
+			})
+			totalScore += score
+		}
+
+		e.examSessionRepository.Database.Save(&studentAnswers)
+	} else {
+		for _, answer := range existingAnswers {
+			totalScore += answer.Score
+			if answer.Score > 0 {
+				totalCorrect++
 			}
 		}
-
-		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
-			score = scoreQuestion
-			totalCorrect++
-		}
-
-		if examData.TypeQuestion == "ESSAY" {
-			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
-			score = essayHelper.EvaluateScoreEssay()
-			totalCorrect++
-		}
-		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
-			ExamCode:   existingHistoryTaken.ExamCode,
-			SessionId:  existingHistoryTaken.SessionId,
-			StudentId:  studentData.ID,
-			QuestionId: submit.QuestionId,
-			AnswerId:   submit.AnswerId,
-			Score:      score,
-		})
-		totalScore += score
 	}
-
-	e.examSessionRepository.Database.Save(&studentAnswers)
 
 	roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
 	averageScore := roundScore * 100
@@ -986,4 +999,76 @@ func (e *ExamSessionService) ResetSuspiciousActivity(request exam_request.Suspic
 
 	e.setCacheDataSession(existingHistoryTaken, request)
 
+}
+
+func (e *ExamSessionService) SyncAnswer(claims jwt.Claims, request exam_request.ExamSessionSubmit) cbt.StudentHistoryTaken {
+	if request.Result == nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "request result is nil"))
+	}
+
+	studentData := e.studentRepo.FindByNISN(claims.Username)
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	var examData school.Exam
+	e.examSessionRepository.Database.Where("code = ?", existingHistoryTaken.ExamCode).First(&examData)
+
+	// Correction result
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+		Delete(&cbt.StudentAnswers{})
+
+	var studentAnswers []cbt.StudentAnswers
+	totalScore := 0
+	totalCorrect := 0
+
+	var questions []school.ExamQuestion
+	err := redisstore.GetJSON(request.ExamCode, &questions)
+	if err != nil || questions == nil || len(questions) == 0 {
+		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
+		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
+	}
+
+	scoreQuestion := examData.ScoreQuestion
+	for _, submit := range request.Result {
+		score := 0
+
+		var question school.ExamQuestion
+		for _, examQuestion := range questions {
+			if examQuestion.QuestionId == submit.QuestionId {
+				question = examQuestion
+				break
+			}
+		}
+
+		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+			score = scoreQuestion
+			totalCorrect++
+		}
+
+		if examData.TypeQuestion == "ESSAY" {
+			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
+			score = essayHelper.EvaluateScoreEssay()
+			totalCorrect++
+		}
+		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
+			ExamCode:   existingHistoryTaken.ExamCode,
+			SessionId:  existingHistoryTaken.SessionId,
+			StudentId:  studentData.ID,
+			QuestionId: submit.QuestionId,
+			AnswerId:   submit.AnswerId,
+			Score:      score,
+		})
+		totalScore += score
+	}
+
+	e.examSessionRepository.Database.Save(&studentAnswers)
+
+	return existingHistoryTaken
 }

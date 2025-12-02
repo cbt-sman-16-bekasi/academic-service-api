@@ -317,3 +317,12 @@ func (e *ExamController) ResetSuspicious(c *gin.Context) {
 	e.examSessionService.ResetSuspiciousActivity(request)
 	response.SuccessResponse("Success session", request).Json(c)
 }
+
+func (e *ExamController) SyncAnswer(c *gin.Context) {
+	var request exam_request.ExamSessionSubmit
+	_ = c.BindJSON(&request)
+
+	claims := jwt.GetDataClaims(c)
+	resp := e.examSessionService.SyncAnswer(claims, request)
+	response.SuccessResponse("Success sync", resp).Json(c)
+}
