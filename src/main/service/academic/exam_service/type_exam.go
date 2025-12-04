@@ -2,6 +2,7 @@ package exam_service
 
 import (
 	"fmt"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
@@ -39,7 +40,7 @@ func (t *TypeExamService) GetAll(c *gin.Context, request pagination.Request[map[
 
 func (t *TypeExamService) GetDetail(id uint) *school.TypeExam {
 	typeExam := t.typeExamRepo.FindById(id)
-	if typeExam.ID == 0 {
+	if typeExam == nil {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("Type exam with id '%d' not found", id)))
 	}
 	return typeExam

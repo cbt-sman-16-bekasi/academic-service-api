@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/redis/go-redis/v9"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 var (
@@ -73,6 +74,10 @@ func GetJSON(key string, out interface{}) error {
 		return errors.New("no data found")
 	}
 	return json.Unmarshal([]byte(val), out)
+}
+
+func RemoveByKey(key string) error {
+	return rdb.Del(ctx, key).Err()
 }
 
 func DeleteByPrefix(prefix string) error {

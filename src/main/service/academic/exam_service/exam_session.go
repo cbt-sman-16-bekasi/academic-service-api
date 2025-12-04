@@ -379,53 +379,44 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	totalScore := 0
 	totalCorrect := 0
 
-	if len(request.Result) != len(existingAnswers) {
-		// Correction result
-		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
-			Delete(&cbt.StudentAnswers{})
-		var studentAnswers []cbt.StudentAnswers
+	// Correction result
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+		Delete(&cbt.StudentAnswers{})
 
-		for _, submit := range request.Result {
-			score := 0
+	var studentAnswers []cbt.StudentAnswers
+	for _, submit := range request.Result {
+		score := 0
 
-			var question school.ExamQuestion
-			for _, examQuestion := range questions {
-				if examQuestion.QuestionId == submit.QuestionId {
-					question = examQuestion
-					break
-				}
-			}
-
-			if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
-				score = scoreQuestion
-				totalCorrect++
-			}
-
-			if examData.TypeQuestion == "ESSAY" {
-				essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
-				score = essayHelper.EvaluateScoreEssay()
-				totalCorrect++
-			}
-			studentAnswers = append(studentAnswers, cbt.StudentAnswers{
-				ExamCode:   existingHistoryTaken.ExamCode,
-				SessionId:  existingHistoryTaken.SessionId,
-				StudentId:  studentData.ID,
-				QuestionId: submit.QuestionId,
-				AnswerId:   submit.AnswerId,
-				Score:      score,
-			})
-			totalScore += score
-		}
-
-		e.examSessionRepository.Database.Save(&studentAnswers)
-	} else {
-		for _, answer := range existingAnswers {
-			totalScore += answer.Score
-			if answer.Score > 0 {
-				totalCorrect++
+		var question school.ExamQuestion
+		for _, examQuestion := range questions {
+			if examQuestion.QuestionId == submit.QuestionId {
+				question = examQuestion
+				break
 			}
 		}
+
+		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+			score = scoreQuestion
+			totalCorrect++
+		}
+
+		if examData.TypeQuestion == "ESSAY" {
+			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
+			score = essayHelper.EvaluateScoreEssay()
+			totalCorrect++
+		}
+		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
+			ExamCode:   existingHistoryTaken.ExamCode,
+			SessionId:  existingHistoryTaken.SessionId,
+			StudentId:  studentData.ID,
+			QuestionId: submit.QuestionId,
+			AnswerId:   submit.AnswerId,
+			Score:      score,
+		})
+		totalScore += score
 	}
+
+	e.examSessionRepository.Database.Save(&studentAnswers)
 
 	roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
 	averageScore := roundScore * 100
@@ -437,11 +428,16 @@ func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_r
 	existingHistoryTaken.TotalCorrect = totalCorrect
 	e.examSessionRepository.Database.Save(&existingHistoryTaken)
 
-	go e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
-		ExamCode:      request.ExamCode,
-		ExamSessionId: request.ExamSessionId,
-		StudentId:     studentData.ID,
-	})
+	go func() {
+		e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
+			ExamCode:      request.ExamCode,
+			ExamSessionId: request.ExamSessionId,
+			StudentId:     studentData.ID,
+		})
+		// Remove cache data by key
+		key := fmt.Sprintf("%s_%s", claims.Username, request.ExamSessionId)
+		_ = redisstore.RemoveByKey(key)
+	}()
 	return existingHistoryTaken
 }
 
@@ -1001,85 +997,36 @@ func (e *ExamSessionService) ResetSuspiciousActivity(request exam_request.Suspic
 
 }
 
-func (e *ExamSessionService) SyncAnswer(claims jwt.Claims, request exam_request.ExamSessionSubmit) cbt.StudentHistoryTaken {
+func (e *ExamSessionService) SyncAnswer(claims jwt.Claims, request exam_request.ExamSessionSubmit) {
 	if request.Result == nil {
 		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "request result is nil"))
 	}
 
-	studentData := e.studentRepo.FindByNISN(claims.Username)
-	var existingHistoryTaken cbt.StudentHistoryTaken
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).First(&existingHistoryTaken)
-	if existingHistoryTaken.ID == 0 {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	key := fmt.Sprintf("%s::%s", claims.Username, request.ExamSessionId)
+
+	err := redisstore.SetJSON(key, request.Result, 24*time.Hour)
+	if err != nil {
+		logger.Log.Error().Msgf("Failed sync answer, err %s", err.Error())
 	}
-
-	if existingHistoryTaken.EndAt != nil {
-		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
-	}
-
-	var examData school.Exam
-	e.examSessionRepository.Database.Where("code = ?", existingHistoryTaken.ExamCode).First(&examData)
-
-	// Correction result
-	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
-		Delete(&cbt.StudentAnswers{})
-
-	var studentAnswers []cbt.StudentAnswers
-	totalScore := 0
-	totalCorrect := 0
-
-	var questions []school.ExamQuestion
-	err := redisstore.GetJSON(request.ExamCode, &questions)
-	if err != nil || questions == nil || len(questions) == 0 {
-		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
-		_ = redisstore.SetJSON(request.ExamCode, &questions, time.Hour*24)
-	}
-
-	scoreQuestion := examData.ScoreQuestion
-	for _, submit := range request.Result {
-		score := 0
-
-		var question school.ExamQuestion
-		for _, examQuestion := range questions {
-			if examQuestion.QuestionId == submit.QuestionId {
-				question = examQuestion
-				break
-			}
-		}
-
-		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
-			score = scoreQuestion
-			totalCorrect++
-		}
-
-		if examData.TypeQuestion == "ESSAY" {
-			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
-			score = essayHelper.EvaluateScoreEssay()
-			totalCorrect++
-		}
-		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
-			ExamCode:   existingHistoryTaken.ExamCode,
-			SessionId:  existingHistoryTaken.SessionId,
-			StudentId:  studentData.ID,
-			QuestionId: submit.QuestionId,
-			AnswerId:   submit.AnswerId,
-			Score:      score,
-		})
-		totalScore += score
-	}
-
-	e.examSessionRepository.Database.Save(&studentAnswers)
-
-	return existingHistoryTaken
 }
 
 func (e *ExamSessionService) RetrieveLatestAnswer(claims jwt.Claims, sessionId string) []cbt.StudentAnswers {
-	studentData := e.studentRepo.FindByNISN(claims.Username)
+	key := fmt.Sprintf("%s::%s", claims.Username, sessionId)
+
+	var data []exam_request.ExamResultSubmit
+	err := redisstore.GetJSON(key, &data)
+	if err != nil {
+		logger.Log.Error().Msgf("Failed retrieve latest answer, err %s", err.Error())
+		return nil
+	}
 
 	var existingAnswers []cbt.StudentAnswers
-	e.examSessionRepository.Database.
-		Where("session_id = ? AND student_id = ?", sessionId, studentData.ID).
-		Find(&existingAnswers)
+	for _, datum := range data {
+		existingAnswers = append(existingAnswers, cbt.StudentAnswers{
+			AnswerId:   datum.AnswerId,
+			QuestionId: datum.QuestionId,
+		})
+	}
 
 	return existingAnswers
 }

@@ -323,8 +323,8 @@ func (e *ExamController) SyncAnswer(c *gin.Context) {
 	_ = c.BindJSON(&request)
 
 	claims := jwt.GetDataClaims(c)
-	resp := e.examSessionService.SyncAnswer(claims, request)
-	response.SuccessResponse("Success sync", resp).Json(c)
+	e.examSessionService.SyncAnswer(claims, request)
+	response.SuccessResponse("Success sync", nil).Json(c)
 }
 
 func (e *ExamController) LastAnswer(c *gin.Context) {
