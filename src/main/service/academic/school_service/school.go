@@ -222,7 +222,9 @@ func (s *SchoolService) LoadConfiguration(origin string) *schoolResponse.Configu
 	}
 
 	return &schoolResponse.ConfigurationResponse{
-		SchoolCode: systemConfig.SchoolCode,
-		Key:        systemConfig.ClientId + systemConfig.ClientSecret,
+		SchoolCode:  systemConfig.SchoolCode,
+		Key:         systemConfig.ClientId + systemConfig.ClientSecret,
+		ThemePreset: systemConfig.ThemePreset,
+		ThemeCustom: systemConfig.ThemeCustom,
 	}
 }

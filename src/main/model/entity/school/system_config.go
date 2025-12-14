@@ -8,4 +8,7 @@ type SystemConfig struct {
 	Origin       string `json:"origin"`
 	ClientId     string `json:"client_id"`
 	ClientSecret string `json:"client_secret"`
+	ThemePreset  string `json:"theme_preset"`
+	ThemeCustom  string `json:"theme_custom"`
+	Metadata     string `json:"metadata"`
 }
