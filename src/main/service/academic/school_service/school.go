@@ -213,3 +213,16 @@ func (s *SchoolService) ModifySchool(claims jwt.Claims, req school_request.Modif
 		LevelOfEducation: "SMA",
 	}
 }
+
+func (s *SchoolService) LoadConfiguration(origin string) *schoolResponse.ConfigurationResponse {
+	var systemConfig *school.SystemConfig
+	s.repo.Database.Where("origin = ?", origin).First(&systemConfig)
+	if systemConfig == nil {
+		return nil
+	}
+
+	return &schoolResponse.ConfigurationResponse{
+		SchoolCode: systemConfig.SchoolCode,
+		Key:        systemConfig.ClientId + systemConfig.ClientSecret,
+	}
+}

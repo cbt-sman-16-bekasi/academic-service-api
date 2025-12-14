@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"regexp"
+	"strconv"
+
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/auth_request"
@@ -13,7 +16,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/yon-module/yon-framework/pagination"
 	"github.com/yon-module/yon-framework/server/response"
-	"strconv"
 )
 
 type SchoolController struct {
@@ -278,4 +280,12 @@ func (s *SchoolController) ChangeProfile(c *gin.Context) {
 
 	s.authService.ChangeProfile(c, request)
 	response.SuccessResponse("Success change profile", nil).Json(c)
+}
+
+func (s *SchoolController) RetrieveConfigSchool(c *gin.Context) {
+	re := regexp.MustCompile(`^https?://`)
+	origin := re.ReplaceAllString(c.Request.Header.Get("Origin"), "")
+
+	res := s.srv.LoadConfiguration(origin)
+	response.SuccessResponse("Success retrieve config", res).Json(c)
 }
