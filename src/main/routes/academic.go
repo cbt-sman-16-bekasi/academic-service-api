@@ -19,6 +19,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 	userController := controllers.NewUserController()
 	examController := controllers.NewExamController()
 	curriculumController := controllers.NewCurriculumController()
+	dapodikController := controllers.NewDapodikController()
 
 	academic := gr.Group("/academic")
 
@@ -209,5 +210,17 @@ func academicRoutes(gr *gin.RouterGroup) {
 		typeExam.POST("/create", jwt.RequirePermission([]string{"ADMIN"}, "create"), examController.CreateTypeExam)
 		typeExam.PUT("/update/:id", jwt.RequirePermission([]string{"ADMIN"}, "update"), examController.ModifyTypeExam)
 		typeExam.DELETE("/delete/:id", jwt.RequirePermission([]string{"ADMIN"}, "delete"), examController.DeleteTypeExam)
+	}
+
+	// DAPODIK Sync Routes
+	dapodik := academic.Group("/dapodik").Use(jwt.AuthMiddleware())
+	{
+		dapodik.GET("/config", jwt.RequirePermission([]string{"ADMIN"}, "read"), dapodikController.GetDapodikConfig)
+		dapodik.POST("/config", jwt.RequirePermission([]string{"ADMIN"}, "create"), dapodikController.SaveDapodikConfig)
+		dapodik.POST("/test-connection", jwt.RequirePermission([]string{"ADMIN"}, "read"), dapodikController.TestDapodikConnection)
+		dapodik.POST("/sync", jwt.RequirePermission([]string{"ADMIN"}, "create"), dapodikController.TriggerSync)
+		dapodik.GET("/history", jwt.RequirePermission([]string{"ADMIN"}, "list"), dapodikController.GetSyncHistory)
+		dapodik.GET("/history/:id", jwt.RequirePermission([]string{"ADMIN"}, "read"), dapodikController.GetSyncHistoryDetail)
+		dapodik.GET("/summary", jwt.RequirePermission([]string{"ADMIN"}, "read"), dapodikController.GetSyncSummary)
 	}
 }
