@@ -13,6 +13,7 @@ const (
 	CacheExam              = "cache::exam::"
 	CacheExamSession       = "cache::exam_session::"
 	CacheExamSessionReport = "cache::exam_session_report::"
+	CacheConfigSchool      = "cache::config_school::"
 )
 
 var TtlDuration = time.Duration(30 * time.Second)

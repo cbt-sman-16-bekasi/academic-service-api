@@ -1,16 +1,18 @@
 package redisstore
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // CacheMiddleware untuk cache GET endpoint
 func CacheMiddleware(prefix string, ttl time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		key := prefix + c.Request.URL.RawQuery + authHeader
+		origin := c.GetHeader("Origin")
+		key := prefix + c.Request.URL.RawQuery + authHeader + origin
 		val, err := Get(key)
 		if err == nil && val != "" {
 			c.Data(http.StatusOK, "application/json", []byte(val))
