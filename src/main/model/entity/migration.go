@@ -1,11 +1,16 @@
 package entity
 
 import (
-	"github.com/yon-module/yon-framework/database"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/spp/entity"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/database"
 )
 
 func init() {
 	database.MigrationRegister(
+		// SPP Module
+		&entity.Payment{},
+		&entity.PaymentTransaction{},
+		&entity.PaymentConfig{},
 	//&user.User{},
 	//&user.Role{},
 	//&user.AccessRoleManagement{},

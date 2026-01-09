@@ -6,14 +6,15 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"mime"
+	"strings"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/config"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/yon-module/yon-framework/logger"
-	"io"
-	"mime"
-	"os"
-	"strings"
+	"github.com/rs/zerolog/log"
 )
 
 type MinioConfig struct {
@@ -26,12 +27,13 @@ type MinioConfig struct {
 }
 
 func NewMinio() *MinioConfig {
+	cfg := config.GetMinio()
 	conf := &MinioConfig{
-		endpoint:  os.Getenv("MINIO_ENDPOINT"),
-		bucket:    os.Getenv("MINIO_BUCKET"),
-		accessKey: os.Getenv("MINIO_ACCESS_KEY"),
-		secretKey: os.Getenv("MINIO_SECRET_KEY"),
-		useSSL:    os.Getenv("MINIO_SSL") == "true",
+		endpoint:  cfg.Endpoint,
+		bucket:    cfg.Bucket,
+		accessKey: cfg.AccessKey,
+		secretKey: cfg.SecretKey,
+		useSSL:    cfg.SSL,
 	}
 	err := conf.createConnection()
 	if err != nil {
@@ -69,7 +71,7 @@ func (conf *MinioConfig) createConnection() error {
 		return err
 	}
 
-	logger.Log.Info().Msg("Connected to Minio")
+	log.Info().Msg("Connected to Minio")
 	conf.minioClient = minioClient
 	return nil
 }

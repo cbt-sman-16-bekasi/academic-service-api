@@ -14,7 +14,8 @@ const TableNameSuspiciousActivity = "cbt_service.suspicious_activity"
 
 type StudentAnswers struct {
 	gorm.Model
-	ExamCode string `json:"exam_code"`
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
+	ExamCode   string `json:"exam_code"`
 	//DetailExam    school.Exam        `json:"detail_exam" gorm:"foreignKey:ExamCode;references:ExamCode"`
 	SessionId string `json:"session_id"`
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
@@ -31,7 +32,8 @@ func (s StudentAnswers) TableName() string {
 
 type StudentHistoryTaken struct {
 	gorm.Model
-	ExamCode string `json:"exam_code"`
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
+	ExamCode   string `json:"exam_code"`
 	//DetailExam    school.Exam        `json:"detail_exam" gorm:"foreignKey:ExamCode;references:ExamCode"`
 	SessionId string `json:"session_id"`
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
@@ -66,7 +68,8 @@ func (s StudentHistoryTaken) TableName() string {
 
 type HistoryResetSession struct {
 	gorm.Model
-	ExamCode string `json:"exam_code"`
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
+	ExamCode   string `json:"exam_code"`
 	//DetailExam    school.Exam        `json:"detail_exam" gorm:"foreignKey:ExamCode;references:ExamCode"`
 	SessionId string `json:"session_id"`
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
@@ -83,7 +86,8 @@ func (s HistoryResetSession) TableName() string {
 
 type HistoryChangeScoreSession struct {
 	gorm.Model
-	ExamCode string `json:"exam_code"`
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
+	ExamCode   string `json:"exam_code"`
 	//DetailExam    school.Exam        `json:"detail_exam" gorm:"foreignKey:ExamCode;references:ExamCode"`
 	SessionId string `json:"session_id"`
 	//DetailSession school.ExamSession `json:"detail_session" gorm:"foreignKey:SessionId;references:SessionId"`
@@ -101,10 +105,11 @@ func (s HistoryChangeScoreSession) TableName() string {
 
 type SuspiciousActivity struct {
 	gorm.Model
-	ExamCode  string `json:"exam_code"`
-	SessionId string `json:"session_id"`
-	StudentId uint   `json:"student_id"`
-	Reason    string `json:"reason"`
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
+	ExamCode   string `json:"exam_code"`
+	SessionId  string `json:"session_id"`
+	StudentId  uint   `json:"student_id"`
+	Reason     string `json:"reason"`
 }
 
 func (s SuspiciousActivity) TableName() string {

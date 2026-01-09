@@ -9,6 +9,7 @@ const (
 
 type Subject struct {
 	gorm.Model
+	SchoolCode  string `gorm:"type:varchar(50);index" json:"school_code"`
 	Code        string `gorm:"unique" json:"code"`
 	Subject     string `json:"subject"`
 	SubjectType string `json:"subject_type"`
@@ -21,8 +22,9 @@ func (s *Subject) TableName() string {
 
 type CurriculumSubject struct {
 	gorm.Model
-	CurriculumId uint `json:"curriculum_id"`
-	SubjectId    uint `json:"subject_id"`
+	SchoolCode   string `gorm:"type:varchar(50);index" json:"school_code"`
+	CurriculumId uint   `json:"curriculum_id"`
+	SubjectId    uint   `json:"subject_id"`
 }
 
 func (c *CurriculumSubject) TableName() string {

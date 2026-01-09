@@ -1,0 +1,45 @@
+# Application Configuration
+# Copy this file to config.yml and adjust values accordingly
+
+app:
+  env: development          # development, production, testing
+  port: 8080
+  name: Academic Service API
+  contextPath: /
+  timezone: Asia/Jakarta
+
+# Database Configuration
+database:
+  type: postgres            # postgres, mysql, sqlite
+  host: localhost
+  port: 5432
+  name: academic_db
+  user: postgres
+  password: postgres
+  # Connection Pool Settings
+  pool:
+    maxOpen: 25             # Max open connections (recommended: 25 for most apps)
+    maxIdle: 10             # Max idle connections (recommended: 10)
+    maxLifetime: 300        # Max connection lifetime in seconds (5 minutes)
+    maxIdleTime: 60         # Max idle time in seconds (1 minute)
+  # Query Settings
+  slowThreshold: 200        # Slow query threshold in milliseconds
+  logLevel: warn            # Log level: silent, error, warn, info
+
+# Redis Configuration
+redis:
+  host: localhost:6379
+  password: ""
+  db: 0
+
+# Security Configuration
+security:
+  secretKey: change-this-to-secure-random-key
+
+# MinIO Configuration
+minio:
+  endpoint: localhost:9000
+  bucket: academic-bucket
+  accessKey: minioadmin
+  secretKey: minioadmin
+  ssl: false

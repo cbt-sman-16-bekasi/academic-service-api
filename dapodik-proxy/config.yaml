@@ -1,0 +1,35 @@
+# Dapodik Proxy Server Configuration
+# ==================================
+
+server:
+  # Port to listen on
+  port: 8888
+  
+  # Request timeout in seconds
+  read_timeout: 60
+  
+  # Response timeout in seconds (should be longer for large data)
+  write_timeout: 120
+  
+  # Allowed IPs to access this proxy (empty = allow all)
+  # Example: ["192.168.1.100", "10.0.0.1"]
+  allowed_ips: []
+
+dapodik:
+  # Default Dapodik base URL (optional)
+  # If set, you can use /proxy/WebService/getSekolah?npsn=xxx
+  # instead of ?target=http://...
+  base_url: ""
+
+logging:
+  # Log level: debug, info, warn, error
+  level: "info"
+  
+  # Pretty print logs (human readable)
+  pretty: true
+
+security:
+  # API key to access this proxy (optional, empty = no auth)
+  # If set, clients must send X-API-Key header
+  api_key: ""
+

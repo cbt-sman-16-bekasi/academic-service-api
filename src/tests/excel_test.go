@@ -2,19 +2,20 @@ package tests
 
 import (
 	"fmt"
-	"github.com/xuri/excelize/v2"
-	"github.com/yon-module/yon-framework/logger"
 	_ "image/jpeg" // Jika pakai JPG
 	_ "image/png"  // WAJIB untuk format PNG
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/rs/zerolog/log"
+	"github.com/xuri/excelize/v2"
 )
 
 func TestUploadExcelUseImage(t *testing.T) {
 	f, err := excelize.OpenFile("Sample Photo.xlsx")
 	if err != nil {
-		logger.Log.Fatal().Msgf("OpenFile err: %v", err)
+		log.Fatal().Msgf("OpenFile err: %v", err)
 	}
 	defer f.Close()
 
@@ -22,7 +23,7 @@ func TestUploadExcelUseImage(t *testing.T) {
 	// Ambil semua gambar dari sheet
 	pictures, err := f.GetPictures(sheetName, "A2")
 	if err != nil {
-		logger.Log.Fatal().Msgf("GetPictures err: %v", err)
+		log.Fatal().Msgf("GetPictures err: %v", err)
 	}
 
 	// Loop melalui setiap gambar yang ditemukan

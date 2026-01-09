@@ -25,6 +25,7 @@ const (
 
 type TypeExam struct {
 	gorm.Model
+	SchoolCode string    `gorm:"type:varchar(50);index" json:"school_code"`
 	Code       string    `gorm:"unique" json:"code"`
 	Name       string    `gorm:"unique" json:"name"`
 	Color      string    `json:"color"`
@@ -38,6 +39,7 @@ func (s *TypeExam) TableName() string {
 
 type Exam struct {
 	gorm.Model
+	SchoolCode     string             `gorm:"type:varchar(50);index" json:"school_code"`
 	Code           string             `gorm:"unique" json:"code"`
 	Name           string             `json:"name"`
 	Description    string             `json:"description" gorm:"type:text"`
@@ -62,6 +64,7 @@ func (s *Exam) TableName() string {
 
 type ExamMember struct {
 	gorm.Model
+	SchoolCode  string `gorm:"type:varchar(50);index" json:"school_code"`
 	ExamCode    string `json:"exam_code"`
 	DetailExam  Exam   `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
 	Class       uint   `json:"class"`
@@ -74,6 +77,7 @@ func (s *ExamMember) TableName() string {
 
 type ExamQuestion struct {
 	gorm.Model
+	SchoolCode     string             `gorm:"type:varchar(50);index" json:"school_code"`
 	ExamCode       string             `json:"exam_code"`
 	QuestionId     string             `gorm:"unique" json:"question_id"`
 	BankQuestionId string             `json:"bank_question_id"`
@@ -92,6 +96,7 @@ func (s *ExamQuestion) TableName() string {
 
 type ExamAnswerOption struct {
 	gorm.Model
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
 	QuestionId string `json:"question_id"`
 	AnswerId   string `json:"answer_id"`
 	Option     string `json:"option" gorm:"type:text"`
@@ -103,6 +108,7 @@ func (s *ExamAnswerOption) TableName() string {
 
 type MasterBankQuestion struct {
 	gorm.Model
+	SchoolCode      string             `gorm:"type:varchar(50);index" json:"school_code"`
 	Code            string             `gorm:"unique" json:"code"`
 	BankName        string             `gorm:"type:varchar(255)" json:"bank_name"`
 	SubjectCode     string             `gorm:"type:varchar(50)" json:"subject_code"`
@@ -119,6 +125,7 @@ func (s *MasterBankQuestion) TableName() string {
 
 type BankQuestion struct {
 	gorm.Model
+	SchoolCode               string             `gorm:"type:varchar(50);index" json:"school_code"`
 	MasterBankQuestionCode   string             `gorm:"type:varchar(50)" json:"master_bank_question_code"`
 	DetailMasterBankQuestion MasterBankQuestion `gorm:"foreignKey:MasterBankQuestionCode;references:Code" json:"detail_master_bank_question_code"`
 	QuestionId               string             `gorm:"unique" json:"question_id"`
@@ -136,6 +143,7 @@ func (s *BankQuestion) TableName() string {
 
 type BankAnswerOption struct {
 	gorm.Model
+	SchoolCode string `gorm:"type:varchar(50);index" json:"school_code"`
 	QuestionId string `json:"question_id"`
 	AnswerId   string `json:"answer_id"`
 	Option     string `json:"option" gorm:"type:text"`
@@ -147,6 +155,7 @@ func (s *BankAnswerOption) TableName() string {
 
 type ExamSession struct {
 	gorm.Model
+	SchoolCode                     string              `gorm:"type:varchar(50);index" json:"school_code"`
 	SessionId                      string              `gorm:"unique" json:"session_id"`
 	ExamCode                       string              `json:"-"`
 	DetailExam                     Exam                `json:"detail_exam" gorm:"foreignKey:ExamCode;references:Code"`
@@ -168,6 +177,7 @@ func (s *ExamSession) TableName() string {
 
 type ExamSessionMember struct {
 	gorm.Model
+	SchoolCode  string      `gorm:"type:varchar(50);index" json:"school_code"`
 	SessionId   string      `json:"session_id"`
 	DetailExam  ExamSession `json:"detail_exam" gorm:"foreignKey:SessionId;references:SessionId"`
 	Class       uint        `json:"class"`
@@ -180,6 +190,7 @@ func (s *ExamSessionMember) TableName() string {
 
 type TokenExamSession struct {
 	gorm.Model
+	SchoolCode        string      `gorm:"type:varchar(50);index" json:"school_code"`
 	ExamSession       string      `json:"-"`
 	DetailExamSession ExamSession `json:"detail_exam_session" gorm:"foreignKey:ExamSession;references:SessionId"`
 	StartActiveToken  time.Time   `json:"start_active_token"`

@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/yon-module/yon-framework/logger"
+	"github.com/rs/zerolog/log"
 )
 
 func PilihanGanda(fileBytes []byte, filename string) ([]ResultParse, error) {
@@ -24,7 +24,7 @@ func PilihanGanda(fileBytes []byte, filename string) ([]ResultParse, error) {
 	}
 	writer.Close()
 
-	logger.Log.Info().Msgf("Call to parse docx with fileName %s and url http://5.181.217.35:8085/parse-docx", filename)
+	log.Info().Msgf("Call to parse docx with fileName %s and url http://5.181.217.35:8085/parse-docx", filename)
 	resp, err := http.Post("http://5.181.217.35:8085/parse-docx", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func PilihanGanda(fileBytes []byte, filename string) ([]ResultParse, error) {
 		return nil, err
 	}
 
-	logger.Log.Info().Msgf("Parse docx with result size: %v", len(result))
+	log.Info().Msgf("Parse docx with result size: %v", len(result))
 
 	return result, nil
 }
@@ -54,7 +54,7 @@ func Essay(fileBytes []byte, filename string) ([]ResultParse, error) {
 	}
 	writer.Close()
 
-	logger.Log.Info().Msgf("Call to parse docx with fileName %s  and url http://5.181.217.35:8085/parse-docx/essay", filename)
+	log.Info().Msgf("Call to parse docx with fileName %s  and url http://5.181.217.35:8085/parse-docx/essay", filename)
 	resp, err := http.Post("http://5.181.217.35:8085/parse-docx/essay", writer.FormDataContentType(), body)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func Essay(fileBytes []byte, filename string) ([]ResultParse, error) {
 		return nil, err
 	}
 
-	logger.Log.Info().Msgf("Parse docx with result size: %v", len(result))
+	log.Info().Msgf("Parse docx with result size: %v", len(result))
 
 	return result, nil
 }

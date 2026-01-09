@@ -1,0 +1,1032 @@
+package service
+
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"math"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/helper/jwt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/exam/repository"
+	reporting "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/reporting/service"
+	studentRepository "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/student/repository"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/cache"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/database"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/exception"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/observer"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/pagination"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/request/exam_request"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/dto/response/exam_response"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/cbt"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/school"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/student"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/model/entity/view"
+	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog/log"
+	"github.com/xuri/excelize/v2"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+)
+
+type ExamSessionService struct {
+	examSessionRepository *repository.ExamSessionRepository
+	studentRepo           *studentRepository.StudentRepository
+}
+
+// NewExamSessionService creates service with injected repositories
+func NewExamSessionService(repo *repository.ExamSessionRepository, studentRepo *studentRepository.StudentRepository) *ExamSessionService {
+	return &ExamSessionService{
+		examSessionRepository: repo,
+		studentRepo:           studentRepo,
+	}
+}
+
+func (e *ExamSessionService) GetAllExamSession(c *gin.Context, request pagination.Request[map[string]interface{}]) *database.Paginator {
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		filter := map[string]interface{}{}
+		filter["created_by"] = jwt.GetID(claims.Username)
+
+		request.Filter = &filter
+	}
+	paging := database.NewPagination[map[string]interface{}](e.examSessionRepository.Database).
+		SetModel([]view.ExamSessionView{}).
+		SetRequest(&request).
+		FindAllPaging()
+
+	return paging
+}
+
+func (e *ExamSessionService) GetDetailExamSession(id uint) exam_response.ExamDetailSessionResponse {
+	data := e.examSessionRepository.FindById(id)
+	if data.ID == 0 {
+		return exam_response.ExamDetailSessionResponse{}
+	}
+
+	var summarySession view.SummaryExamSession
+	e.examSessionRepository.Database.Where("session_id = ?", data.SessionId).First(&summarySession)
+
+	return exam_response.ExamDetailSessionResponse{
+		ExamSession:     data,
+		Exam:            data.DetailExam,
+		TotalStudent:    0,
+		TotalAttendance: summarySession.TotalLogin,
+		TotalSubmit:     summarySession.TotalStudentSubmit,
+		TotalCheating:   summarySession.TotalCheating,
+		TotalTimesOver:  summarySession.TotalTimeIsOver,
+	}
+}
+
+func (e *ExamSessionService) CreateExamSession(c *gin.Context, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
+	data := &school.ExamSession{
+		SessionId:                      "SESSION-" + helper.RandomString(10),
+		ExamCode:                       request.ExamCode,
+		Name:                           request.Name,
+		StartDate:                      request.StartAt,
+		EndDate:                        request.EndAt,
+		MaxCheatIndication:             request.MaxCheatIndication,
+		TotalResetSuspiciousIndication: request.MaxResetCheatIndication,
+	}
+
+	claims := jwt.GetDataClaims(c)
+	data.CreatedBy = uint(jwt.GetID(claims.Username))
+
+	e.examSessionRepository.Database.Create(&data)
+
+	var dataExamSessionMember []school.ExamSessionMember
+	for _, classId := range request.ClassId {
+		dataExamSessionMember = append(dataExamSessionMember, school.ExamSessionMember{
+			SessionId: data.SessionId,
+			Class:     uint(classId),
+		})
+	}
+
+	e.examSessionRepository.Database.Create(&dataExamSessionMember)
+	return request
+}
+
+func (e *ExamSessionService) UpdateExamSession(c *gin.Context, id uint, request exam_request.ModifyExamSessionRequest) exam_request.ModifyExamSessionRequest {
+	existing := e.examSessionRepository.FindById(id)
+	if existing.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, fmt.Sprintf("exam session not found")))
+	}
+
+	existing.ExamCode = request.ExamCode
+	existing.Name = request.Name
+	existing.StartDate = request.StartAt
+	existing.EndDate = request.EndAt
+	existing.MaxCheatIndication = request.MaxCheatIndication
+	existing.TotalResetSuspiciousIndication = request.MaxResetCheatIndication
+
+	claims := jwt.GetDataClaims(c)
+	existing.ModifiedBy = uint(jwt.GetID(claims.Username))
+	e.examSessionRepository.Database.Save(&existing)
+
+	e.examSessionRepository.Database.Where("session_id = ?", existing.SessionId).Delete(&school.ExamSessionMember{})
+	var dataExamSessionMember []school.ExamSessionMember
+	for _, classId := range request.ClassId {
+		dataExamSessionMember = append(dataExamSessionMember, school.ExamSessionMember{
+			SessionId: existing.SessionId,
+			Class:     uint(classId),
+		})
+	}
+
+	e.examSessionRepository.Database.Create(&dataExamSessionMember)
+	return request
+}
+
+func (e *ExamSessionService) DeleteExamSession(id uint) {
+	e.examSessionRepository.Database.Where("id = ?", id).Delete(&school.ExamSession{})
+}
+
+func (e *ExamSessionService) GetAllAttendance(request exam_request.ExamSessionAttendanceRequest) []exam_response.ExamSessionAttendanceResponse {
+	var studentData []view.VStudent
+	e.examSessionRepository.Database.Where("class_id = ?", request.ClassId).
+		Find(&studentData)
+
+	var responses []exam_response.ExamSessionAttendanceResponse
+
+	for _, std := range studentData {
+		var studentAttendance cbt.StudentHistoryTaken
+		e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, std.ID).First(&studentAttendance)
+		status := studentAttendance.Status
+
+		if status == "STARTED" {
+			status = "Aktif"
+		}
+		if status == "COMPLETED" {
+			status = "Selesai"
+		}
+
+		if studentAttendance.IsForced {
+			status = "Dikumpulkan Oleh Sistem"
+			if studentAttendance.IsTimeOver {
+				status = "Mengumpulkan Pada Waktu Habis"
+			}
+			if studentAttendance.IsCheating {
+				status = "Terindikasi Kecurangan"
+			}
+		}
+
+		lastCorrection := ""
+		if studentAttendance.LastCorrectionScore != nil {
+			lastCorrection = studentAttendance.LastCorrectionScore.Format("2006-01-02 15:04:05")
+		}
+
+		if math.IsNaN(studentAttendance.Score) {
+			studentAttendance.Score = 0
+		}
+
+		data := exam_response.ExamSessionAttendanceResponse{
+			Nisn:                std.NISN,
+			Name:                strings.ToUpper(std.Name),
+			Class:               std.ClassName,
+			StartAt:             studentAttendance.StartAt,
+			EndAt:               studentAttendance.EndAt,
+			Score:               studentAttendance.Score,
+			Status:              status,
+			StudentId:           std.ID,
+			NeedCorrection:      studentAttendance.NeedCorrection,
+			LastCorrectionScore: lastCorrection,
+			LastCorrectionBy:    studentAttendance.LastCorrectionBy,
+		}
+		responses = append(responses, data)
+	}
+
+	return responses
+}
+
+func (e *ExamSessionService) GenerateToken(c *gin.Context, request exam_request.ExamSessionGenerateToken) *school.TokenExamSession {
+	data := &school.TokenExamSession{
+		Model:            gorm.Model{},
+		ExamSession:      request.ExamSessionId,
+		StartActiveToken: request.StartAt,
+		EndActiveToken:   request.EndAt,
+		Token:            strings.ToUpper(helper.RandomString(6)),
+	}
+
+	claims := jwt.GetDataClaims(c)
+	data.CreatedBy = uint(jwt.GetID(claims.Username))
+	e.examSessionRepository.Database.Create(&data)
+	return data
+}
+
+func (e *ExamSessionService) GetAllToken(c *gin.Context, request exam_request.ExamSessionTokenFilterRequest) (res []exam_response.ExamSessionTokenResponse) {
+	var data []school.TokenExamSession
+	q := e.examSessionRepository.Database.Preload("DetailExamSession").
+		Preload("DetailExamSession.DetailExam").
+		Preload("DetailExamSession.DetailExam.DetailSubject").
+		Preload("DetailExamSession.DetailExam.DetailTypeExam").
+		Where("end_active_token >= ?", time.Now())
+
+	claims := jwt.GetDataClaims(c)
+	if claims.Role != "ADMIN" {
+		q = q.Where("created_by", jwt.GetID(claims.Username))
+	}
+
+	q = q.Order("id desc").
+		Find(&data)
+
+	for _, tokenExamSession := range data {
+		status := "Active"
+		tolerance := 5 * time.Second
+
+		if time.Now().After(tokenExamSession.EndActiveToken.Add(tolerance)) {
+			status = "Expired"
+		}
+		res = append(res, exam_response.ExamSessionTokenResponse{
+			TokenExamSession: &tokenExamSession,
+			Status:           status,
+		})
+	}
+	return
+}
+
+func (e *ExamSessionService) ValidateTokenDo(claims jwt.Claims, request exam_request.ExamSessionStartDoWork) cbt.StudentHistoryTaken {
+	var tokenExamSession school.TokenExamSession
+	e.examSessionRepository.Database.Where("token = ? AND exam_session = ?", request.Token, request.ExamSessionId).
+		Preload("DetailExamSession").
+		Preload("DetailExamSession.DetailExam").
+		Preload(clause.Associations).
+		First(&tokenExamSession)
+	if tokenExamSession.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "token exam session not found"))
+	}
+
+	timeNow := time.Now()
+	e.validateAgeToken(timeNow, tokenExamSession)
+	var examSession = tokenExamSession.DetailExamSession
+	if examSession.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if timeNow.Before(tokenExamSession.StartActiveToken) {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "start active token timeout"))
+	}
+
+	if timeNow.After(tokenExamSession.EndActiveToken) {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "end active token timeout"))
+	}
+
+	remainingInMinutes := examSession.EndDate.Sub(timeNow).Minutes()
+	if int(remainingInMinutes) > examSession.DetailExam.Duration {
+		remainingInMinutes = float64(examSession.DetailExam.Duration)
+	}
+
+	studentData, _ := e.studentRepo.FindByNISN(claims.Username)
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", examSession.SessionId, studentData.ID).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		existingHistoryTaken = cbt.StudentHistoryTaken{
+			ExamCode:       tokenExamSession.DetailExamSession.ExamCode,
+			SessionId:      examSession.SessionId,
+			StudentId:      studentData.ID,
+			StartAt:        &timeNow,
+			EndAt:          nil,
+			Status:         "STARTED",
+			RemainingTime:  int(remainingInMinutes),
+			IsFinished:     false,
+			IsForced:       false,
+			NeedCorrection: false,
+		}
+	} else {
+		existingHistoryTaken.RemainingTime = int(remainingInMinutes)
+	}
+
+	if remainingInMinutes <= 0 {
+		existingHistoryTaken.IsForced = true
+		existingHistoryTaken.IsFinished = true
+		existingHistoryTaken.EndAt = &timeNow
+		existingHistoryTaken.Status = "COMPLETED"
+	}
+
+	if tokenExamSession.DetailExamSession.DetailExam.TypeQuestion == "ESSAY" {
+		existingHistoryTaken.NeedCorrection = true
+	}
+
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	go e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
+		ExamCode:      request.ExamCode,
+		ExamSessionId: request.ExamSessionId,
+		StudentId:     studentData.ID,
+	})
+
+	return existingHistoryTaken
+}
+
+func (e *ExamSessionService) validateAgeToken(timeNow time.Time, tokenExamSession school.TokenExamSession) {
+	if timeNow.After(tokenExamSession.EndActiveToken) {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Token already expired"))
+	}
+
+	if timeNow.Before(tokenExamSession.StartActiveToken) {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Token is not active"))
+	}
+}
+
+func (e *ExamSessionService) SubmitExamSession(claims jwt.Claims, request exam_request.ExamSessionSubmit) cbt.StudentHistoryTaken {
+	if request.Result == nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "request result is nil"))
+	}
+	studentData, _ := e.studentRepo.FindByNISN(claims.Username)
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	timeNow := time.Now()
+	existingHistoryTaken.IsForced = request.IsForced
+	existingHistoryTaken.IsTimeOver = request.IsTimeOver
+	existingHistoryTaken.IsCheating = request.IsCheat
+	existingHistoryTaken.IsFinished = true
+	existingHistoryTaken.EndAt = &timeNow
+	existingHistoryTaken.Status = "COMPLETED"
+
+	var examData school.Exam
+	e.examSessionRepository.Database.Where("code = ?", existingHistoryTaken.ExamCode).First(&examData)
+
+	if examData.TypeQuestion == "ESSAY" {
+		existingHistoryTaken.NeedCorrection = true
+	}
+
+	var existingAnswers []cbt.StudentAnswers
+	e.examSessionRepository.Database.
+		Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+		Find(&existingAnswers)
+
+	var questions []school.ExamQuestion
+	err := cache.GetJSON(request.ExamCode, &questions)
+	if err != nil || questions == nil || len(questions) == 0 {
+		e.examSessionRepository.Database.Where("exam_code", request.ExamCode).Preload("QuestionOption").Find(&questions)
+		_ = cache.SetJSON(request.ExamCode, &questions, time.Hour*24)
+	}
+	totalQuestions := len(questions)
+
+	scoreQuestion := examData.ScoreQuestion
+	totalQMS := scoreQuestion * totalQuestions
+	totalScore := 0
+	totalCorrect := 0
+
+	// Correction result
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, studentData.ID).
+		Delete(&cbt.StudentAnswers{})
+
+	var studentAnswers []cbt.StudentAnswers
+	for _, submit := range request.Result {
+		score := 0
+
+		var question school.ExamQuestion
+		for _, examQuestion := range questions {
+			if examQuestion.QuestionId == submit.QuestionId {
+				question = examQuestion
+				break
+			}
+		}
+
+		if submit.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+			score = scoreQuestion
+			totalCorrect++
+		}
+
+		if examData.TypeQuestion == "ESSAY" {
+			essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, submit.AnswerId, question.Score)
+			score = essayHelper.EvaluateScoreEssay()
+			totalCorrect++
+		}
+		studentAnswers = append(studentAnswers, cbt.StudentAnswers{
+			ExamCode:   existingHistoryTaken.ExamCode,
+			SessionId:  existingHistoryTaken.SessionId,
+			StudentId:  studentData.ID,
+			QuestionId: submit.QuestionId,
+			AnswerId:   submit.AnswerId,
+			Score:      score,
+		})
+		totalScore += score
+	}
+
+	e.examSessionRepository.Database.Save(&studentAnswers)
+
+	roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
+	averageScore := roundScore * 100
+
+	if math.IsNaN(averageScore) {
+		averageScore = 0
+	}
+	existingHistoryTaken.Score = averageScore
+	existingHistoryTaken.TotalCorrect = totalCorrect
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	go func() {
+		e.setCacheDataSession(existingHistoryTaken, exam_request.SuspiciousActivityReport{
+			ExamCode:      request.ExamCode,
+			ExamSessionId: request.ExamSessionId,
+			StudentId:     studentData.ID,
+		})
+		// Remove cache data by key
+		key := fmt.Sprintf("%s_%s", claims.Username, request.ExamSessionId)
+		_ = cache.RemoveByKey(key)
+	}()
+	return existingHistoryTaken
+}
+
+func (e *ExamSessionService) ExportExamSessionAttendanceToExcel(c *gin.Context, responses []exam_response.ExamSessionAttendanceResponse, request exam_request.ExamSessionAttendanceRequest) {
+	var examSession school.ExamSession
+	_ = e.studentRepo.DB().Where("session_id = ?", request.ExamSessionId).
+		Preload("DetailExam").
+		Preload("DetailExam.DetailSubject").
+		Preload("DetailExam.DetailTypeExam").
+		First(&examSession)
+
+	f := excelize.NewFile()
+	sheet := "Attendance"
+	index, _ := f.NewSheet(sheet)
+
+	// Header
+	headers := []string{"No", "NISN", "Name", "Class", "Start At", "End At", "Score", "Status"}
+	for i, h := range headers {
+		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
+		f.SetCellValue(sheet, cell, h)
+	}
+
+	// Data
+	for i, r := range responses {
+		row := i + 2
+		f.SetCellValue(sheet, "A"+strconv.Itoa(row), i+1)
+		f.SetCellValue(sheet, "B"+strconv.Itoa(row), r.Nisn)
+		f.SetCellValue(sheet, "C"+strconv.Itoa(row), r.Name)
+		f.SetCellValue(sheet, "D"+strconv.Itoa(row), r.Class)
+		// Start At
+		if r.StartAt != nil {
+			f.SetCellValue(sheet, "E"+strconv.Itoa(row), r.StartAt.Format("2006-01-02 15:04:05"))
+		} else {
+			f.SetCellValue(sheet, "E"+strconv.Itoa(row), "")
+		}
+
+		// End At
+		if r.EndAt != nil {
+			f.SetCellValue(sheet, "F"+strconv.Itoa(row), r.EndAt.Format("2006-01-02 15:04:05"))
+		} else {
+			f.SetCellValue(sheet, "F"+strconv.Itoa(row), "")
+		}
+
+		f.SetCellValue(sheet, "G"+strconv.Itoa(row), r.Score)
+		f.SetCellValue(sheet, "H"+strconv.Itoa(row), r.Status)
+	}
+
+	f.SetActiveSheet(index)
+
+	fileName := fmt.Sprintf(
+		"Data Peserta_%s_%s_%s.xlsx",
+		examSession.DetailExam.DetailTypeExam.Code,
+		examSession.DetailExam.DetailSubject.Subject,
+		examSession.EndDate.Format("20060102"),
+	)
+	// Stream Excel ke response
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, fileName))
+	c.Header("File-Name", fmt.Sprintf(`attachment; filename="%s"`, fileName))
+	c.Header("Content-Transfer-Encoding", "binary")
+	c.Header("Access-Control-Expose-Headers", "Content-Disposition")
+	c.Header("Expires", "0")
+
+	if err := f.Write(c.Writer); err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(
+			response.ServerError, "Failed generate report"),
+		)
+	}
+}
+
+func (e *ExamSessionService) ExamSessionMember(sessionId string) []school.ExamSessionMember {
+	var examSessionMembers []school.ExamSessionMember
+	e.examSessionRepository.Database.Where("session_id = ?", sessionId).Preload("DetailClass").Find(&examSessionMembers)
+	return examSessionMembers
+}
+
+func (e *ExamSessionService) GenerateReportSession(sessionID string, schoolCode string) {
+	var schoolData school.School
+	e.examSessionRepository.Database.Where("school_code=?", schoolCode).First(&schoolData)
+
+	var sessionReport *view.ExamSessionReadyReport
+	e.examSessionRepository.Database.Where("session_id = ?", sessionID).First(&sessionReport)
+	if sessionReport.SessionID == "" {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Pembuatan laporan nilai tidak dapat dilakukan karena sesi ujian Anda belum dinyatakan selesai. Mohon periksa status sesi ujian atau pastikan seluruh hasil ujian telah dikoreksi."))
+	}
+
+	go func(schoolData school.School, sessionReport *view.ExamSessionReadyReport) {
+		var sessionData school.ExamSession
+		e.examSessionRepository.Database.Where("session_id = ?", sessionID).First(&sessionData)
+		e.updateStatusSession(sessionReport.SessionID, "PROGRESS", nil, nil)
+
+		log.Info().Msgf("ExamSession Report %v", sessionReport)
+		report := reporting.NewReport(schoolData)
+
+		var reportSession []reporting.DataExamSession
+		classIds, _ := StringToUintSlice(sessionReport.KelasID)
+		classNames := strings.Split(sessionReport.Kelas, ",")
+		for i, classId := range classIds {
+			dataScore := e.GetAllAttendance(exam_request.ExamSessionAttendanceRequest{
+				ExamSessionId: sessionReport.SessionID,
+				ClassId:       &classId,
+			})
+
+			var reportScore []reporting.DataNilai
+			for _, data := range dataScore {
+				reportScore = append(reportScore, reporting.DataNilai{
+					NISN:      data.Nisn,
+					Name:      data.Name,
+					ClassName: data.Class,
+					Gender:    "-",
+					Score:     data.Score,
+				})
+			}
+			dataSession := reporting.DataExamSession{
+				TypeExam:     sessionReport.TypeExam,
+				Subject:      sessionReport.Subject,
+				ClassName:    classNames[i],
+				SessionName:  sessionReport.SessionName,
+				SessionStart: sessionReport.StartDate,
+				SessionEnd:   sessionReport.EndDate,
+				ScoreData:    reportScore,
+			}
+			reportSession = append(reportSession, dataSession)
+		}
+		report.SetData(reportSession)
+
+		err := report.Generate()
+		if err != nil {
+			errString := fmt.Sprintf("%v", err)
+			e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errString)
+			log.Error().Msgf("Generate reportSession Error: %s", err.Error())
+			return
+		}
+
+		resUrlReport, isSuccess := report.GetResult()
+		log.Info().Str("URL", fmt.Sprintf("%v", resUrlReport)).Str("Status", fmt.Sprintf("%v", isSuccess)).Msg("Generate reportSession Result")
+		if !isSuccess {
+			errorReport := ErrorsToString(report.GetError())
+			e.updateStatusSession(sessionReport.SessionID, "FAILED", nil, &errorReport)
+			log.Error().Msgf("Generate reportSession Error: %s", errorReport)
+			return
+		}
+
+		e.updateStatusSession(sessionReport.SessionID, "READY", resUrlReport, nil)
+
+		var totalStudents int64
+		e.studentRepo.DB().Model(&student.StudentClass{}).Where("class_id IN ?", classIds).Count(&totalStudents)
+
+		examSessionReport := cbt.ExamSessionReport{
+			SessionID:    sessionID,
+			ExamCode:     sessionData.ExamCode,
+			SessionName:  sessionReport.SessionName,
+			ExamName:     sessionReport.ExamName,
+			Subject:      sessionReport.Subject,
+			Kelas:        sessionReport.Kelas,
+			Total:        int(totalStudents),
+			StartDate:    sessionReport.StartDate,
+			EndDate:      sessionReport.EndDate,
+			Status:       "SELESAI",
+			CreatedBy:    sessionData.CreatedBy,
+			StatusReport: "READY",
+			ReportURL:    *resUrlReport,
+		}
+
+		err = e.examSessionRepository.Database.
+			Create(&examSessionReport).Error
+
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to upsert ExamSessionReport")
+		}
+
+		observer.Trigger(model.EventExamSessionReportChanged)
+	}(schoolData, sessionReport)
+}
+
+func (e *ExamSessionService) updateStatusSession(sessionID string, status string, resUrlReport *string, err *string) *gorm.DB {
+	return e.examSessionRepository.Database.Debug().Where("session_id = ?", sessionID).Model(&school.ExamSession{}).Updates(map[string]interface{}{
+		"report_url":    resUrlReport,
+		"status_report": status,
+		"error_report":  err,
+	})
+}
+
+func (e *ExamSessionService) GetAllReport(request exam_request.ExamSessionReportRequest) []cbt.ExamSessionReport {
+	var data []cbt.ExamSessionReport
+	q := e.examSessionRepository.Database.Where("exam_code=?", request.ExamCode)
+	if request.SessionId != nil && *request.SessionId != "" {
+		q = q.Where("session_id=?", *request.SessionId)
+	}
+	q.Find(&data)
+	return data
+}
+
+func (e *ExamSessionService) GetAnswerStudent(request exam_request.ExamSessionStudentAnswer) []school.ExamEssayResult {
+	var data []school.ExamEssayResult
+	e.examSessionRepository.Database.Raw(`select q.question_id, sa.session_id, q.question, q.answer_single, sa.answer_id as answer_user, sa.id as answerID, sa.score from school_service.exam_question q
+left join school_service.exam e on e.code = q.exam_code
+LEFT JOIN cbt_service.student_answers sa ON sa.question_id = q.question_id AND sa.student_id = ? AND sa.session_id = ? AND sa.deleted_at is null
+WHERE q.exam_code = ? AND q.deleted_at is null`, request.StudentId, request.SessionId, request.ExamCode).Scan(&data)
+
+	for _, datum := range data {
+		datum.SessionID = request.SessionId
+	}
+	return data
+}
+
+func (e *ExamSessionService) CorrectionAnswerStudent(request exam_request.ExamSessionStudentAnswer) exam_request.ExamSessionStudentAnswer {
+	if request.AnswerResult != nil {
+		var exam school.Exam
+		e.examSessionRepository.Database.Where("code=?", request.ExamCode).First(&exam)
+
+		totalScore := 0
+		for _, result := range *request.AnswerResult {
+			totalScore += result.Score
+			err := e.examSessionRepository.Database.
+				Where("question_id=? and student_id = ? and session_id = ?", result.QuestionID, request.StudentId, request.SessionId).
+				Model(&cbt.StudentAnswers{}).
+				Update("score", result.Score)
+			if err.RowsAffected == 0 {
+				answer := ""
+				if result.AnswerID != nil {
+					answer = *result.AnswerID
+				}
+				e.examSessionRepository.Database.Create(&cbt.StudentAnswers{
+					ExamCode:   request.ExamCode,
+					SessionId:  request.SessionId,
+					StudentId:  request.StudentId,
+					QuestionId: result.QuestionID,
+					AnswerId:   answer,
+					Score:      result.Score,
+				})
+			}
+		}
+
+		totalQuestion := len(*request.AnswerResult)
+		score := exam.ScoreQuestion
+		totalQMS := totalQuestion * score
+		averageScore := (float64(totalScore) / float64(totalQMS)) * 100
+		e.examSessionRepository.Database.Model(&cbt.StudentHistoryTaken{}).
+			Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+			Updates(map[string]interface{}{
+				"score":           math.Ceil(averageScore),
+				"need_correction": false,
+			})
+	}
+
+	return request
+}
+
+func (e *ExamSessionService) CorrectionScoreUserMoreThan100() {
+	var scoreTaken []cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = 'SESSION-EkQpGDDa7I'").Find(&scoreTaken)
+
+	var newScoreTaken []cbt.StudentHistoryTaken
+	startDataCalculate := 1
+	totalDataCalculate := len(scoreTaken)
+	for _, dt := range scoreTaken {
+		log.Info().Msgf("[%d/%d] Student %d start recalculate Before score: %d", startDataCalculate, totalDataCalculate, dt.StudentId, dt.Score)
+		var answers []cbt.StudentAnswers
+		e.examSessionRepository.Database.Where("student_id = ? AND session_id = ?", dt.StudentId, dt.SessionId).Find(&answers)
+
+		if len(answers) == 0 {
+			log.Error().Msgf("Failed recalculate, answers student not found")
+			dt.Score = 0
+			newScoreTaken = append(newScoreTaken, dt)
+			continue
+		}
+
+		var exam school.Exam
+		e.examSessionRepository.Database.Where("code = ?", dt.ExamCode).First(&exam)
+		if exam.ID == 0 {
+			log.Error().Msgf("Failed recalculate, exam not found %s", dt.ExamCode)
+			continue
+		}
+
+		var questions []school.ExamQuestion
+		err := cache.GetJSON(dt.ExamCode, &questions)
+		if err != nil || questions == nil || len(questions) == 0 {
+			log.Error().Msg("Get question to database, at cache nil")
+			e.examSessionRepository.Database.Where("exam_code", dt.ExamCode).Preload("QuestionOption").Find(&questions)
+			_ = cache.SetJSON(dt.ExamCode, &questions, time.Hour*24)
+		}
+		totalQuestions := len(questions)
+
+		scoreQuestion := exam.ScoreQuestion
+		totalQMS := scoreQuestion * totalQuestions
+		totalScore := 0
+
+		var newAnswer []cbt.StudentAnswers
+		totalCorrect := 0
+		for _, answer := range answers {
+			score := 0
+
+			var question *school.ExamQuestion
+			for _, examQuestion := range questions {
+				if examQuestion.QuestionId == answer.QuestionId {
+					question = &examQuestion
+					break
+				}
+			}
+			if question == nil {
+				log.Error().Msgf("Failed recalculate, question not found %s for %s", dt.ExamCode, answer.QuestionId)
+				continue
+			}
+
+			if answer.AnswerId == question.Answer && question.TypeQuestion == "PILIHAN_GANDA" {
+				score = exam.ScoreQuestion
+				totalCorrect++
+			}
+
+			if exam.TypeQuestion == "ESSAY" {
+				essayHelper := helper.NewCosineSimilarity(question.AnswerSingle, answer.AnswerId, question.Score)
+				score = essayHelper.EvaluateScoreEssay()
+				totalCorrect++
+			}
+			answer.Score = score
+			totalScore += score
+			//log.Info().
+			//	Str("QUESTION KEY", answer.QuestionId).
+			//	Str("TYPE QUESTION", exam.TypeQuestion).
+			//	Str("ANSWER USER", answer.AnswerId).
+			//	Str("ANSWER KEY", question.Answer).
+			//	Str("SCORE", fmt.Sprintf("%d", score)).
+			//	Str("EXAM SCORE", fmt.Sprintf("%d", exam.ScoreQuestion)).
+			//	Msgf("[%d]", i+1)
+			newAnswer = append(newAnswer, answer)
+		}
+
+		e.examSessionRepository.Database.Save(&newAnswer)
+
+		//log.Info().
+		//	Str("Total score", fmt.Sprintf("%d", totalScore)).
+		//	Str("Total question", fmt.Sprintf("%d", totalQuestions)).
+		//	Str("Total QMS", fmt.Sprintf("%d", totalQMS)).
+		//	Msg("[FINAL SCORE]")
+		roundScore := ((float64(totalScore) / float64(totalQMS)) * 100) / 100
+		averageScore := roundScore * 100
+		dt.Score = averageScore
+		newScoreTaken = append(newScoreTaken, dt)
+		startDataCalculate++
+	}
+	e.examSessionRepository.Database.Save(&newScoreTaken)
+}
+
+func (e *ExamSessionService) ResetSessionStudent(request exam_request.ExamSessionResetRequest) {
+	var dataStudent cbt.StudentHistoryTaken
+
+	result := e.examSessionRepository.Database.
+		Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+		First(&dataStudent)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(
+			response.BadRequest,
+			"Can't delete session student. Session student is empty",
+		))
+	}
+
+	if math.IsNaN(dataStudent.Score) {
+		dataStudent.Score = 0
+	}
+
+	marshal, err := json.Marshal(&dataStudent)
+	if err != nil {
+		log.Error().Msgf("Failed reset session student, marshal err %s", err.Error())
+	}
+	log.Info().Msgf("DEBUG studentAttendance: %+v", dataStudent)
+	log.Info().Msgf("DEBUG marshalled JSON: %s", string(marshal))
+
+	history := cbt.HistoryResetSession{
+		ExamCode:  dataStudent.ExamCode,
+		SessionId: dataStudent.SessionId,
+		StudentId: dataStudent.StudentId,
+		Reason:    request.Reason,
+		ResetBy:   "",
+		LastData:  string(marshal),
+	}
+
+	e.examSessionRepository.Database.
+		Session(&gorm.Session{PrepareStmt: false}).Create(&history)
+
+	e.examSessionRepository.Database.
+		Session(&gorm.Session{PrepareStmt: false}).Delete(&dataStudent)
+
+}
+
+func (e *ExamSessionService) CorrectionScoreStudent(c *gin.Context, request exam_request.ExamSessionCorrectionRequest) {
+	var dataStudent cbt.StudentHistoryTaken
+	result := e.examSessionRepository.Database.
+		Where("session_id = ? and student_id = ?", request.SessionId, request.StudentId).
+		First(&dataStudent)
+
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		panic(exception.NewBadRequestExceptionStruct(
+			response.BadRequest,
+			"Can't change score student. Session student is empty",
+		))
+	}
+	dataLogin := jwt.GetDataClaims(c)
+
+	var dataUser map[string]interface{}
+	jwt.ExtractDetailUser(dataLogin.Username, &dataUser)
+
+	dataStudent.Score = request.Score
+	now := time.Now()
+	dataStudent.LastCorrectionScore = &now
+
+	name, ok := dataUser["name"].(string)
+	if ok {
+		dataStudent.LastCorrectionBy = name
+	}
+	if err := e.examSessionRepository.Database.Save(&dataStudent).Error; err != nil {
+		panic(exception.NewIntenalServerExceptionStruct(
+			response.ServerError,
+			fmt.Sprintf("Can't update score student. Error: %s", err.Error()),
+		))
+	}
+
+	history := cbt.HistoryChangeScoreSession{
+		ExamCode:  dataStudent.ExamCode,
+		SessionId: dataStudent.SessionId,
+		StudentId: dataStudent.StudentId,
+		Reason:    request.Reason,
+		ChangeBy:  name,
+		LastScore: dataStudent.Score,
+		NewScore:  request.Score,
+	}
+	e.examSessionRepository.Database.Create(&history)
+}
+
+func StringToUintSlice(s string) ([]uint, error) {
+	parts := strings.Split(s, ",")
+	result := make([]uint, 0, len(parts))
+
+	for _, part := range parts {
+		p := strings.TrimSpace(part)
+		num, err := strconv.ParseUint(p, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, uint(num))
+	}
+
+	return result, nil
+}
+
+func ErrorsToString(errs []error) string {
+	strs := make([]string, 0, len(errs))
+	for _, err := range errs {
+		if err != nil {
+			strs = append(strs, err.Error())
+		}
+	}
+	return strings.Join(strs, ", ")
+}
+
+func (e *ExamSessionService) SuspiciousActivityReport(claims jwt.Claims, request exam_request.SuspiciousActivityReport) {
+	var sessionData school.ExamSession
+	e.examSessionRepository.Database.Where("session_id", request.ExamSessionId).First(&sessionData)
+	if sessionData.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "session not found"))
+	}
+
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, request.StudentId).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	existingHistoryTaken.SuspiciousIndication += 1
+
+	data := cbt.SuspiciousActivity{
+		ExamCode:  request.ExamCode,
+		SessionId: request.ExamSessionId,
+		StudentId: request.StudentId,
+		Reason:    request.Reason,
+	}
+
+	e.examSessionRepository.Database.Create(&data)
+
+	if existingHistoryTaken.SuspiciousIndication >= sessionData.MaxCheatIndication && existingHistoryTaken.TotalResetSuspiciousIndication < sessionData.TotalResetSuspiciousIndication {
+		existingHistoryTaken.Status = "BANNED"
+		existingHistoryTaken.ReasonStatus = "Banned by system. Reason: " + request.Reason
+	}
+
+	if existingHistoryTaken.SuspiciousIndication >= sessionData.MaxCheatIndication && existingHistoryTaken.TotalResetSuspiciousIndication >= sessionData.TotalResetSuspiciousIndication {
+		e.SubmitExamSession(claims, exam_request.ExamSessionSubmit{
+			ExamCode:      request.ExamCode,
+			ExamSessionId: request.ExamSessionId,
+			IsForced:      true,
+			IsTimeOver:    false,
+			IsCheat:       true,
+			Result:        request.Result,
+		})
+		return
+	}
+
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	e.setCacheDataSession(existingHistoryTaken, request)
+
+}
+
+func (e *ExamSessionService) setCacheDataSession(existingHistoryTaken cbt.StudentHistoryTaken, request exam_request.SuspiciousActivityReport) {
+	if math.IsNaN(existingHistoryTaken.Score) {
+		existingHistoryTaken.Score = 0
+	}
+
+	err := cache.SetJSON(
+		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
+		existingHistoryTaken,
+		6*time.Hour,
+	)
+	if err != nil {
+		log.Error().Msgf("Failed set cache data session, err %s", err.Error())
+	}
+}
+
+func (e *ExamSessionService) SessionInfo(request exam_request.SuspiciousActivityReport) cbt.StudentHistoryTaken {
+	var existingHistoryTaken cbt.StudentHistoryTaken
+
+	err := cache.GetJSON(
+		fmt.Sprintf("%s::%s::%d", request.ExamCode, request.ExamSessionId, request.StudentId),
+		&existingHistoryTaken,
+	)
+
+	if err != nil {
+		log.Error().Msgf("Failed get session info, err %s", err.Error())
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "session not found"))
+	}
+
+	return existingHistoryTaken
+}
+
+func (e *ExamSessionService) ResetSuspiciousActivity(request exam_request.SuspiciousActivityReport) {
+	var existingHistoryTaken cbt.StudentHistoryTaken
+	e.examSessionRepository.Database.Where("session_id = ? AND student_id = ?", request.ExamSessionId, request.StudentId).First(&existingHistoryTaken)
+	if existingHistoryTaken.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "exam session not found"))
+	}
+
+	if existingHistoryTaken.EndAt != nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "Your session is already submitted"))
+	}
+
+	existingHistoryTaken.SuspiciousIndication = 0
+	existingHistoryTaken.TotalResetSuspiciousIndication += 1
+	existingHistoryTaken.Status = "STARTED"
+
+	e.examSessionRepository.Database.Save(&existingHistoryTaken)
+
+	e.setCacheDataSession(existingHistoryTaken, request)
+
+}
+
+func (e *ExamSessionService) SyncAnswer(claims jwt.Claims, request exam_request.ExamSessionSubmit) {
+	if request.Result == nil {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "request result is nil"))
+	}
+
+	key := fmt.Sprintf("%s::%s", claims.Username, request.ExamSessionId)
+
+	err := cache.SetJSON(key, request.Result, 24*time.Hour)
+	if err != nil {
+		log.Error().Msgf("Failed sync answer, err %s", err.Error())
+	}
+}
+
+func (e *ExamSessionService) RetrieveLatestAnswer(claims jwt.Claims, sessionId string) []cbt.StudentAnswers {
+	key := fmt.Sprintf("%s::%s", claims.Username, sessionId)
+
+	var data []exam_request.ExamResultSubmit
+	err := cache.GetJSON(key, &data)
+	if err != nil {
+		log.Error().Msgf("Failed retrieve latest answer, err %s", err.Error())
+		return nil
+	}
+
+	var existingAnswers []cbt.StudentAnswers
+	for _, datum := range data {
+		existingAnswers = append(existingAnswers, cbt.StudentAnswers{
+			AnswerId:   datum.AnswerId,
+			QuestionId: datum.QuestionId,
+		})
+	}
+
+	return existingAnswers
+}

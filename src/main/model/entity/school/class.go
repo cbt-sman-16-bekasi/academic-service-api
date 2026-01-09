@@ -13,6 +13,7 @@ const (
 
 type Class struct {
 	gorm.Model
+	SchoolCode      string    `gorm:"type:varchar(50);index" json:"school_code"`
 	ClassCode       string    `json:"classCode"`
 	DetailClassCode ClassCode `gorm:"foreignKey:ClassCode;references:Code"`
 	ClassName       string    `json:"className"`
@@ -24,6 +25,7 @@ func (c *Class) TableName() string {
 
 type ClassCode struct {
 	gorm.Model
+	SchoolCode  string  `gorm:"type:varchar(50);index" json:"school_code"`
 	Code        string  `gorm:"unique" json:"code"`
 	Name        string  `json:"name"`
 	ClassMember []Class `json:"class_member" gorm:"foreignKey:ClassCode;references:Code"`
@@ -35,6 +37,7 @@ func (c *ClassCode) TableName() string {
 
 type ClassSubject struct {
 	gorm.Model
+	SchoolCode      string             `gorm:"type:varchar(50);index" json:"school_code"`
 	SubjectCode     string             `json:"subjectCode"`
 	DetailSubject   curriculum.Subject `gorm:"foreignKey:SubjectCode;references:Code"`
 	ClassCode       string             `json:"classCode"`

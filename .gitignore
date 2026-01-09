@@ -1,2 +1,29 @@
-.env
+# IDE
 .idea/
+.vscode/
+*.swp
+*.swo
+
+# Build
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test
+*.test
+*.out
+coverage.txt
+
+# Dependency
+vendor/
+
+# Config (contains secrets)
+config.yml
+.env
+
+# Logs
+*.log
+logs/

@@ -2,19 +2,23 @@ package jwt
 
 import (
 	"fmt"
-	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/redisstore"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/yon-module/yon-framework/exception"
-	"github.com/yon-module/yon-framework/logger"
-	"github.com/yon-module/yon-framework/server/response"
-	"log"
-	"os"
 	"strings"
 	"time"
+
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/cache"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/config"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/exception"
+	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/shared/response"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog/log"
 )
 
-var secretKey = []byte(os.Getenv("yon.security.secret_key"))
+// getSecretKey returns the JWT secret key from config
+func getSecretKey() []byte {
+	return []byte(config.GetSecurity().SecretKey)
+}
+
 var AllAccess = []string{"read", "delete", "create", "update", "list"}
 
 type Claims struct {
@@ -23,6 +27,12 @@ type Claims struct {
 	Permission []string `json:"permission"`
 	SchoolCode string   `json:"school_code"`
 	Id         uint     `json:"id"`
+}
+
+// GetSchoolCode returns the SchoolCode from Claims
+// Implements interface for cache middleware to extract school code
+func (c Claims) GetSchoolCode() string {
+	return c.SchoolCode
 }
 
 func GenerateJWT(claim Claims) (string, error) {
@@ -37,7 +47,7 @@ func GenerateJWT(claim Claims) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(secretKey)
+	signedToken, err := token.SignedString(getSecretKey())
 	if err != nil {
 		return "", err
 	}
@@ -49,7 +59,7 @@ func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			response.ErrorResponse(response.Unauthorized, "Please input your token", nil).Json(c)
+			response.UnauthorizedError(c, "Please input your token")
 			c.Abort()
 			return
 		}
@@ -62,18 +72,18 @@ func AuthMiddleware() gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return secretKey, nil
+			return getSecretKey(), nil
 		})
 
 		if err != nil || !token.Valid {
-			response.ErrorResponse(response.Unauthorized, "Your token invalid", nil).Json(c)
+			response.UnauthorizedError(c, "Your token invalid")
 			c.Abort()
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
-			response.ErrorResponse(response.Unauthorized, "Your token invalid", nil).Json(c)
+			response.UnauthorizedError(c, "Your token invalid")
 			c.Abort()
 			return
 		}
@@ -100,14 +110,14 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 	return func(c *gin.Context) {
 		claims, exists := c.Get("claims")
 		if !exists {
-			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
+			response.ForbiddenError(c, "You are not authorized")
 			c.Abort()
 			return
 		}
 
 		userClaims, ok := claims.(Claims)
 		if !ok {
-			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
+			response.ForbiddenError(c, "You are not authorized")
 			c.Abort()
 			return
 		}
@@ -123,7 +133,7 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 			}
 		}
 		if !hasMatch {
-			response.ErrorResponse(response.UnprocessableEntity, "You are not authorized", nil).Json(c)
+			response.ForbiddenError(c, "You are not authorized")
 			c.Abort()
 			return
 		}
@@ -135,7 +145,7 @@ func RequirePermission(requiredRole []string, requiredPermission string) gin.Han
 			}
 		}
 
-		response.ErrorResponse(response.UnprocessableEntity, "You don't have access, please contact administrator", nil).Json(c)
+		response.ForbiddenError(c, "You don't have access, please contact administrator")
 		c.Abort()
 		return
 	}
@@ -169,11 +179,11 @@ func GetDataClaims(c *gin.Context) Claims {
 }
 
 func SaveDetailUser(key string, user interface{}, exp time.Duration) {
-	_ = redisstore.SetJSON(key, user, exp)
+	_ = cache.SetJSON(key, user, exp)
 }
 
 func ExtractDetailUser(key string, detail interface{}) {
-	err := redisstore.GetJSON(key, detail)
+	err := cache.GetJSON(key, detail)
 	if err != nil {
 		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, err.Error()))
 	}
@@ -181,21 +191,21 @@ func ExtractDetailUser(key string, detail interface{}) {
 
 func GetID(key string) float64 {
 	var data map[string]interface{}
-	err := redisstore.GetJSON(key, &data)
+	err := cache.GetJSON(key, &data)
 	if data == nil {
-		logger.Log.Error().Msg("No data found")
+		log.Error().Msg("No data found")
 		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Data user not found"))
 	}
 	if err != nil {
-		logger.Log.Error().Msg("No data found")
+		log.Error().Msg("No data found")
 		panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, err.Error()))
 	}
 	if val, ok := data["ID"]; ok {
 		if floatVal, ok := val.(float64); ok {
 			return floatVal
 		} else {
-			// handle jika bukan float64, misalnya error log
-			log.Println("ID bukan float64")
+			// handle jika bukan float64
+			log.Error().Msg("ID bukan float64")
 		}
 	}
 	panic(exception.NewBadRequestExceptionStruct(response.Unauthorized, "Data user not found"))
@@ -204,4 +214,29 @@ func GetID(key string) float64 {
 func GetIDClaims(c *gin.Context) float64 {
 	claims := GetDataClaims(c)
 	return GetID(claims.Username)
+}
+
+// GetSchoolCode returns the SchoolCode from JWT claims in context
+// This is a helper function to easily get school code for multi-tenant filtering
+func GetSchoolCode(c *gin.Context) string {
+	claims := GetDataClaims(c)
+	return claims.SchoolCode
+}
+
+// SchoolScopeMiddleware validates that the user has a valid school context
+// Use this middleware after AuthMiddleware for endpoints that require school scope
+func SchoolScopeMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		claims := GetDataClaims(c)
+
+		if claims.SchoolCode == "" {
+			response.UnauthorizedError(c, "Invalid school context. Please login again.")
+			c.Abort()
+			return
+		}
+
+		// Set school_code ke context untuk easy access
+		c.Set("school_code", claims.SchoolCode)
+		c.Next()
+	}
 }

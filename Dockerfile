@@ -18,9 +18,9 @@ RUN go mod download
 # Copy the rest of the source
 COPY . .
 
-# Build the Go app
-WORKDIR /app/src/main
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main .
+# Build the Go app from new entry point
+WORKDIR /app
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/main ./src/main/cmd/api
 
 # --------- runtime stage ----------
 FROM alpine:3.19
@@ -38,8 +38,10 @@ COPY --from=builder /app/.env .
 COPY fonts/*.ttf /usr/share/fonts/truetype/
 RUN fc-cache -f -v
 
-# Set timezone
+# Environment variables
 ENV TZ=Asia/Jakarta
+ENV APP_ENV=production
+ENV GIN_MODE=release
 
 EXPOSE 8080
 
