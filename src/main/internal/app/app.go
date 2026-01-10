@@ -1,6 +1,7 @@
 package app
 
 import (
+	academicyear "github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/academic-year"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/auth"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/class"
 	"github.com/Sistem-Informasi-Akademik/academic-system-information-service/src/main/internal/modules/curriculum"
@@ -25,6 +26,7 @@ func NewApp() *fx.App {
 		CoreModule,
 
 		// Feature modules
+		academicyear.Module,
 		auth.Module,
 		class.Module,
 		curriculum.Module,

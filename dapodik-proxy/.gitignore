@@ -1,0 +1,67 @@
+# ==================================
+# Build Artifacts (Local Build Only)
+# ==================================
+# Folder hasil build lokal
+dist/
+build/
+bin/
+out/
+
+# Package files
+*.zip
+*.tar.gz
+*.tgz
+*.tar.bz2
+*.rar
+
+# Binaries (Windows, Linux, macOS)
+*.exe
+*.dll
+*.so
+*.dylib
+dapodik-proxy
+dapodik-proxy-*
+installer
+installer-*
+
+# ==================================
+# Go Build Files
+# ==================================
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+*.prof
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# ==================================
+# IDE & Editor Files
+# ==================================
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ==================================
+# Logs & Temporary Files
+# ==================================
+*.log
+*.tmp
+*.temp
+*.pid
+*.lock
+
+# ==================================
+# OS Files
+# ==================================
+Thumbs.db
+desktop.ini

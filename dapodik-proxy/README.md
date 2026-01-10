@@ -23,7 +23,24 @@ Install proxy ini di komputer/server yang IP-nya sudah terdaftar di Dapodik. Kem
 
 ## Installation (Windows)
 
-1. Download file berikut ke komputer Windows yang IP-nya terdaftar di Dapodik:
+### Method 1: Automated Installer (Recommended) ⭐
+
+1. Download dan extract package `dapodik-proxy-windows-amd64.zip` dari [Releases](https://github.com/YOUR_ORG/YOUR_REPO/releases)
+
+2. **Run installer as Administrator:**
+   - Right-click `installer.exe`
+   - Select **"Run as Administrator"**
+
+3. Pilih opsi **[1] Install Service**
+
+4. ✅ **Selesai!** Service akan:
+   - Terinstall sebagai Windows Service
+   - Autostart saat Windows boot
+   - Port 8888 otomatis dibuka di Firewall
+
+### Method 2: Manual Installation
+
+1. Download file berikut:
    - `dapodik-proxy-windows-amd64.exe` (untuk Windows 64-bit)
    - `config.yaml`
 
@@ -129,15 +146,35 @@ chmod +x build.sh
 ./build.sh
 ```
 
-## Running as Windows Service
+## Managing Windows Service
 
-Untuk menjalankan sebagai Windows Service, gunakan tools seperti [NSSM](https://nssm.cc/):
+Jika Anda menggunakan automated installer, gunakan `installer.exe` untuk mengelola service:
 
 ```cmd
-nssm install DapodikProxy C:\path\to\dapodik-proxy.exe
-nssm set DapodikProxy AppDirectory C:\path\to
-nssm set DapodikProxy AppParameters -config config.yaml
-nssm start DapodikProxy
+# Run as Administrator:
+installer.exe
+```
+
+Pilih opsi:
+- **[1]** Install Service (install + autostart + firewall)
+- **[2]** Uninstall Service (remove service + firewall rule)
+- **[3]** Start Service
+- **[4]** Stop Service  
+- **[5]** Service Status
+
+### Manual Service Management
+
+Jika install manual, gunakan `sc` command:
+
+```cmd
+# Start service
+sc start DapodikProxy
+
+# Stop service
+sc stop DapodikProxy
+
+# Check status
+sc query DapodikProxy
 ```
 
 ## Configuration Reference

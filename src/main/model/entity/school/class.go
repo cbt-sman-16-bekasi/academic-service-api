@@ -17,6 +17,11 @@ type Class struct {
 	ClassCode       string    `json:"classCode"`
 	DetailClassCode ClassCode `gorm:"foreignKey:ClassCode;references:Code"`
 	ClassName       string    `json:"className"`
+	// Semester tracking for Dapodik integration
+	SemesterID      string `gorm:"type:varchar(10);index" json:"semester_id"`       // Dapodik format: YYYYS (e.g., "20251")
+	DapodikRombelID string `gorm:"type:varchar(100);null" json:"dapodik_rombel_id"` // rombongan_belajar_id from Dapodik
+	WaliKelasID     *uint  `gorm:"null" json:"wali_kelas_id"`                       // Teacher ID for homeroom teacher
+	WaliKelasName   string `gorm:"type:varchar(100);null" json:"wali_kelas_name"`   // Cached name for display
 }
 
 func (c *Class) TableName() string {

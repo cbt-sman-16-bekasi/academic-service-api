@@ -1,0 +1,148 @@
+name: Build Dapodik Proxy
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Binaries
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        path: dapodik-proxy
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        cache-dependency-path: dapodik-proxy/go.sum
+
+    - name: Get dependencies
+      working-directory: ./dapodik-proxy
+      run: |
+        go mod download
+        go mod tidy
+
+    - name: Build Proxy - Windows AMD64
+      working-directory: ./dapodik-proxy
+      run: |
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o dist/dapodik-proxy-windows-amd64.exe main.go
+
+    - name: Build Proxy - Windows 386
+      working-directory: ./dapodik-proxy
+      run: |
+        GOOS=windows GOARCH=386 go build -ldflags="-s -w" -o dist/dapodik-proxy-windows-386.exe main.go
+
+    - name: Build Proxy - Linux AMD64
+      working-directory: ./dapodik-proxy
+      run: |
+        GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o dist/dapodik-proxy-linux-amd64 main.go
+
+    - name: Build Proxy - macOS AMD64
+      working-directory: ./dapodik-proxy
+      run: |
+        GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o dist/dapodik-proxy-darwin-amd64 main.go
+
+    - name: Build Proxy - macOS ARM64
+      working-directory: ./dapodik-proxy
+      run: |
+        GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o dist/dapodik-proxy-darwin-arm64 main.go
+
+    - name: Build Installer - Windows AMD64
+      working-directory: ./dapodik-proxy
+      run: |
+        cd installer
+        GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H=windowsgui" -o ../dist/installer-windows-amd64.exe main.go
+
+    - name: Build Installer - Windows 386
+      working-directory: ./dapodik-proxy
+      run: |
+        cd installer
+        GOOS=windows GOARCH=386 go build -ldflags="-s -w -H=windowsgui" -o ../dist/installer-windows-386.exe main.go
+
+    - name: Copy configuration files
+      working-directory: ./dapodik-proxy
+      run: |
+        cp config.yaml dist/
+        cp README.md dist/
+
+    - name: Create distribution packages
+      working-directory: ./dapodik-proxy/dist
+      run: |
+        # Windows 64-bit package
+        mkdir -p dapodik-proxy-windows-amd64
+        cp dapodik-proxy-windows-amd64.exe dapodik-proxy-windows-amd64/
+        cp installer-windows-amd64.exe dapodik-proxy-windows-amd64/installer.exe
+        cp config.yaml dapodik-proxy-windows-amd64/
+        cp README.md dapodik-proxy-windows-amd64/
+        zip -r dapodik-proxy-windows-amd64.zip dapodik-proxy-windows-amd64/
+        
+        # Windows 32-bit package
+        mkdir -p dapodik-proxy-windows-386
+        cp dapodik-proxy-windows-386.exe dapodik-proxy-windows-386/
+        cp installer-windows-386.exe dapodik-proxy-windows-386/installer.exe
+        cp config.yaml dapodik-proxy-windows-386/
+        cp README.md dapodik-proxy-windows-386/
+        zip -r dapodik-proxy-windows-386.zip dapodik-proxy-windows-386/
+        
+        # Linux package
+        mkdir -p dapodik-proxy-linux-amd64
+        cp dapodik-proxy-linux-amd64 dapodik-proxy-linux-amd64/
+        cp config.yaml dapodik-proxy-linux-amd64/
+        cp README.md dapodik-proxy-linux-amd64/
+        tar -czf dapodik-proxy-linux-amd64.tar.gz dapodik-proxy-linux-amd64/
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dapodik-proxy-binaries
+        path: |
+          dapodik-proxy/dist/*.zip
+          dapodik-proxy/dist/*.tar.gz
+        retention-days: 30
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dapodik-proxy/dist/*.zip
+          dapodik-proxy/dist/*.tar.gz
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        path: dapodik-proxy
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+        cache-dependency-path: dapodik-proxy/go.sum
+
+    - name: Run tests
+      working-directory: ./dapodik-proxy
+      run: |
+        go test -v ./...
+
+    - name: Run go vet
+      working-directory: ./dapodik-proxy
+      run: |
+        go vet ./...
