@@ -332,3 +332,11 @@ func (e *ExamController) LastAnswer(c *gin.Context) {
 	resp := e.examSessionService.RetrieveLatestAnswer(claims, c.Query("sessionId"))
 	response.SuccessResponse("Success sync", resp).Json(c)
 }
+
+func (e *ExamController) HardSubmitAnswer(c *gin.Context) {
+	var request exam_request.ExamSessionForceSubmitRequest
+	_ = c.BindJSON(&request)
+
+	e.examSessionService.HardSubmitFromAdmin(request)
+	response.SuccessResponse("Success submit answer", nil).Json(c)
+}

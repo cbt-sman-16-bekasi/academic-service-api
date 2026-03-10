@@ -68,6 +68,11 @@ type ExamSessionGenerateReportRequest struct {
 	SessionId string `json:"session_id" form:"sessionId"`
 }
 
+type ExamSessionForceSubmitRequest struct {
+	SessionId string `json:"session_id" form:"sessionId"`
+	StudentId uint   `json:"student_id" form:"student_id"`
+}
+
 type ExamSessionResetRequest struct {
 	SessionId string `json:"session_id" form:"sessionId"`
 	StudentId uint   `json:"student_id" form:"student_id"`

@@ -1030,3 +1030,29 @@ func (e *ExamSessionService) RetrieveLatestAnswer(claims jwt.Claims, sessionId s
 
 	return existingAnswers
 }
+
+func (e *ExamSessionService) HardSubmitFromAdmin(request exam_request.ExamSessionForceSubmitRequest) {
+	var sessionData school.ExamSession
+	e.examSessionRepository.Database.Where("session_id", request.SessionId).First(&sessionData)
+	if sessionData.ID == 0 {
+		panic(exception.NewBadRequestExceptionStruct(response.BadRequest, "session not found"))
+	}
+
+	studentData := e.studentRepo.FindById(request.StudentId)
+	claims := jwt.Claims{Username: studentData.NISN}
+
+	key := fmt.Sprintf("%s::%s", claims.Username, request.SessionId)
+
+	var results []exam_request.ExamResultSubmit
+	_ = redisstore.GetJSON(key, results)
+
+	e.SubmitExamSession(jwt.Claims{Username: studentData.NISN}, exam_request.ExamSessionSubmit{
+		ExamCode:      sessionData.ExamCode,
+		ExamSessionId: sessionData.SessionId,
+		IsForced:      true,
+		IsTimeOver:    false,
+		IsCheat:       true,
+		Result:        results,
+	})
+
+}

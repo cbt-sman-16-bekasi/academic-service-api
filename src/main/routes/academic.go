@@ -194,6 +194,7 @@ func academicRoutes(gr *gin.RouterGroup) {
 		examSession.POST("/reset", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "list"), examController.ExamSessionReset)
 		examSession.POST("/change/score", jwt.RequirePermission([]string{"ADMIN"}, "update"), examController.ExamSessionCorrectionScore)
 		examSession.POST("/cheat/reset", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.ResetSuspicious)
+		examSession.POST("/force/submit", jwt.RequirePermission([]string{"ADMIN", "TEACHER"}, "update"), examController.HardSubmitAnswer)
 	}
 
 	examSessionToken := exam.Group("/session/token").Use(jwt.AuthMiddleware())
