@@ -1044,7 +1044,7 @@ func (e *ExamSessionService) HardSubmitFromAdmin(request exam_request.ExamSessio
 	key := fmt.Sprintf("%s::%s", claims.Username, request.SessionId)
 
 	var results []exam_request.ExamResultSubmit
-	_ = redisstore.GetJSON(key, results)
+	_ = redisstore.GetJSON(key, &results)
 
 	e.SubmitExamSession(jwt.Claims{Username: studentData.NISN}, exam_request.ExamSessionSubmit{
 		ExamCode:      sessionData.ExamCode,
